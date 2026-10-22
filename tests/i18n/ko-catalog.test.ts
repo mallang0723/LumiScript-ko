@@ -13,7 +13,7 @@
 import { describe, test, expect } from 'bun:test';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
-import { KO } from '../../src/i18n/ko.js';
+import { KO, KO_AREAS } from '../../src/i18n/ko.js';
 import { APP_LOCALE, createTranslator, format, splitTemplate, t } from '../../src/i18n/index.js';
 
 const ROOT = join(import.meta.dir, '..', '..');
@@ -114,6 +114,19 @@ describe('ko catalog', () => {
   test('no stale keys — every catalog entry is used in src/', () => {
     const stale = Object.keys(KO).filter((k) => !USED_KEYS.has(k));
     expect(stale).toEqual([]);
+  });
+
+  test('a key shared by several areas has the same translation everywhere', () => {
+    const seen = new Map<string, [string, string]>();
+    const bad: string[] = [];
+    for (const [area, cat] of Object.entries(KO_AREAS)) {
+      for (const [k, v] of Object.entries(cat)) {
+        const prev = seen.get(k);
+        if (prev && prev[1] !== v) bad.push(`${JSON.stringify(k)}: ${prev[0]}=${JSON.stringify(prev[1])} vs ${area}=${JSON.stringify(v)}`);
+        else if (!prev) seen.set(k, [area, v]);
+      }
+    }
+    expect(bad).toEqual([]);
   });
 
   test('argument parity — same {placeholders} in key and translation', () => {
