@@ -19,6 +19,7 @@
 
 import type { FrontendToBackend } from '../../types/messages.js';
 import type { DbRecord } from '../../types/script.js';
+import { t } from '../../i18n/index.js';
 
 /** Filter mode — selected by the InspectModal segmented control. */
 export type FilterMode = 'shallow' | 'deep' | 'jsonquery';
@@ -59,10 +60,10 @@ export function parseRecordDraft(draft: string): ParseRecordResult {
     parsed = JSON.parse(draft);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    return { ok: false, error: `JSON parse error: ${msg}` };
+    return { ok: false, error: t('JSON parse error: {error}', { error: msg }) };
   }
   if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    return { ok: false, error: 'Record must be a JSON object — not an array, null, or primitive.' };
+    return { ok: false, error: t('Record must be a JSON object — not an array, null, or primitive.') };
   }
   return { ok: true, patch: parsed as Record<string, unknown> };
 }

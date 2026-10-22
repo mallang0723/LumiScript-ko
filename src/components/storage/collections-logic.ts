@@ -18,6 +18,7 @@
  */
 
 import type { CollectionSummary } from '../../engine/db-admin.js';
+import { t } from '../../i18n/index.js';
 
 /** Sortable column keys — must match the header `<span>` render order. */
 export type SortKey = 'name' | 'scope' | 'owner' | 'size' | 'updated';
@@ -67,12 +68,12 @@ export function sizeBudget(bytes: number): { tier: 'normal' | 'warn' | 'danger';
  */
 export function scopeTooltip(c: CollectionSummary): string {
   if (c.scope === 'character') {
-    if (c.characterName) return `character: ${c.characterName} (${c.characterId})\n${c.path}`;
-    if (c.characterId)   return `character: ${c.characterId} (not currently loaded)\n${c.path}`;
+    if (c.characterName) return t('character: {name} ({id})\n{path}', { name: c.characterName, id: String(c.characterId), path: c.path });
+    if (c.characterId)   return t('character: {id} (not currently loaded)\n{path}', { id: c.characterId, path: c.path });
   }
   if (c.scope === 'chat') {
-    if (c.chatName) return `chat: ${c.chatName} (${c.chatId})\n${c.path}`;
-    if (c.chatId)   return `chat: ${c.chatId} (not currently loaded)\n${c.path}`;
+    if (c.chatName) return t('chat: {name} ({id})\n{path}', { name: c.chatName, id: String(c.chatId), path: c.path });
+    if (c.chatId)   return t('chat: {id} (not currently loaded)\n{path}', { id: c.chatId, path: c.path });
   }
   return c.path;
 }

@@ -31,6 +31,8 @@ import { formatTimeAgo, copyToClipboard, cachedRecordHtml, highlightBodyCapped }
 import { EditRecordModal } from './EditRecordModal.js';
 import { buildInspectRequest, prettyPrintUserData, formatTopValue, formatNum, type FilterMode } from './record-logic.js';
 import { filterRecords, type RecordFilterOptions } from '../../engine/record-filter.js';
+import { t } from '../../i18n/index.js';
+import { tx } from '../../i18n/react.js';
 
 /** Page size used in the panel UI. Backend caps record counts anyway. */
 const PAGE_SIZE = 50;
@@ -187,21 +189,30 @@ const RecordRow: FC<RecordRowProps> = memo(function RecordRow({
       <div className="ls-inspect-record-id" title={`id: ${idStr}`}>
         <code>{idStr.slice(0, 12)}…</code>
         <span className="ls-inspect-record-timestamps">
-          created <time title={new Date(record.createdAt as number).toISOString()}>
-            {formatTimeAgo(record.createdAt as number)}
-          </time>
+          {tx('created {time}', {
+            time: (
+              <time title={new Date(record.createdAt as number).toISOString()}>
+                {formatTimeAgo(record.createdAt as number)}
+              </time>
+            ),
+          })}
           {record.updatedAt !== record.createdAt && (
             <>
-              {' · '}updated <time title={new Date(record.updatedAt as number).toISOString()}>
-                {formatTimeAgo(record.updatedAt as number)}
-              </time>
+              {' · '}
+              {tx('updated {time}', {
+                time: (
+                  <time title={new Date(record.updatedAt as number).toISOString()}>
+                    {formatTimeAgo(record.updatedAt as number)}
+                  </time>
+                ),
+              })}
             </>
           )}
         </span>
         <span style={{ flex: 1 }} />
         <button
           className="ls-inspect-record-action"
-          title={idCopied ? 'Copied!' : 'Copy ID'}
+          title={idCopied ? t('Copied!') : t('Copy ID')}
           onClick={() => onCopyId(record)}
           style={{ ...RECORD_ACTION_BTN, marginLeft: 4, color: idCopied ? 'var(--lumiverse-accent)' : 'inherit', opacity: idCopied ? 1 : 0.6 }}
         >
@@ -210,7 +221,7 @@ const RecordRow: FC<RecordRowProps> = memo(function RecordRow({
         </button>
         <button
           className="ls-inspect-record-action"
-          title={jsonCopied ? 'Copied!' : 'Copy full JSON'}
+          title={jsonCopied ? t('Copied!') : t('Copy full JSON')}
           onClick={() => onCopyJson(record)}
           style={{ ...RECORD_ACTION_BTN, marginLeft: 2, color: jsonCopied ? 'var(--lumiverse-accent)' : 'inherit', opacity: jsonCopied ? 1 : 0.6 }}
         >
@@ -219,16 +230,16 @@ const RecordRow: FC<RecordRowProps> = memo(function RecordRow({
         </button>
         <button
           className="ls-inspect-record-action"
-          title="Edit record"
+          title={t('Edit record')}
           onClick={() => onEdit(record)}
           style={{ ...RECORD_ACTION_BTN, marginLeft: 2, color: 'inherit', opacity: 0.6 }}
         >
           <Pencil size={11} />
-          Edit
+          {t('Edit')}
         </button>
         <button
           className={'ls-inspect-record-action' + (isPendingDelete ? ' ls-inspect-record-action-confirm' : '')}
-          title={isPendingDelete ? 'Click again to confirm — auto-cancels in a few seconds' : 'Delete record'}
+          title={isPendingDelete ? t('Click again to confirm — auto-cancels in a few seconds') : t('Delete record')}
           onClick={() => onDelete(record)}
           style={{
             ...RECORD_ACTION_BTN,
@@ -243,7 +254,7 @@ const RecordRow: FC<RecordRowProps> = memo(function RecordRow({
           }}
         >
           <Trash2 size={11} />
-          {isPendingDelete ? 'Confirm?' : 'Delete'}
+          {isPendingDelete ? t('Confirm?') : t('Delete')}
         </button>
       </div>
       <pre
@@ -518,10 +529,10 @@ export const InspectModal: FC<InspectModalProps> = ({
   const scopeIdentity = useMemo((): string | null => {
     if (!summary) return null;
     if (summary.scope === 'character' && summary.characterName) {
-      return `character: ${summary.characterName}`;
+      return t('character: {name}', { name: summary.characterName });
     }
     if (summary.scope === 'chat' && summary.chatName) {
-      return `chat: ${summary.chatName}`;
+      return t('chat: {name}', { name: summary.chatName });
     }
     return null;
   }, [summary]);
@@ -643,12 +654,12 @@ export const InspectModal: FC<InspectModalProps> = ({
           <button
             className="ls-modal-close"
             onClick={() => setLocalRefreshTick(t => t + 1)}
-            title="Refresh records"
+            title={t('Refresh records')}
             style={{ marginRight: 4 }}
           >
             <RefreshCw size={14} />
           </button>
-          <button className="ls-modal-close" onClick={onClose} title="Close (Esc)">
+          <button className="ls-modal-close" onClick={onClose} title={t('Close (Esc)')}>
             <X size={16} />
           </button>
         </div>
@@ -658,7 +669,7 @@ export const InspectModal: FC<InspectModalProps> = ({
             mid-record. Stats lazy-loads on first activation; subsequent
             activations are instant (state cached at the panel level)
             and refresh in step with collections_updated. */}
-        <div className="ls-inspect-tabs" role="tablist" aria-label="Inspect view">
+        <div className="ls-inspect-tabs" role="tablist" aria-label={t('Inspect view')}>
           <button
             type="button"
             role="tab"
@@ -667,7 +678,7 @@ export const InspectModal: FC<InspectModalProps> = ({
             onClick={() => setViewMode('records')}
           >
             <ListOrdered size={12} />
-            Records
+            {t('Records')}
           </button>
           <button
             type="button"
@@ -677,7 +688,7 @@ export const InspectModal: FC<InspectModalProps> = ({
             onClick={() => setViewMode('stats')}
           >
             <BarChart3 size={12} />
-            Stats
+            {t('Stats')}
           </button>
         </div>
 
@@ -693,10 +704,10 @@ export const InspectModal: FC<InspectModalProps> = ({
               className="ls-inspect-search-input"
               placeholder={
                 filterMode === 'jsonquery'
-                  ? 'jsonquery expression — e.g. filter(.hp > 50) or pipe(filter(...), sort(.created))'
+                  ? t('jsonquery expression — e.g. filter(.hp > 50) or pipe(filter(...), sort(.created))')
                   : filterMode === 'deep'
-                    ? 'Filter records (deep string match — all nested fields)…'
-                    : 'Filter records (shallow string match)…'
+                    ? t('Filter records (deep string match — all nested fields)…')
+                    : t('Filter records (shallow string match)…')
               }
               value={filter}
               onChange={e => setFilter(e.target.value)}
@@ -708,13 +719,13 @@ export const InspectModal: FC<InspectModalProps> = ({
             {/* Mode selector — segmented control, pressed-state highlight
                 indicates the active mode. Click cycles through three:
                 shallow (Search) → deep (Layers) → jsonquery (Code2). */}
-            <div className="ls-inspect-mode-selector" role="radiogroup" aria-label="Filter mode">
+            <div className="ls-inspect-mode-selector" role="radiogroup" aria-label={t('Filter mode')}>
               <button
                 type="button"
                 className="ls-inspect-mode-btn"
                 role="radio"
                 aria-checked={filterMode === 'shallow'}
-                title="Shallow text filter — top-level string fields only"
+                title={t('Shallow text filter — top-level string fields only')}
                 onClick={() => setFilterMode('shallow')}
               >
                 <Search size={11} />
@@ -724,7 +735,7 @@ export const InspectModal: FC<InspectModalProps> = ({
                 className="ls-inspect-mode-btn"
                 role="radio"
                 aria-checked={filterMode === 'deep'}
-                title="Deep text filter — search all nested string fields"
+                title={t('Deep text filter — search all nested string fields')}
                 onClick={() => setFilterMode('deep')}
               >
                 <Layers size={11} />
@@ -734,7 +745,7 @@ export const InspectModal: FC<InspectModalProps> = ({
                 className="ls-inspect-mode-btn"
                 role="radio"
                 aria-checked={filterMode === 'jsonquery'}
-                title="jsonquery expression — power-user typed query"
+                title={t('jsonquery expression — power-user typed query')}
                 onClick={() => setFilterMode('jsonquery')}
               >
                 <Code2 size={11} />
@@ -744,14 +755,18 @@ export const InspectModal: FC<InspectModalProps> = ({
           <div className="ls-inspect-pager">
             <span className="ls-inspect-pager-status">
               {viewTotal === 0
-                ? 'No matching records'
-                : <>Showing <strong>{pageFirst}</strong>&ndash;<strong>{pageLast}</strong> of <strong>{viewTotal}</strong></>}
+                ? t('No matching records')
+                : tx('Showing {first}–{last} of {total}', {
+                    first: <strong>{pageFirst}</strong>,
+                    last:  <strong>{pageLast}</strong>,
+                    total: <strong>{viewTotal}</strong>,
+                  })}
             </span>
             <button
               className="ls-inspect-pager-btn"
               onClick={() => setPage(p => Math.max(0, p - 1))}
               disabled={page === 0}
-              title="Previous page"
+              title={t('Previous page')}
             >
               <ChevronLeft size={12} />
             </button>
@@ -759,7 +774,7 @@ export const InspectModal: FC<InspectModalProps> = ({
               className="ls-inspect-pager-btn"
               onClick={() => setPage(p => Math.min(pageCount - 1, p + 1))}
               disabled={page >= pageCount - 1}
-              title="Next page"
+              title={t('Next page')}
             >
               <ChevronRight size={12} />
             </button>
@@ -779,12 +794,12 @@ export const InspectModal: FC<InspectModalProps> = ({
         {/* Records body */}
         <div ref={bodyContainerRef} className="ls-inspect-body">
           {records === null ? (
-            <div className="ls-inspect-empty">Loading records…</div>
+            <div className="ls-inspect-empty">{t('Loading records…')}</div>
           ) : viewRecords.length === 0 ? (
             <div className="ls-inspect-empty">
               {viewTotal === 0 && debouncedFilter ? (
                 <>
-                  <div>No records match &ldquo;{debouncedFilter}&rdquo;</div>
+                  <div>{t('No records match “{filter}”', { filter: debouncedFilter })}</div>
                   <button
                     onClick={() => setFilter('')}
                     style={{
@@ -798,13 +813,13 @@ export const InspectModal: FC<InspectModalProps> = ({
                       cursor: 'pointer',
                     }}
                   >
-                    Clear filter
+                    {t('Clear filter')}
                   </button>
                 </>
               ) : viewTotal === 0 ? (
-                'Collection is empty'
+                t('Collection is empty')
               ) : (
-                'No records on this page'
+                t('No records on this page')
               )}
             </div>
           ) : (
@@ -834,12 +849,12 @@ export const InspectModal: FC<InspectModalProps> = ({
         {viewMode === 'stats' && (
           <div className="ls-inspect-body ls-inspect-stats-body">
             {stats === null ? (
-              <div className="ls-inspect-empty">Computing stats…</div>
+              <div className="ls-inspect-empty">{t('Computing stats…')}</div>
             ) : stats.fields.length === 0 ? (
               <div className="ls-inspect-empty">
                 {stats.totalRecords === 0
-                  ? 'Collection is empty — no fields to analyze.'
-                  : 'No user-data fields in this collection (only reserved fields).'}
+                  ? t('Collection is empty — no fields to analyze.')
+                  : t('No user-data fields in this collection (only reserved fields).')}
               </div>
             ) : (
               <StatsPanel stats={stats} />
@@ -902,10 +917,18 @@ const StatsPanel: FC<StatsPanelProps> = ({ stats }) => {
   return (
     <div className="ls-inspect-stats">
       <div className="ls-inspect-stats-summary">
-        Aggregating across <strong>{stats.totalRecords.toLocaleString()}</strong>{' '}
-        {stats.totalRecords === 1 ? 'record' : 'records'} ·{' '}
-        <strong>{stats.fields.length}</strong>{' '}
-        {stats.fields.length === 1 ? 'field' : 'fields'}
+        {(() => {
+          const parts = {
+            records: <strong>{stats.totalRecords.toLocaleString()}</strong>,
+            fields:  <strong>{stats.fields.length}</strong>,
+          };
+          const oneRecord = stats.totalRecords === 1;
+          const oneField  = stats.fields.length === 1;
+          if (oneRecord && oneField) return tx('Aggregating across {records} record · {fields} field', parts);
+          if (oneRecord)             return tx('Aggregating across {records} record · {fields} fields', parts);
+          if (oneField)              return tx('Aggregating across {records} records · {fields} field', parts);
+          return tx('Aggregating across {records} records · {fields} fields', parts);
+        })()}
       </div>
       <div className="ls-inspect-stats-grid">
         {stats.fields.map((f) => (
@@ -930,7 +953,7 @@ const StatsFieldCard: FC<StatsFieldCardProps> = ({ field, totalRecords }) => {
     <div className="ls-inspect-stats-card">
       <div className="ls-inspect-stats-card-head">
         <code className="ls-inspect-stats-card-name" title={field.name}>{field.name}</code>
-        <span className="ls-inspect-stats-card-presence" title={`${field.presence} of ${totalRecords} records`}>
+        <span className="ls-inspect-stats-card-presence" title={t('{presence} of {total} records', { presence: field.presence, total: totalRecords })}>
           {presencePct}%
         </span>
       </div>
@@ -943,17 +966,17 @@ const StatsFieldCard: FC<StatsFieldCardProps> = ({ field, totalRecords }) => {
       </div>
       {field.numericRange && (
         <div className="ls-inspect-stats-card-numeric">
-          <span>min <strong>{formatNum(field.numericRange.min)}</strong></span>
+          <span>{tx('min {value}', { value: <strong>{formatNum(field.numericRange.min)}</strong> })}</span>
           <span>·</span>
-          <span>max <strong>{formatNum(field.numericRange.max)}</strong></span>
+          <span>{tx('max {value}', { value: <strong>{formatNum(field.numericRange.max)}</strong> })}</span>
           <span>·</span>
-          <span>mean <strong>{formatNum(field.numericRange.mean)}</strong></span>
+          <span>{tx('mean {value}', { value: <strong>{formatNum(field.numericRange.mean)}</strong> })}</span>
         </div>
       )}
       {field.topValues.length > 0 && (
         <div className="ls-inspect-stats-card-values">
           <div className="ls-inspect-stats-card-values-label">
-            Top {field.topValues.length} of {field.cardinality.toLocaleString()} distinct
+            {t('Top {n} of {total} distinct', { n: field.topValues.length, total: field.cardinality.toLocaleString() })}
           </div>
           <div className="ls-inspect-stats-card-values-list">
             {field.topValues.map((v, i) => (

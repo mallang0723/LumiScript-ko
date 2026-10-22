@@ -42,6 +42,14 @@ import {
   type SortKey,
   type SortDir,
 } from './collections-logic.js';
+import { t } from '../../i18n/index.js';
+
+/** Hover titles for the scope filter chips (whole sentences per scope). */
+const SCOPE_CHIP_TITLE: Record<Scope, { hide: string; show: string }> = {
+  script:    { hide: t('Hide script-scoped'),    show: t('Show script-scoped') },
+  character: { hide: t('Hide character-scoped'), show: t('Show character-scoped') },
+  chat:      { hide: t('Hide chat-scoped'),      show: t('Show chat-scoped') },
+};
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -131,11 +139,11 @@ export const CollectionsSection: FC<CollectionsSectionProps> = ({
     <div className="ls-status-section">
       <div className="ls-inject-header">
         <Database size={10} />
-        Collections
+        {t('Collections')}
         {totalCount > 0 && <span className="ls-inject-count">{totalCount}</span>}
         <button
           className="ls-vars-refresh"
-          title="Refresh collections"
+          title={t('Refresh collections')}
           onClick={handleRefresh}
         >
           <RefreshCw size={10} />
@@ -143,9 +151,9 @@ export const CollectionsSection: FC<CollectionsSectionProps> = ({
       </div>
       <div className="ls-status-section-body">
         {collections === null ? (
-          <div className="ls-section-empty">Click refresh to load collections</div>
+          <div className="ls-section-empty">{t('Click refresh to load collections')}</div>
         ) : collections.length === 0 ? (
-          <div className="ls-section-empty">No api.db collections on disk</div>
+          <div className="ls-section-empty">{t('No api.db collections on disk')}</div>
         ) : (
           <>
             {/* Filter row: name search + scope chips + counter ── */}
@@ -155,14 +163,14 @@ export const CollectionsSection: FC<CollectionsSectionProps> = ({
                 <input
                   type="text"
                   className="ls-collections-filter-input"
-                  placeholder="Filter by name…"
+                  placeholder={t('Filter by name…')}
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                 />
                 {searchQuery && (
                   <button
                     className="ls-collections-filter-clear"
-                    title="Clear search"
+                    title={t('Clear search')}
                     onClick={() => setSearchQuery('')}
                   >
                     <X size={9} />
@@ -179,7 +187,7 @@ export const CollectionsSection: FC<CollectionsSectionProps> = ({
                       className="ls-collections-filter-chip"
                       data-scope={scope}
                       aria-pressed={pressed}
-                      title={pressed ? `Hide ${scope}-scoped` : `Show ${scope}-scoped`}
+                      title={pressed ? SCOPE_CHIP_TITLE[scope].hide : SCOPE_CHIP_TITLE[scope].show}
                       onClick={() => toggleScope(scope)}
                     >
                       {SCOPE_LABEL_SHORT[scope]}
@@ -195,7 +203,7 @@ export const CollectionsSection: FC<CollectionsSectionProps> = ({
             {/* Table or filtered-empty fallback ── */}
             {visibleCount === 0 ? (
               <div className="ls-section-empty">
-                <div>No collections match the filter</div>
+                <div>{t('No collections match the filter')}</div>
                 <button
                   onClick={clearFilters}
                   style={{
@@ -210,7 +218,7 @@ export const CollectionsSection: FC<CollectionsSectionProps> = ({
                     cursor: 'pointer',
                   }}
                 >
-                  Clear filter
+                  {t('Clear filter')}
                 </button>
               </div>
             ) : (
@@ -218,20 +226,20 @@ export const CollectionsSection: FC<CollectionsSectionProps> = ({
                 {/* Header row — sticky so it stays visible as the body scrolls.
                     Each header span doubles as a sort toggle (except actions). */}
                 <div className="ls-collections-row ls-collections-header-row">
-                  <span className="ls-collections-sortable" onClick={() => handleSort('name')} title="Sort by name">
-                    Name {renderSortIndicator('name')}
+                  <span className="ls-collections-sortable" onClick={() => handleSort('name')} title={t('Sort by name')}>
+                    {t('Name')}{' '}{renderSortIndicator('name')}
                   </span>
-                  <span className="ls-collections-sortable" onClick={() => handleSort('scope')} title="Sort by scope">
-                    Scope {renderSortIndicator('scope')}
+                  <span className="ls-collections-sortable" onClick={() => handleSort('scope')} title={t('Sort by scope')}>
+                    {t('Scope')}{' '}{renderSortIndicator('scope')}
                   </span>
-                  <span className="ls-collections-sortable" onClick={() => handleSort('owner')} title="Sort by owner">
-                    Owner {renderSortIndicator('owner')}
+                  <span className="ls-collections-sortable" onClick={() => handleSort('owner')} title={t('Sort by owner')}>
+                    {t('Owner')}{' '}{renderSortIndicator('owner')}
                   </span>
-                  <span className="ls-collections-sortable" onClick={() => handleSort('size')} title="Sort by size">
-                    Size {renderSortIndicator('size')}
+                  <span className="ls-collections-sortable" onClick={() => handleSort('size')} title={t('Sort by size')}>
+                    {t('Size')}{' '}{renderSortIndicator('size')}
                   </span>
-                  <span className="ls-collections-sortable" onClick={() => handleSort('updated')} title="Sort by last updated">
-                    Updated {renderSortIndicator('updated')}
+                  <span className="ls-collections-sortable" onClick={() => handleSort('updated')} title={t('Sort by last updated')}>
+                    {t('Updated')}{' '}{renderSortIndicator('updated')}
                   </span>
                   <span>{/* actions — not sortable */}</span>
                 </div>
@@ -239,7 +247,7 @@ export const CollectionsSection: FC<CollectionsSectionProps> = ({
                   const ownerName = scriptNameById.get(c.scriptId) ?? `(${c.scriptId.slice(0, 8)}…)`;
                   const ownerIsUnknown = !scriptNameById.has(c.scriptId);
                   const ownerTooltip = ownerIsUnknown
-                    ? `scriptId: ${c.scriptId} (not currently loaded)`
+                    ? t('scriptId: {id} (not currently loaded)', { id: c.scriptId })
                     : `${ownerName} (${c.scriptId})`;
                   return (
                     <div key={c.path} className="ls-collections-row">
@@ -256,7 +264,7 @@ export const CollectionsSection: FC<CollectionsSectionProps> = ({
                       {(() => {
                         const budget = sizeBudget(c.sizeBytes);
                         const pct = (c.sizeBytes / SIZE_CAP_BYTES * 100).toFixed(c.sizeBytes < 1024 * 1024 ? 2 : 1);
-                        const tooltip = `${c.sizeBytes.toLocaleString()} bytes (${pct}% of 50 MB cap)`;
+                        const tooltip = t('{bytes} bytes ({pct}% of 50 MB cap)', { bytes: c.sizeBytes.toLocaleString(), pct });
                         return (
                           <span
                             className="ls-collections-size"
@@ -274,14 +282,14 @@ export const CollectionsSection: FC<CollectionsSectionProps> = ({
                       <span className="ls-collections-actions">
                         <button
                           className="ls-collections-action"
-                          title="Inspect records"
+                          title={t('Inspect records')}
                           onClick={() => onInspect(c.path)}
                         >
                           <Eye size={10} />
                         </button>
                         <button
                           className="ls-collections-action ls-collections-action-danger"
-                          title="Drop collection"
+                          title={t('Drop collection')}
                           onClick={() => onDrop(c)}
                         >
                           <Trash2 size={10} />

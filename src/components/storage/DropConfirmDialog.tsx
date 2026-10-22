@@ -23,6 +23,8 @@ import { X, Trash2, AlertTriangle } from 'lucide-react';
 import type { CollectionSummary } from '../../engine/db-admin.js';
 import { formatBytes, SCOPE_LABEL_LONG } from './utils.js';
 import { scopeIdentityLine } from './collections-logic.js';
+import { t } from '../../i18n/index.js';
+import { tx } from '../../i18n/react.js';
 
 export interface DropConfirmDialogProps {
   target: CollectionSummary;
@@ -119,9 +121,9 @@ export const DropConfirmDialog: FC<DropConfirmDialogProps> = ({
         <div className="ls-modal-header">
           <span className="ls-modal-title">
             <Trash2 size={15} style={{ color: 'var(--lumiverse-danger, rgb(246, 130, 130))' }} />
-            Drop collection?
+            {t('Drop collection?')}
           </span>
-          <button className="ls-modal-close" onClick={onCancel} title="Cancel (Esc)">
+          <button className="ls-modal-close" onClick={onCancel} title={t('Cancel (Esc)')}>
             <X size={16} />
           </button>
         </div>
@@ -129,9 +131,7 @@ export const DropConfirmDialog: FC<DropConfirmDialogProps> = ({
         {/* Body */}
         <div className="ls-drop-body">
           <p className="ls-drop-intro">
-            This will permanently delete the collection and all its records.
-            Scripts that own this collection can re-create it, but any
-            existing records will be gone.
+            {t('This will permanently delete the collection and all its records. Scripts that own this collection can re-create it, but any existing records will be gone.')}
           </p>
 
           <div className="ls-drop-target">
@@ -150,7 +150,9 @@ export const DropConfirmDialog: FC<DropConfirmDialogProps> = ({
                   style={{ marginTop: 6, fontSize: 12, opacity: 0.85 }}
                   title={`${ident.label.toLowerCase()}Id: ${ident.id}`}
                 >
-                  {ident.label}: <strong>{ident.name}</strong>
+                  {target.scope === 'character'
+                    ? tx('Character: {name}', { name: <strong>{ident.name}</strong> })
+                    : tx('Chat: {name}', { name: <strong>{ident.name}</strong> })}
                 </div>
               );
             })()}
@@ -165,19 +167,21 @@ export const DropConfirmDialog: FC<DropConfirmDialogProps> = ({
               couldn't read). */}
           {recordCount === null ? (
             <div style={{ marginTop: 6, fontSize: 12, opacity: 0.55 }}>
-              Counting records…
+              {t('Counting records…')}
             </div>
           ) : recordCount >= 0 ? (
             <div style={{ marginTop: 6, fontSize: 12 }}>
               {recordCount === 0
-                ? 'Collection is currently empty.'
-                : <>Will delete <strong>{recordCount.toLocaleString()}</strong> {recordCount === 1 ? 'record' : 'records'}.</>}
+                ? t('Collection is currently empty.')
+                : recordCount === 1
+                  ? tx('Will delete {n} record.', { n: <strong>{recordCount.toLocaleString()}</strong> })
+                  : tx('Will delete {n} records.', { n: <strong>{recordCount.toLocaleString()}</strong> })}
             </div>
           ) : null}
 
           <div className="ls-drop-warning">
             <AlertTriangle size={12} />
-            <span>This action cannot be undone.</span>
+            <span>{t('This action cannot be undone.')}</span>
           </div>
 
           <div className="ls-drop-actions">
@@ -186,14 +190,14 @@ export const DropConfirmDialog: FC<DropConfirmDialogProps> = ({
               onClick={onCancel}
               autoFocus
             >
-              Cancel
+              {t('Cancel')}
             </button>
             <button
               className="ls-drop-btn ls-drop-btn-confirm"
               onClick={onConfirm}
             >
               <Trash2 size={12} />
-              Drop collection
+              {t('Drop collection')}
             </button>
           </div>
         </div>

@@ -35,6 +35,7 @@ import {
   type SortKey,
   type SortDir,
 } from './script-storage-section-logic.js';
+import { t } from '../../i18n/index.js';
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -105,11 +106,11 @@ export const ScriptStorageSection: FC<ScriptStorageSectionProps> = ({
     <div className="ls-status-section">
       <div className="ls-inject-header">
         <HardDrive size={10} />
-        Script Storage
+        {t('Script Storage')}
         {totalCount > 0 && <span className="ls-inject-count">{totalCount}</span>}
         <button
           className="ls-vars-refresh"
-          title="Refresh script storage"
+          title={t('Refresh script storage')}
           onClick={handleRefresh}
         >
           <RefreshCw size={10} />
@@ -117,9 +118,9 @@ export const ScriptStorageSection: FC<ScriptStorageSectionProps> = ({
       </div>
       <div className="ls-status-section-body">
         {entries === null ? (
-          <div className="ls-section-empty">Click refresh to load script storage</div>
+          <div className="ls-section-empty">{t('Click refresh to load script storage')}</div>
         ) : entries.length === 0 ? (
-          <div className="ls-section-empty">No scripts have stored entries via api.scriptStorage</div>
+          <div className="ls-section-empty">{t('No scripts have stored entries via api.scriptStorage')}</div>
         ) : (
           <>
             <div className="ls-scriptstorage-filter">
@@ -128,14 +129,14 @@ export const ScriptStorageSection: FC<ScriptStorageSectionProps> = ({
                 <input
                   type="text"
                   className="ls-scriptstorage-filter-input"
-                  placeholder="Filter by script name…"
+                  placeholder={t('Filter by script name…')}
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                 />
                 {searchQuery && (
                   <button
                     className="ls-scriptstorage-filter-clear"
-                    title="Clear search"
+                    title={t('Clear search')}
                     onClick={() => setSearchQuery('')}
                   >
                     <X size={9} />
@@ -149,7 +150,7 @@ export const ScriptStorageSection: FC<ScriptStorageSectionProps> = ({
 
             {visibleCount === 0 ? (
               <div className="ls-section-empty">
-                <div>No scripts match the filter</div>
+                <div>{t('No scripts match the filter')}</div>
                 <button
                   onClick={() => setSearchQuery('')}
                   style={{
@@ -164,23 +165,23 @@ export const ScriptStorageSection: FC<ScriptStorageSectionProps> = ({
                     cursor: 'pointer',
                   }}
                 >
-                  Clear filter
+                  {t('Clear filter')}
                 </button>
               </div>
             ) : (
               <div className="ls-scriptstorage-list">
                 <div className="ls-scriptstorage-row ls-scriptstorage-header-row">
-                  <span className="ls-scriptstorage-sortable" onClick={() => handleSort('script')} title="Sort by script name">
-                    Script {renderSortIndicator('script')}
+                  <span className="ls-scriptstorage-sortable" onClick={() => handleSort('script')} title={t('Sort by script name')}>
+                    {t('Script')}{' '}{renderSortIndicator('script')}
                   </span>
-                  <span className="ls-scriptstorage-sortable" onClick={() => handleSort('keys')} title="Sort by key count">
-                    Keys {renderSortIndicator('keys')}
+                  <span className="ls-scriptstorage-sortable" onClick={() => handleSort('keys')} title={t('Sort by key count')}>
+                    {t('Keys')}{' '}{renderSortIndicator('keys')}
                   </span>
-                  <span className="ls-scriptstorage-sortable" onClick={() => handleSort('size')} title="Sort by size">
-                    Size {renderSortIndicator('size')}
+                  <span className="ls-scriptstorage-sortable" onClick={() => handleSort('size')} title={t('Sort by size')}>
+                    {t('Size')}{' '}{renderSortIndicator('size')}
                   </span>
-                  <span className="ls-scriptstorage-sortable" onClick={() => handleSort('modified')} title="Sort by last modified">
-                    Modified {renderSortIndicator('modified')}
+                  <span className="ls-scriptstorage-sortable" onClick={() => handleSort('modified')} title={t('Sort by last modified')}>
+                    {t('Modified')}{' '}{renderSortIndicator('modified')}
                   </span>
                   <span>{/* actions — not sortable */}</span>
                 </div>
@@ -188,14 +189,14 @@ export const ScriptStorageSection: FC<ScriptStorageSectionProps> = ({
                   const ownerName = scriptNameById.get(e.scriptId) ?? `(${e.scriptId.slice(0, 8)}…)`;
                   const ownerIsUnknown = !scriptNameById.has(e.scriptId);
                   const ownerTooltip = ownerIsUnknown
-                    ? `scriptId: ${e.scriptId} (not currently loaded)`
+                    ? t('scriptId: {id} (not currently loaded)', { id: e.scriptId })
                     : `${ownerName} (${e.scriptId})`;
                   const budget = sizeBudget(e.sizeBytes);
                   const pct = (e.sizeBytes / SIZE_CAP_BYTES * 100).toFixed(e.sizeBytes < 100 * 1024 ? 2 : 1);
-                  const sizeTooltip = `${e.sizeBytes.toLocaleString()} bytes (${pct}% of 1 MB cap)`;
+                  const sizeTooltip = t('{bytes} bytes ({pct}% of 1 MB cap)', { bytes: e.sizeBytes.toLocaleString(), pct });
                   const modifiedIso = e.modifiedAtMs > 0
                     ? new Date(e.modifiedAtMs).toISOString()
-                    : 'unknown';
+                    : t('unknown');
                   return (
                     <div key={e.scriptId} className="ls-scriptstorage-row">
                       <span
@@ -204,7 +205,7 @@ export const ScriptStorageSection: FC<ScriptStorageSectionProps> = ({
                       >
                         {ownerName}
                       </span>
-                      <span className="ls-scriptstorage-keys" title={`${e.keyCount} key${e.keyCount === 1 ? '' : 's'}`}>
+                      <span className="ls-scriptstorage-keys" title={e.keyCount === 1 ? t('{n} key', { n: e.keyCount }) : t('{n} keys', { n: e.keyCount })}>
                         {e.keyCount}
                       </span>
                       <span
@@ -221,14 +222,14 @@ export const ScriptStorageSection: FC<ScriptStorageSectionProps> = ({
                       <span className="ls-scriptstorage-actions">
                         <button
                           className="ls-scriptstorage-action"
-                          title="Inspect entries"
+                          title={t('Inspect entries')}
                           onClick={() => onInspect(e.scriptId)}
                         >
                           <Eye size={10} />
                         </button>
                         <button
                           className="ls-scriptstorage-action ls-scriptstorage-action-danger"
-                          title="Clear this script's storage"
+                          title={t("Clear this script's storage")}
                           onClick={() => onClear(e)}
                         >
                           <Trash2 size={10} />

@@ -35,6 +35,7 @@ import { X, HardDrive, Search, RefreshCw, Copy, Braces, Trash2, AlertTriangle } 
 import type { FrontendToBackend } from '../../types/messages.js';
 import type { Script } from '../../types/script.js';
 import { copyToClipboard, highlightJson } from './utils.js';
+import { t } from '../../i18n/index.js';
 
 /** How long the "Copied" tick stays visible after a successful copy. */
 const COPY_FEEDBACK_MS = 1200;
@@ -154,13 +155,17 @@ export const InspectScriptStorageModal: FC<InspectScriptStorageModalProps> = ({
             <HardDrive size={15} style={{ color: 'var(--lumiverse-accent)' }} />
             <span className="ls-inspect-title-name">{ownerName}</span>
             <span className="ls-inspect-title-path">
-              scriptStorage · {isFiltered ? `${visibleCount}/${totalCount}` : `${totalCount} entr${totalCount === 1 ? 'y' : 'ies'}`}
+              scriptStorage · {isFiltered
+                ? `${visibleCount}/${totalCount}`
+                : totalCount === 1
+                  ? t('{n} entry', { n: totalCount })
+                  : t('{n} entries', { n: totalCount })}
             </span>
           </span>
           <button
             className="ls-modal-close"
             onClick={() => sendToBackend({ type: 'inspect_script_storage', scriptId })}
-            title="Refresh entries"
+            title={t('Refresh entries')}
             style={{ marginRight: 4 }}
           >
             <RefreshCw size={14} />
@@ -168,7 +173,7 @@ export const InspectScriptStorageModal: FC<InspectScriptStorageModalProps> = ({
           <button
             className="ls-modal-close"
             onClick={onClose}
-            title="Close (Esc)"
+            title={t('Close (Esc)')}
           >
             <X size={16} />
           </button>
@@ -181,14 +186,14 @@ export const InspectScriptStorageModal: FC<InspectScriptStorageModalProps> = ({
             <input
               type="text"
               className="ls-scriptstorage-filter-input"
-              placeholder="Filter by key…"
+              placeholder={t('Filter by key…')}
               value={filter}
               onChange={e => setFilter(e.target.value)}
             />
             {filter && (
               <button
                 className="ls-scriptstorage-filter-clear"
-                title="Clear filter"
+                title={t('Clear filter')}
                 onClick={() => setFilter('')}
               >
                 <X size={9} />
@@ -201,16 +206,15 @@ export const InspectScriptStorageModal: FC<InspectScriptStorageModalProps> = ({
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '8px 12px' }}>
           {entries === null ? (
             <div style={{ padding: '16px', color: 'var(--lumiverse-text-muted)', fontSize: 12 }}>
-              Loading entries…
+              {t('Loading entries…')}
             </div>
           ) : entries.length === 0 ? (
             <div style={{ padding: '16px', color: 'var(--lumiverse-text-muted)', fontSize: 12 }}>
-              No entries — this script's storage slot is empty (or was cleared
-              between the section list and your inspect click).
+              {t("No entries — this script's storage slot is empty (or was cleared between the section list and your inspect click).")}
             </div>
           ) : visibleCount === 0 ? (
             <div style={{ padding: '16px', color: 'var(--lumiverse-text-muted)', fontSize: 12 }}>
-              No entries match the filter.
+              {t('No entries match the filter.')}
             </div>
           ) : (
             <div className="ls-scriptstorage-entries">
@@ -226,14 +230,14 @@ export const InspectScriptStorageModal: FC<InspectScriptStorageModalProps> = ({
                       <div className="ls-scriptstorage-entry-actions">
                         <button
                           className="ls-scriptstorage-action"
-                          title={copiedKey ? 'Copied!' : 'Copy key'}
+                          title={copiedKey ? t('Copied!') : t('Copy key')}
                           onClick={() => handleCopyKey(key)}
                         >
                           <Copy size={10} />
                         </button>
                         <button
                           className="ls-scriptstorage-action"
-                          title={copiedValue ? 'Copied!' : 'Copy value (JSON)'}
+                          title={copiedValue ? t('Copied!') : t('Copy value (JSON)')}
                           onClick={() => handleCopyValue(key, value)}
                         >
                           <Braces size={10} />
@@ -241,7 +245,7 @@ export const InspectScriptStorageModal: FC<InspectScriptStorageModalProps> = ({
                         {!isArmed ? (
                           <button
                             className="ls-scriptstorage-action ls-scriptstorage-action-danger"
-                            title="Delete this entry"
+                            title={t('Delete this entry')}
                             onClick={() => handleDeleteArm(key)}
                           >
                             <Trash2 size={10} />
@@ -249,10 +253,10 @@ export const InspectScriptStorageModal: FC<InspectScriptStorageModalProps> = ({
                         ) : (
                           <button
                             className="ls-scriptstorage-action ls-scriptstorage-action-confirm"
-                            title="Click to confirm deletion (auto-cancels in 4s)"
+                            title={t('Click to confirm deletion (auto-cancels in 4s)')}
                             onClick={() => handleDeleteConfirm(key)}
                           >
-                            <AlertTriangle size={10} /> Confirm?
+                            <AlertTriangle size={10} />{' '}{t('Confirm?')}
                           </button>
                         )}
                       </div>

@@ -31,6 +31,8 @@ import type { FrontendToBackend } from '../../types/messages.js';
 import type { DbRecord } from '../../types/script.js';
 import { highlightJson } from './utils.js';
 import { prettyPrintUserData, parseRecordDraft } from './record-logic.js';
+import { t } from '../../i18n/index.js';
+import { tx } from '../../i18n/react.js';
 
 export interface EditRecordModalProps {
   /** Path of the collection that owns the record. */
@@ -155,9 +157,9 @@ export const EditRecordModal: FC<EditRecordModalProps> = ({
         <div className="ls-modal-header">
           <span className="ls-modal-title">
             <Pencil size={14} style={{ color: 'var(--lumiverse-accent)' }} />
-            Edit record
+            {t('Edit record')}
           </span>
-          <button className="ls-modal-close" onClick={onClose} title="Cancel (Esc)">
+          <button className="ls-modal-close" onClick={onClose} title={t('Cancel (Esc)')}>
             <X size={16} />
           </button>
         </div>
@@ -169,9 +171,11 @@ export const EditRecordModal: FC<EditRecordModalProps> = ({
             <code className="ls-edit-meta-value" title={idStr}>{idStr}</code>
           </div>
           <p className="ls-edit-hint">
-            Reserved fields (<code>id</code>, <code>createdAt</code>,{' '}
-            <code>updatedAt</code>) are managed automatically and aren&rsquo;t
-            shown here. <code>updatedAt</code> will be re-stamped on save.
+            {tx('Reserved fields ({id}, {createdAt}, {updatedAt}) are managed automatically and aren’t shown here. {updatedAt} will be re-stamped on save.', {
+              id:        <code>id</code>,
+              createdAt: <code>createdAt</code>,
+              updatedAt: <code>updatedAt</code>,
+            })}
           </p>
 
           {/* Live syntax-highlighted editor: a transparent-text
@@ -227,15 +231,15 @@ export const EditRecordModal: FC<EditRecordModalProps> = ({
               className="ls-drop-btn ls-drop-btn-cancel"
               onClick={onClose}
             >
-              Cancel
+              {t('Cancel')}
             </button>
             <button
               className="ls-drop-btn ls-edit-btn-save"
               onClick={handleSave}
-              title="Save (Ctrl/Cmd+Enter)"
+              title={t('Save (Ctrl/Cmd+Enter)')}
             >
               <Save size={12} />
-              Save changes
+              {t('Save changes')}
             </button>
           </div>
         </div>

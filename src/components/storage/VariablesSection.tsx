@@ -13,12 +13,13 @@ import { useState, type FC } from 'react';
 import { ChevronDown, ChevronUp, Database, RefreshCw } from 'lucide-react';
 import type { FrontendToBackend, VariablesSnapshot } from '../../types/messages.js';
 import { formatValue } from './utils.js';
+import { t } from '../../i18n/index.js';
 
 const SCOPE_LABELS: Array<{ key: keyof VariablesSnapshot; label: string; hint?: string }> = [
-  { key: 'local',     label: 'local',     hint: 'Per-chat ({{getvar}})' },
-  { key: 'global',    label: 'global',    hint: 'Cross-chat ({{getgvar}})' },
-  { key: 'chat',      label: 'chat',      hint: 'Chat metadata ({{@key}})' },
-  { key: 'character', label: 'character', hint: 'Per-character card' },
+  { key: 'local',     label: t('local'),     hint: t('Per-chat ({{getvar}})') },
+  { key: 'global',    label: t('global'),    hint: t('Cross-chat ({{getgvar}})') },
+  { key: 'chat',      label: t('chat'),      hint: t('Chat metadata ({{@key}})') },
+  { key: 'character', label: t('character'), hint: t('Per-character card') },
 ];
 
 export interface VariablesSectionProps {
@@ -48,11 +49,11 @@ export const VariablesSection: FC<VariablesSectionProps> = ({ variables, sendToB
     <div className="ls-status-section">
       <div className="ls-inject-header">
         <Database size={10} />
-        Variables
+        {t('Variables')}
         {totalKeys > 0 && <span className="ls-inject-count">{totalKeys}</span>}
         <button
           className="ls-vars-refresh"
-          title="Refresh variables"
+          title={t('Refresh variables')}
           onClick={() => sendToBackend({ type: 'get_variables' })}
         >
           <RefreshCw size={10} />
@@ -60,9 +61,9 @@ export const VariablesSection: FC<VariablesSectionProps> = ({ variables, sendToB
       </div>
       <div className="ls-status-section-body">
         {!variables ? (
-          <div className="ls-section-empty">Click refresh to load variables</div>
+          <div className="ls-section-empty">{t('Click refresh to load variables')}</div>
         ) : totalKeys === 0 ? (
-          <div className="ls-section-empty">No variables in active context</div>
+          <div className="ls-section-empty">{t('No variables in active context')}</div>
         ) : (
           SCOPE_LABELS.map(({ key, label, hint }) => {
             const scope = variables[key];

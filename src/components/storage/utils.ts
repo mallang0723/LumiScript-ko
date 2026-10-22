@@ -9,6 +9,7 @@
  */
 
 import type { CollectionSummary } from '../../engine/db-admin.js';
+import { t } from '../../i18n/index.js';
 
 // ─── Byte formatting ─────────────────────────────────────────────────────────
 
@@ -58,20 +59,20 @@ export function formatValue(v: unknown): string {
  * directly without extra null checks.
  */
 export function formatTimeAgo(input: string | number): string {
-  let t: number;
+  let ts: number;
   if (typeof input === 'number') {
-    t = input;
+    ts = input;
   } else {
     if (!input) return '—';
-    t = new Date(input).getTime();
+    ts = new Date(input).getTime();
   }
-  if (!Number.isFinite(t) || t <= 0) return '—';
-  const diff = Date.now() - t;
-  if (diff < 60_000)         return 'just now';
-  if (diff < 3_600_000)      return `${Math.floor(diff / 60_000)}m ago`;
-  if (diff < 86_400_000)     return `${Math.floor(diff / 3_600_000)}h ago`;
-  if (diff < 30 * 86_400_000) return `${Math.floor(diff / 86_400_000)}d ago`;
-  return new Date(t).toISOString().slice(0, 10);
+  if (!Number.isFinite(ts) || ts <= 0) return '—';
+  const diff = Date.now() - ts;
+  if (diff < 60_000)         return t('just now');
+  if (diff < 3_600_000)      return t('{n}m ago', { n: Math.floor(diff / 60_000) });
+  if (diff < 86_400_000)     return t('{n}h ago', { n: Math.floor(diff / 3_600_000) });
+  if (diff < 30 * 86_400_000) return t('{n}d ago', { n: Math.floor(diff / 86_400_000) });
+  return new Date(ts).toISOString().slice(0, 10);
 }
 
 // ─── Scope labels ────────────────────────────────────────────────────────────
@@ -84,9 +85,9 @@ export function formatTimeAgo(input: string | number): string {
  * column in the sidebar — abbreviate to `'char'` to fit comfortably.
  */
 export const SCOPE_LABEL_SHORT: Record<CollectionSummary['scope'], string> = {
-  script:    'script',
-  character: 'char',
-  chat:      'chat',
+  script:    t('script'),
+  character: t('char'),
+  chat:      t('chat'),
 };
 
 /**
@@ -95,9 +96,9 @@ export const SCOPE_LABEL_SHORT: Record<CollectionSummary['scope'], string> = {
  * collection" — rather than viewed as a chip.
  */
 export const SCOPE_LABEL_LONG: Record<CollectionSummary['scope'], string> = {
-  script:    'Script-scoped',
-  character: 'Character-scoped',
-  chat:      'Chat-scoped',
+  script:    t('Script-scoped'),
+  character: t('Character-scoped'),
+  chat:      t('Chat-scoped'),
 };
 
 // ─── JSON syntax highlighting ────────────────────────────────────────────────
@@ -167,7 +168,7 @@ export function highlightBodyCapped(pretty: string): string {
   const omitted = pretty.length - RECORD_BODY_HIGHLIGHT_CAP;
   return (
     highlightJson(pretty.slice(0, RECORD_BODY_HIGHLIGHT_CAP)) +
-    `\n… (${omitted} more chars truncated — use Copy JSON for the full record)`
+    '\n' + t('… ({n} more chars truncated — use Copy JSON for the full record)', { n: omitted })
   );
 }
 
