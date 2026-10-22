@@ -190,4 +190,9 @@ export const KO_ASSISTANT: Readonly<Record<string, string>> = {
   'Apply this code…': '이 코드 적용…',
   'Create new script': '새 스크립트 만들기',
   'Update “{name}”': '“{name}” 업데이트',
+  // Example prompts on an empty thread (dropped into the composer as the user's own message)
+  'How do I send a chat message and trigger generation?': '채팅 메시지를 보내고 생성을 시작하려면 어떻게 해요?',
+  'Show me an agentic tool-call loop': '에이전트식 도구 호출 루프 예시를 보여 주세요',
+  "What's the difference between api.broadcast and api.events?": 'api.broadcast와 api.events는 뭐가 달라요?',
+  'What permissions does api.databanks.create need?': 'api.databanks.create에는 어떤 권한이 필요해요?',
 };

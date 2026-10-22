@@ -73,10 +73,10 @@ const ASSISTANT_DISPLAY_NAME = 'Lisa';
  * composer — it does NOT auto-send, so the user can tweak it first.
  */
 const EXAMPLE_PROMPTS = [
-  'How do I send a chat message and trigger generation?',
-  'Show me an agentic tool-call loop',
-  "What's the difference between api.broadcast and api.events?",
-  'What permissions does api.databanks.create need?',
+  t('How do I send a chat message and trigger generation?'),
+  t('Show me an agentic tool-call loop'),
+  t("What's the difference between api.broadcast and api.events?"),
+  t('What permissions does api.databanks.create need?'),
 ];
 
 interface AssistantModalProps {
