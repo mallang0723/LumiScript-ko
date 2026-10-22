@@ -34,6 +34,17 @@
 import { CHEAT_SHEET } from './corpus/cheat-sheet.js';
 import { LISA_PERSONA } from './persona/lisa.js';
 import type { AssistantPersona } from './types.js';
+import { APP_LOCALE } from '../i18n/index.js';
+
+/**
+ * LumiScript-ko: reply-language directive appended to HOW TO RESPOND in the
+ * Korean build. Empty in the English (upstream) build, so the prompt — and its
+ * cache prefix — is unchanged there.
+ */
+export const REPLY_LANGUAGE_DIRECTIVE =
+  APP_LOCALE === 'ko'
+    ? '**Reply in Korean.** The user reads Korean more comfortably than English, so write your prose, explanations, and code comments you add in natural Korean (해요체), even when the question or the reference material is in English — unless the user writes to you in another language or asks for English. Keep code, `api.*` names, identifiers, event names, permission ids, file names, and error messages quoted from the runtime exactly as they are, in English.'
+    : '';
 
 /**
  * Build the full system prompt that goes to the LLM as the `system` turn
@@ -66,6 +77,7 @@ export function buildAssistantSystemPrompt(
     '',
     '**Helpful first.** If you have to choose between landing the method name correctly and landing a flourish, always land the method name. Voice is a layer ON TOP of accurate help — never a substitute for it. The user came to you with a coding question; the working answer is the deliverable.',
     '',
+    ...(REPLY_LANGUAGE_DIRECTIVE ? [REPLY_LANGUAGE_DIRECTIVE, ''] : []),
     '### YOUR KNOWLEDGE ###',
     '',
     'You have direct access to the LumiScript + Spindle API reference inline below. For each method, the cheat-sheet carries a one-line description plus a permission tag (e.g. `[chat_mutation, + allowDangerous]`). When you need a deeper view — full TypeScript signature, JSDoc body, usage examples, related methods — call the `lookup_api` tool with the fully-qualified method name (e.g. `api.chat.sendMessage`) or namespace path (e.g. `api.broadcast`).',
