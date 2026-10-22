@@ -1,6 +1,7 @@
 import { FC, useState } from 'react';
 import { Zap, Lock, Radio, List, Braces, Hash, Package, Blocks, Download, ChevronDown, ChevronRight, AtSign, Shield, Workflow } from 'lucide-react';
 import { downloadReferenceMarkdown } from './markdown-export.js';
+import { t } from '../../i18n/index.js';
 
 // ─── Section accordion ────────────────────────────────────────────────────────
 
@@ -38,7 +39,7 @@ const Perm: FC<{ children: string }> = ({ children }) => (
 );
 
 const NoPerm: FC = () => (
-  <span className="ls-ref-perm ls-ref-perm-none">none</span>
+  <span className="ls-ref-perm ls-ref-perm-none">{t('none')}</span>
 );
 
 const Silent: FC = () => (
@@ -103,10 +104,10 @@ const EventsTable: FC = () => {
     <table className="ls-ref-table">
       <thead>
         <tr>
-          <th>Event</th>
-          <th>Group</th>
-          <th>Payload shape</th>
-          <th>Fires</th>
+          <th>{t('Event')}</th>
+          <th>{t('Group')}</th>
+          <th>{t('Payload shape')}</th>
+          <th>{t('Fires')}</th>
         </tr>
       </thead>
       <tbody>
@@ -260,8 +261,8 @@ const PermsTable: FC = () => (
   <table className="ls-ref-table">
     <thead>
       <tr>
-        <th>Method</th>
-        <th>Required permissions</th>
+        <th>{t('Method')}</th>
+        <th>{t('Required permissions')}</th>
       </tr>
     </thead>
     <tbody>
@@ -459,9 +460,9 @@ const SandboxRejectedPatternsTable: FC = () => (
   <table className="ls-ref-table">
     <thead>
       <tr>
-        <th>Pattern</th>
-        <th>Why</th>
-        <th>Use instead</th>
+        <th>{t('Pattern')}</th>
+        <th>{t('Why')}</th>
+        <th>{t('Use instead')}</th>
       </tr>
     </thead>
     <tbody>
@@ -480,8 +481,8 @@ const SandboxAccessibleGlobalsTable: FC = () => (
   <table className="ls-ref-table">
     <thead>
       <tr>
-        <th>Category</th>
-        <th>Available globals</th>
+        <th>{t('Category')}</th>
+        <th>{t('Available globals')}</th>
       </tr>
     </thead>
     <tbody>
@@ -592,9 +593,9 @@ const BroadcastTable: FC = () => (
   <table className="ls-ref-table">
     <thead>
       <tr>
-        <th>Event</th>
-        <th>Payload fields</th>
-        <th>Emitted by</th>
+        <th>{t('Event')}</th>
+        <th>{t('Payload fields')}</th>
+        <th>{t('Emitted by')}</th>
       </tr>
     </thead>
     <tbody>
@@ -657,9 +658,9 @@ const DirectivesTable: FC = () => (
   <table className="ls-ref-table">
     <thead>
       <tr>
-        <th>Directive</th>
-        <th>Applies to</th>
-        <th>What it does</th>
+        <th>{t('Directive')}</th>
+        <th>{t('Applies to')}</th>
+        <th>{t('What it does')}</th>
       </tr>
     </thead>
     <tbody>
@@ -767,10 +768,10 @@ const LumiScriptMacrosTable: FC = () => (
   <table className="ls-ref-table">
     <thead>
       <tr>
-        <th>Macro</th>
-        <th>Aliases</th>
-        <th>Returns</th>
-        <th>Description</th>
+        <th>{t('Macro')}</th>
+        <th>{t('Aliases')}</th>
+        <th>{t('Returns')}</th>
+        <th>{t('Description')}</th>
       </tr>
     </thead>
     <tbody>
@@ -3049,9 +3050,9 @@ const KeyTypesTable: FC = () => (
   <table className="ls-ref-table">
     <thead>
       <tr>
-        <th>Field</th>
-        <th>Type</th>
-        <th>Description</th>
+        <th>{t('Field')}</th>
+        <th>{t('Type')}</th>
+        <th>{t('Description')}</th>
       </tr>
     </thead>
     <tbody>
@@ -3679,9 +3680,9 @@ const ApiFunctionsTable: FC = () => (
   <table className="ls-ref-table">
     <thead>
       <tr>
-        <th>Method</th>
-        <th>Arguments</th>
-        <th>Description</th>
+        <th>{t('Method')}</th>
+        <th>{t('Arguments')}</th>
+        <th>{t('Description')}</th>
       </tr>
     </thead>
     <tbody>
@@ -3868,9 +3869,9 @@ const BuiltinLibrariesSection: FC = () => (
     <table className="ls-ref-table">
       <thead>
         <tr>
-          <th>Method</th>
-          <th>Arguments</th>
-          <th>Description</th>
+          <th>{t('Method')}</th>
+          <th>{t('Arguments')}</th>
+          <th>{t('Description')}</th>
         </tr>
       </thead>
       <tbody>
@@ -3904,9 +3905,9 @@ const BuiltinLibrariesSection: FC = () => (
     <table className="ls-ref-table" style={{ marginTop: 12 }}>
       <thead>
         <tr>
-          <th>Field</th>
-          <th>Type</th>
-          <th>Description</th>
+          <th>{t('Field')}</th>
+          <th>{t('Type')}</th>
+          <th>{t('Description')}</th>
         </tr>
       </thead>
       <tbody>
@@ -4322,14 +4323,14 @@ export const ReferenceTab: FC = () => (
         type="button"
         className="ls-ref-export-btn"
         onClick={() => downloadReferenceMarkdown()}
-        title="Download the current reference as a Markdown file"
+        title={t('Download the current reference as a Markdown file')}
       >
         <Download size={11} />
-        Export Markdown
+        {t('Export Markdown')}
       </button>
     </div>
 
-    <Section icon={<Workflow size={11} />} title="Trigger model" defaultOpen>
+    <Section icon={<Workflow size={11} />} title={t('Trigger model')} defaultOpen>
       <p style={{ marginBottom: 8 }}>
         <strong>LumiScript does NOT use runtime event subscription.</strong> There is no
         {' '}<Code>api.on()</Code>, no <Code>api.events.on()</Code>, no
@@ -4452,15 +4453,15 @@ if (data.__event === 'MESSAGE_SENT') {
       </p>
     </Section>
 
-    <Section icon={<Zap size={11} />} title="Lumiverse Events">
+    <Section icon={<Zap size={11} />} title={t('Lumiverse Events')}>
       <EventsTable />
     </Section>
 
-    <Section icon={<Lock size={11} />} title="Permission Matrix">
+    <Section icon={<Lock size={11} />} title={t('Permission Matrix')}>
       <PermsTable />
     </Section>
 
-    <Section icon={<Shield size={11} />} title="Sandbox hardening">
+    <Section icon={<Shield size={11} />} title={t('Sandbox hardening')}>
       <p className="ls-ref-muted" style={{ marginBottom: 8 }}>
         The script-runner subprocess locks down host capabilities that user
         scripts have no business reaching. Two layers gate this — both are
@@ -4504,7 +4505,7 @@ if (data.__event === 'MESSAGE_SENT') {
       </p>
     </Section>
 
-    <Section icon={<Radio size={11} />} title="LumiScript Events">
+    <Section icon={<Radio size={11} />} title={t('LumiScript Events')}>
       <BroadcastTable />
       <p className="ls-ref-muted" style={{ marginTop: 6 }}>
         The <Code>ls:</Code> prefix is reserved for LumiScript engine events.
@@ -4512,7 +4513,7 @@ if (data.__event === 'MESSAGE_SENT') {
       </p>
     </Section>
 
-    <Section icon={<AtSign size={11} />} title="Directives">
+    <Section icon={<AtSign size={11} />} title={t('Directives')}>
       <p className="ls-ref-muted" style={{ marginBottom: 8 }}>
         Runtime directives are special <Code>// @ls:&lt;name&gt;</Code> comments that
         change how the runtime treats your script. The <Code>@ls:</Code> prefix
@@ -4523,7 +4524,7 @@ if (data.__event === 'MESSAGE_SENT') {
       <DirectivesTable />
     </Section>
 
-    <Section icon={<Hash size={11} />} title="LumiScript Macros">
+    <Section icon={<Hash size={11} />} title={t('LumiScript Macros')}>
       <LumiScriptMacrosTable />
       <p className="ls-ref-muted" style={{ marginTop: 6 }}>
         Character variable macros read from and write to the active character's
@@ -4532,19 +4533,19 @@ if (data.__event === 'MESSAGE_SENT') {
       </p>
     </Section>
 
-    <Section icon={<Braces size={11} />} title="Key Types">
+    <Section icon={<Braces size={11} />} title={t('Key Types')}>
       <KeyTypesTable />
     </Section>
 
-    <Section icon={<List size={11} />} title="API Functions">
+    <Section icon={<List size={11} />} title={t('API Functions')}>
       <ApiFunctionsTable />
     </Section>
 
-    <Section icon={<Blocks size={11} />} title="Built-in Libraries">
+    <Section icon={<Blocks size={11} />} title={t('Built-in Libraries')}>
       <BuiltinLibrariesSection />
     </Section>
 
-    <Section icon={<Package size={11} />} title="Script Packs">
+    <Section icon={<Package size={11} />} title={t('Script Packs')}>
       <p className="ls-ref-muted">
         <strong>Export</strong> — click the <Code>↓</Code> button in the script list header to
         download the currently filtered scripts as a <Code>.lumiscript.zip</Code> file.

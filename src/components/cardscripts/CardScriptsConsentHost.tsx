@@ -18,6 +18,8 @@ import { isActionable, isScopable, defaultSelectedBundleIds, defaultScopedBundle
 import { TypeBadge, HookPills, pillStyle, formatScriptSize } from './script-pills.js';
 import type { BackendToFrontend, FrontendToBackend } from '../../types/messages.js';
 import type { CardScriptAction } from '../../types/card-scripts.js';
+import { t } from '../../i18n/index.js';
+import { tx } from '../../i18n/react.js';
 
 type Detected = Extract<BackendToFrontend, { type: 'ls_card_scripts_detected' }>;
 
@@ -114,21 +116,22 @@ export const CardScriptsConsentHost: FC<Props> = ({ onBackendMessage, sendToBack
   };
 
   const actionableCount = current.items.filter(isActionable).length;
-  const from = current.bundleName ?? 'this character';
+  const from = current.bundleName ?? t('this character');
 
   return (
     <ConfirmDialog
-      title={`Install scripts from ${from}?`}
-      confirmLabel={selected.size > 0 ? `Install ${selected.size} selected` : 'Install none'}
-      cancelLabel="Not now"
+      title={t('Install scripts from {from}?', { from })}
+      confirmLabel={selected.size > 0 ? t('Install {n} selected', { n: selected.size }) : t('Install none')}
+      cancelLabel={t('Not now')}
       wide
       overlayZIndex={10010}
       onConfirm={confirm}
       onCancel={dismiss}
     >
       <p style={noteStyle}>
-        This character card includes <b>{actionableCount}</b> LumiScript script{actionableCount === 1 ? '' : 's'}.
-        They install <b>disabled</b> — review the code in the LumiScript panel before enabling.
+        {actionableCount === 1
+          ? tx('This character card includes {n} LumiScript script. They install {disabled} — review the code in the LumiScript panel before enabling.', { n: <b>{actionableCount}</b>, disabled: <b>{t('disabled')}</b> })
+          : tx('This character card includes {n} LumiScript scripts. They install {disabled} — review the code in the LumiScript panel before enabling.', { n: <b>{actionableCount}</b>, disabled: <b>{t('disabled')}</b> })}
       </p>
       {current.items.map((item) => {
         const act = isActionable(item);
@@ -152,32 +155,34 @@ export const CardScriptsConsentHost: FC<Props> = ({ onBackendMessage, sendToBack
             <div style={pillsRowStyle}>
               <HookPills type={item.entry.type} triggers={item.entry.triggers} />
               <span style={pillStyle}>{formatScriptSize(item.entry.code)}</span>
-              {item.entry.metadata?.author ? <span style={pillStyle}>by {item.entry.metadata.author}</span> : null}
+              {item.entry.metadata?.author ? <span style={pillStyle}>{t('by {author}', { author: item.entry.metadata.author })}</span> : null}
               {item.entry.metadata?.version ? <span style={pillStyle}>v{item.entry.metadata.version}</span> : null}
-              {renamedFromCard ? <span style={pillStyle}>card: “{item.entry.name}”</span> : null}
+              {renamedFromCard ? <span style={pillStyle}>{t('card: “{name}”', { name: item.entry.name })}</span> : null}
             </div>
             {item.entry.bindings && item.entry.bindings.length > 0 ? (
               <div style={hookStyle}>
-                Card author scoped this to {item.entry.bindings.map((b) => b.displayName).join(', ')}{' '}
-                <span style={{ color: MUTED }}>(not carried on import — use the toggle below)</span>
+                {t('Card author scoped this to {targets}', { targets: item.entry.bindings.map((b) => b.displayName).join(', ') })}{' '}
+                <span style={{ color: MUTED }}>{t('(not carried on import — use the toggle below)')}</span>
               </div>
             ) : null}
             {act && isScopable(item) && selected.has(item.entry.bundleId) ? (
               <label style={scopeStyle}>
                 <input type="checkbox" checked={scoped.has(item.entry.bundleId)} onChange={() => toggleScope(item.entry.bundleId)} />
-                <span>Run only for {from} <span style={{ color: MUTED }}>(otherwise runs in every chat)</span></span>
+                <span>{t('Run only for {from}', { from })} <span style={{ color: MUTED }}>{t('(otherwise runs in every chat)')}</span></span>
               </label>
             ) : null}
             {item.targetEnabled ? (
-              <div style={warnStyle}>⚠ This replaces the code of an <b>enabled</b> script — the new code runs on its next trigger.</div>
+              <div style={warnStyle}>⚠ {tx('This replaces the code of an {enabled} script — the new code runs on its next trigger.', { enabled: <b>{t('enabled')}</b> })}</div>
             ) : null}
             {item.localEdits ? (
-              <div style={warnStyle}>⚠ You've edited this script locally — updating overwrites your changes.</div>
+              <div style={warnStyle}>⚠ {t('You\'ve edited this script locally — updating overwrites your changes.')}</div>
             ) : null}
             {ungranted.length > 0 ? (
               <div style={warnStyle}>
-                ⚠ Needs {ungranted.length > 1 ? 'permissions' : 'permission'} not currently granted: {ungranted.map((p) => p.permission).join(', ')}.
-                {' '}Enable in Lumiverse → Extensions, or the script may not work.
+                ⚠ {ungranted.length > 1
+                  ? t('Needs permissions not currently granted: {perms}.', { perms: ungranted.map((p) => p.permission).join(', ') })
+                  : t('Needs permission not currently granted: {perms}.', { perms: ungranted.map((p) => p.permission).join(', ') })}
+                {' '}{t('Enable in Lumiverse → Extensions, or the script may not work.')}
               </div>
             ) : null}
           </div>

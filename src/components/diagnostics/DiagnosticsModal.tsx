@@ -30,6 +30,7 @@ import type {
 } from '../../engine/diagnostics.js';
 import { runSectionFChecks } from './section-f-checks.js';
 import { serializeReportAsMarkdown } from './serialize-markdown.js';
+import { t } from '../../i18n/index.js';
 
 export interface DiagnosticsModalProps {
   /** Closes the modal — bubbled up to the parent so it can drop state. */
@@ -157,9 +158,9 @@ export const DiagnosticsModal: FC<DiagnosticsModalProps> = ({
               <Activity size={11} />
               LumiScript
             </div>
-            <h2 className="ls-diag-title">Diagnostics</h2>
+            <h2 className="ls-diag-title">{t('Diagnostics')}</h2>
             <p className="ls-diag-subtitle">
-              Snapshot of LumiScript&apos;s runtime state — version, granted permissions, script-runner subprocess health, active context, registrations, storage, editor.
+              {t('Snapshot of LumiScript\'s runtime state — version, granted permissions, script-runner subprocess health, active context, registrations, storage, editor.')}
             </p>
           </div>
           <div className="ls-diag-header-actions">
@@ -169,22 +170,22 @@ export const DiagnosticsModal: FC<DiagnosticsModalProps> = ({
               className="ls-diag-action-btn"
               onClick={handleRefresh}
               disabled={loading}
-              title="Re-run all checks"
+              title={t('Re-run all checks')}
             >
               <RefreshCw size={13} className={loading ? 'ls-diag-spin' : undefined} />
-              Refresh
+              {t('Refresh')}
             </button>
             <button
               type="button"
               className={`ls-diag-action-btn${downloadState === 'done' ? ' ls-diag-action-btn-done' : ''}${downloadState === 'error' ? ' ls-diag-action-btn-error' : ''}`}
               onClick={handleDownload}
               disabled={!mergedReport}
-              title="Download as a timestamped Markdown file for support reports"
+              title={t('Download as a timestamped Markdown file for support reports')}
             >
               {downloadState === 'done' ? <Check size={13} /> : <Download size={13} />}
-              {downloadState === 'done' ? 'Downloaded' : downloadState === 'error' ? 'Download failed' : 'Download Report'}
+              {downloadState === 'done' ? t('Downloaded') : downloadState === 'error' ? t('Download failed') : t('Download Report')}
             </button>
-            <button type="button" className="ls-diag-close" onClick={onClose} title="Close (Esc)">
+            <button type="button" className="ls-diag-close" onClick={onClose} title={t('Close (Esc)')}>
               <X size={15} />
             </button>
           </div>
@@ -194,7 +195,7 @@ export const DiagnosticsModal: FC<DiagnosticsModalProps> = ({
           {loading && !mergedReport && (
             <div className="ls-diag-loading">
               <RefreshCw size={18} className="ls-diag-spin" />
-              <span>Collecting diagnostic snapshot…</span>
+              <span>{t('Collecting diagnostic snapshot…')}</span>
             </div>
           )}
 
@@ -215,7 +216,7 @@ export const DiagnosticsModal: FC<DiagnosticsModalProps> = ({
           {report && !frontendSection && (
             <div className="ls-diag-loading">
               <RefreshCw size={14} className="ls-diag-spin" />
-              <span>Running frontend probes…</span>
+              <span>{t('Running frontend probes…')}</span>
             </div>
           )}
         </div>
@@ -238,10 +239,10 @@ const SummaryChip: FC<SummaryChipProps> = ({ report, tone }) => {
   const { failures, warnings, passes, info } = report.summary;
   return (
     <span className={`ls-diag-summary-chip ls-diag-tone-${tone}`}>
-      {failures > 0 && <span>{failures} fail</span>}
-      {warnings > 0 && <span>{warnings} warn</span>}
-      <span>{passes} pass</span>
-      <span>{info} info</span>
+      {failures > 0 && <span>{t('{n} fail', { n: failures })}</span>}
+      {warnings > 0 && <span>{t('{n} warn', { n: warnings })}</span>}
+      <span>{t('{n} pass', { n: passes })}</span>
+      <span>{t('{n} info', { n: info })}</span>
     </span>
   );
 };
@@ -307,10 +308,10 @@ const StatusBadge: FC<StatusBadgeProps> = ({ status }) => {
              : status === 'warn' ? AlertTriangle
              : status === 'fail' ? XCircle
              : Info;
-  const label = status === 'pass' ? 'Pass'
-              : status === 'warn' ? 'Warn'
-              : status === 'fail' ? 'Fail'
-              : 'Info';
+  const label = status === 'pass' ? t('Pass')
+              : status === 'warn' ? t('Warn')
+              : status === 'fail' ? t('Fail')
+              : t('Info');
   return (
     <span className={`ls-diag-badge ls-diag-tone-${status}`} title={label}>
       <Icon size={12} />

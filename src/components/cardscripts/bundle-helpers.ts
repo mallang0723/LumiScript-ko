@@ -6,6 +6,7 @@
  * the established two-roots bus pattern (no prop threading through ManagePanel).
  */
 import type { Script } from '../../types/script.js';
+import { t } from '../../i18n/index.js';
 
 /** Window CustomEvent that opens the bundle modal; detail carries the scripts. */
 export const OPEN_BUNDLE_EVENT = 'ls:open-bundle-modal';
@@ -39,7 +40,7 @@ const VERSION_MAX = 64;
 export function overCapWarning(selectedCount: number): string | null {
   if (selectedCount <= EMBED_SCRIPT_CAP) return null;
   const dropped = selectedCount - EMBED_SCRIPT_CAP;
-  return `Only the first ${EMBED_SCRIPT_CAP} scripts are importable — ${dropped} more won't fit when the card is imported.`;
+  return t('Only the first {cap} scripts are importable — {dropped} more won\'t fit when the card is imported.', { cap: EMBED_SCRIPT_CAP, dropped });
 }
 
 /** Per-script warnings for fields the import side would clamp (no silent loss). */
@@ -47,12 +48,12 @@ export function lengthWarnings(scripts: readonly Script[]): string[] {
   const out: string[] = [];
   const label = (s: Script): string => (s.name.length > 32 ? `${s.name.slice(0, 32)}…` : s.name);
   for (const s of scripts) {
-    if (s.name.length > NAME_MAX) out.push(`“${label(s)}”: name over ${NAME_MAX} chars — trimmed on import.`);
-    if (s.folder && s.folder.length > FOLDER_MAX) out.push(`“${label(s)}”: folder over ${FOLDER_MAX} chars — trimmed on import.`);
+    if (s.name.length > NAME_MAX) out.push(t('“{name}”: name over {max} chars — trimmed on import.', { name: label(s), max: NAME_MAX }));
+    if (s.folder && s.folder.length > FOLDER_MAX) out.push(t('“{name}”: folder over {max} chars — trimmed on import.', { name: label(s), max: FOLDER_MAX }));
     const m = s.metadata;
-    if (m?.description && m.description.length > DESC_MAX) out.push(`“${label(s)}”: description over ${DESC_MAX} chars — trimmed on import.`);
-    if (m?.author && m.author.length > AUTHOR_MAX) out.push(`“${label(s)}”: author over ${AUTHOR_MAX} chars — trimmed on import.`);
-    if (m?.version && m.version.length > VERSION_MAX) out.push(`“${label(s)}”: version over ${VERSION_MAX} chars — trimmed on import.`);
+    if (m?.description && m.description.length > DESC_MAX) out.push(t('“{name}”: description over {max} chars — trimmed on import.', { name: label(s), max: DESC_MAX }));
+    if (m?.author && m.author.length > AUTHOR_MAX) out.push(t('“{name}”: author over {max} chars — trimmed on import.', { name: label(s), max: AUTHOR_MAX }));
+    if (m?.version && m.version.length > VERSION_MAX) out.push(t('“{name}”: version over {max} chars — trimmed on import.', { name: label(s), max: VERSION_MAX }));
   }
   return out;
 }
@@ -69,8 +70,12 @@ export function bindingWarning(scripts: readonly Script[]): string | null {
   const bound = scripts.filter((s) => s.bindings && s.bindings.length > 0);
   if (bound.length === 0) return null;
   const shown = bound.slice(0, 3).map((s) => `“${s.name.length > 28 ? `${s.name.slice(0, 28)}…` : s.name}”`).join(', ');
-  const more = bound.length > 3 ? `, +${bound.length - 3} more` : '';
-  const plural = bound.length === 1;
-  return `${plural ? 'This script is' : `${bound.length} selected scripts are`} bound to specific characters/chats (${shown}${more}). ` +
-    `Those bindings won't carry to whoever imports the card — the imported ${plural ? 'script' : 'scripts'} won't run until re-bound.`;
+  // Whole-sentence keys (i18n): singular / plural / plural with a "+N more" overflow.
+  if (bound.length === 1) {
+    return t('This script is bound to specific characters/chats ({shown}). Those bindings won\'t carry to whoever imports the card — the imported script won\'t run until re-bound.', { shown });
+  }
+  if (bound.length > 3) {
+    return t('{n} selected scripts are bound to specific characters/chats ({shown}, +{more} more). Those bindings won\'t carry to whoever imports the card — the imported scripts won\'t run until re-bound.', { n: bound.length, shown, more: bound.length - 3 });
+  }
+  return t('{n} selected scripts are bound to specific characters/chats ({shown}). Those bindings won\'t carry to whoever imports the card — the imported scripts won\'t run until re-bound.', { n: bound.length, shown });
 }

@@ -23,6 +23,8 @@ import { ScriptPickerList } from './ScriptPickerList.js';
 import { OPEN_BUNDLE_EVENT, overCapWarning, lengthWarnings, bindingWarning, type OpenBundleDetail } from './bundle-helpers.js';
 import type { BackendToFrontend, FrontendToBackend } from '../../types/messages.js';
 import type { Script } from '../../types/script.js';
+import { t } from '../../i18n/index.js';
+import { tx } from '../../i18n/react.js';
 
 type CharsList = Extract<BackendToFrontend, { type: 'ls_characters_list' }>;
 type ExportResult = Extract<BackendToFrontend, { type: 'ls_card_scripts_export_result' }>;
@@ -78,7 +80,7 @@ export const BundleIntoCardModal: FC<Props> = ({ onBackendMessage, sendToBackend
       if (msg.requestId !== activeRequestRef.current) return;   // stale/abandoned submit — ignore
       activeRequestRef.current = null;
       if (msg.ok) setOpen(false);           // backend toasts the success summary
-      else { setError(msg.error ?? 'Bundling failed.'); setSubmitting(false); }
+      else { setError(msg.error ?? t('Bundling failed.')); setSubmitting(false); }
     }
   }), [onBackendMessage]);
 
@@ -135,8 +137,8 @@ export const BundleIntoCardModal: FC<Props> = ({ onBackendMessage, sendToBackend
 
   const confirm = (): void => {
     if (submitting) return;                                   // guard double-submit (button can't be disabled)
-    if (selected.size === 0) { setError('Select at least one script to bundle.'); return; }
-    if (!characterId) { setError('Choose a target character.'); return; }
+    if (selected.size === 0) { setError(t('Select at least one script to bundle.')); return; }
+    if (!characterId) { setError(t('Choose a target character.')); return; }
     const requestId = String(++reqSeqRef.current);
     activeRequestRef.current = requestId;
     setError(null);
@@ -145,16 +147,16 @@ export const BundleIntoCardModal: FC<Props> = ({ onBackendMessage, sendToBackend
   };
 
   const confirmLabel = submitting
-    ? 'Bundling…'
+    ? t('Bundling…')
     : selected.size > 0 && characterId
-      ? `Bundle ${selected.size} script${selected.size === 1 ? '' : 's'}`
-      : 'Bundle';
+      ? (selected.size === 1 ? t('Bundle {n} script', { n: selected.size }) : t('Bundle {n} scripts', { n: selected.size }))
+      : t('Bundle');
 
   return (
     <ConfirmDialog
-      title="Bundle scripts into a character card"
+      title={t('Bundle scripts into a character card')}
       confirmLabel={confirmLabel}
-      cancelLabel="Cancel"
+      cancelLabel={t('Cancel')}
       wide
       overlayZIndex={10010}
       onConfirm={confirm}
@@ -167,37 +169,37 @@ export const BundleIntoCardModal: FC<Props> = ({ onBackendMessage, sendToBackend
       }}
     >
       <p style={noteStyle}>
-        Selected scripts are written into the character card's data. Export the card afterwards to share them. Scripts install <b>disabled</b> when imported.
+        {tx('Selected scripts are written into the character card\'s data. Export the card afterwards to share them. Scripts install {disabled} when imported.', { disabled: <b>{t('disabled')}</b> })}
       </p>
 
-      <div style={sectionLabel}>Target character</div>
+      <div style={sectionLabel}>{t('Target character')}</div>
       {characters === null ? (
-        <div style={{ ...noteStyle, marginBottom: 0 }}>Loading characters…</div>
+        <div style={{ ...noteStyle, marginBottom: 0 }}>{t('Loading characters…')}</div>
       ) : characters.length === 0 ? (
-        <div style={{ ...noteStyle, marginBottom: 0 }}>No characters found.</div>
+        <div style={{ ...noteStyle, marginBottom: 0 }}>{t('No characters found.')}</div>
       ) : (
         <>
           <HostSelect
             options={options}
             value={characterId}
             onChange={setCharacterId}
-            placeholder="Select a character…"
-            ariaLabel="Target character"
+            placeholder={t('Select a character…')}
+            ariaLabel={t('Target character')}
           />
           {charactersTotal > characters.length ? (
-            <div style={metaNote}>Showing {characters.length} of {charactersTotal} characters.</div>
+            <div style={metaNote}>{t('Showing {shown} of {total} characters.', { shown: characters.length, total: charactersTotal })}</div>
           ) : null}
         </>
       )}
 
       <div style={{ ...sectionLabel, display: 'flex', alignItems: 'center' }}>
-        <span>Scripts ({selected.size}/{scripts.length} selected)</span>
+        <span>{t('Scripts ({selected}/{total} selected)', { selected: selected.size, total: scripts.length })}</span>
         {scripts.length > 0 ? (
-          <button type="button" onClick={toggleAll} style={linkBtn}>{allSelected ? 'Clear' : 'Select all'}</button>
+          <button type="button" onClick={toggleAll} style={linkBtn}>{allSelected ? t('Clear') : t('Select all')}</button>
         ) : null}
       </div>
       {scripts.length === 0 ? (
-        <div style={{ ...noteStyle, marginBottom: 0 }}>No scripts to bundle.</div>
+        <div style={{ ...noteStyle, marginBottom: 0 }}>{t('No scripts to bundle.')}</div>
       ) : (
         <ScriptPickerList scripts={scripts} selected={selected} onToggle={toggle} />
       )}

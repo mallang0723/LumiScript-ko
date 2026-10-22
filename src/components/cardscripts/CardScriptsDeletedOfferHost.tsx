@@ -13,6 +13,8 @@ import { Trash2 } from 'lucide-react';
 import { ConfirmDialog } from '../common/ConfirmDialog.js';
 import { TypeBadge, HookPills, pillStyle, formatSizeChars } from './script-pills.js';
 import type { BackendToFrontend, FrontendToBackend } from '../../types/messages.js';
+import { t } from '../../i18n/index.js';
+import { tx } from '../../i18n/react.js';
 
 type Offer = Extract<BackendToFrontend, { type: 'ls_card_scripts_deleted_offer' }>;
 
@@ -48,18 +50,19 @@ export const CardScriptsDeletedOfferHost: FC<Props> = ({ onBackendMessage, sendT
 
   return (
     <ConfirmDialog
-      title="Remove the card's scripts?"
+      title={t('Remove the card\'s scripts?')}
       icon={<Trash2 size={15} style={{ color: 'rgb(246,130,130)' }} />}
       variant="danger"
-      confirmLabel={`Remove ${n} script${n === 1 ? '' : 's'}`}
-      cancelLabel="Keep"
+      confirmLabel={n === 1 ? t('Remove {n} script', { n }) : t('Remove {n} scripts', { n })}
+      cancelLabel={t('Keep')}
       overlayZIndex={10010}
       onConfirm={remove}
       onCancel={advance}
     >
       <p style={bodyStyle}>
-        {current.characterName ? <b>{current.characterName}</b> : 'A character'} was deleted. It installed{' '}
-        {n} script{n === 1 ? '' : 's'} — remove {n === 1 ? 'it' : 'them'} too?
+        {n === 1
+          ? tx('{who} was deleted. It installed {n} script — remove it too?', { who: current.characterName ? <b>{current.characterName}</b> : t('A character'), n })
+          : tx('{who} was deleted. It installed {n} scripts — remove them too?', { who: current.characterName ? <b>{current.characterName}</b> : t('A character'), n })}
       </p>
       <div style={listStyle}>
         {current.scripts.map((s) => (
@@ -71,7 +74,7 @@ export const CardScriptsDeletedOfferHost: FC<Props> = ({ onBackendMessage, sendT
               <span style={pillStyle}>{formatSizeChars(s.sizeChars)}</span>
             </div>
             {s.bindingNames && s.bindingNames.length > 0 ? (
-              <div style={bindLineStyle}>Bound to {s.bindingNames.join(', ')}</div>
+              <div style={bindLineStyle}>{t('Bound to {targets}', { targets: s.bindingNames.join(', ') })}</div>
             ) : null}
           </div>
         ))}

@@ -3,6 +3,7 @@
  * split out so they're unit-testable without a DOM harness.
  */
 import type { DetectedCardScript } from '../../types/card-scripts.js';
+import { t } from '../../i18n/index.js';
 
 export function isActionable(item: DetectedCardScript): boolean {
   return item.action === 'install' || item.action === 'update';
@@ -36,15 +37,15 @@ export function defaultScopedBundleIds(items: DetectedCardScript[]): string[] {
 }
 
 export function actionBadgeLabel(item: DetectedCardScript): string {
-  if (item.action === 'install') return 'Install';
+  if (item.action === 'install') return t('Install');
   if (item.action === 'update') {
     const d = item.versionDelta;
-    return d && d.from && d.to ? `Update v${d.from} → v${d.to}` : 'Update';
+    return d && d.from && d.to ? t('Update v{from} → v{to}', { from: d.from, to: d.to }) : t('Update');
   }
   switch (item.skipReason) {
-    case 'up-to-date':     return 'Up to date';
-    case 'not-newer':      return 'Older — skipped';
-    case 'duplicate-code': return 'Already in your library';
-    default:               return 'Unchanged';
+    case 'up-to-date':     return t('Up to date');
+    case 'not-newer':      return t('Older — skipped');
+    case 'duplicate-code': return t('Already in your library');
+    default:               return t('Unchanged');
   }
 }

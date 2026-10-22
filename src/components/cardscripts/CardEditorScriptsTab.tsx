@@ -37,6 +37,8 @@ import { TypeBadge, HookPills, pillStyle, formatScriptSize } from './script-pill
 import { LUMISCRIPT_CARD_FORMAT_VERSION, type EmbeddedScriptEntry } from '../../types/card-scripts.js';
 import type { Script } from '../../types/script.js';
 import type { FrontendToBackend, BackendToFrontend } from '../../types/messages.js';
+import { t } from '../../i18n/index.js';
+import { tx } from '../../i18n/react.js';
 
 type ScriptStatus = {
   state: 'installed' | 'not-installed' | 'update-available' | 'library-newer';
@@ -138,17 +140,17 @@ const StatusBadge: FC<{ status: ScriptStatus }> = ({ status }) => {
   switch (status.state) {
     case 'installed':
       return (
-        <span style={{ ...pillStyle, color: GREEN, borderColor: 'rgba(110,190,130,0.30)' }} title={status.installedName ? `In your library as "${status.installedName}"${status.installedEnabled ? ' (enabled)' : ' (disabled)'}` : undefined}>
-          <CheckCircle2 size={10} /> In your library
+        <span style={{ ...pillStyle, color: GREEN, borderColor: 'rgba(110,190,130,0.30)' }} title={status.installedName ? (status.installedEnabled ? t('In your library as "{name}" (enabled)', { name: status.installedName }) : t('In your library as "{name}" (disabled)', { name: status.installedName })) : undefined}>
+          <CheckCircle2 size={10} /> {t('In your library')}
         </span>
       );
     case 'update-available':
-      return <span style={{ ...pillStyle, color: AMBER, borderColor: 'rgba(220,180,90,0.32)' }}><ArrowUpCircle size={10} /> Update available</span>;
+      return <span style={{ ...pillStyle, color: AMBER, borderColor: 'rgba(220,180,90,0.32)' }}><ArrowUpCircle size={10} /> {t('Update available')}</span>;
     case 'library-newer':
-      return <span style={pillStyle} title="Your installed copy is newer than the card's">Library is newer</span>;
+      return <span style={pillStyle} title={t('Your installed copy is newer than the card\'s')}>{t('Library is newer')}</span>;
     case 'not-installed':
     default:
-      return <span style={pillStyle}>Not in your library</span>;
+      return <span style={pillStyle}>{t('Not in your library')}</span>;
   }
 };
 
@@ -161,7 +163,7 @@ const ScriptCard: FC<{ entry: EmbeddedScriptEntry; status?: ScriptStatus; onDele
         <TypeBadge type={entry.type} />
         <span style={{ ...nameStyle, flex: 1 }} title={entry.name}>{entry.name}</span>
         {meta?.version && <span style={pillStyle}>v{meta.version}</span>}
-        <button type="button" style={iconBtnStyle} title="Remove from card" aria-label={`Remove ${entry.name} from card`} onClick={onDelete}>
+        <button type="button" style={iconBtnStyle} title={t('Remove from card')} aria-label={t('Remove {name} from card', { name: entry.name })} onClick={onDelete}>
           <Trash2 size={13} />
         </button>
       </div>
@@ -172,14 +174,14 @@ const ScriptCard: FC<{ entry: EmbeddedScriptEntry; status?: ScriptStatus; onDele
         {status && <StatusBadge status={status} />}
         <HookPills type={entry.type} triggers={entry.triggers} />
         <span style={pillStyle}>{formatScriptSize(entry.code)}</span>
-        {meta?.author && <span style={pillStyle}>by {meta.author}</span>}
+        {meta?.author && <span style={pillStyle}>{t('by {author}', { author: meta.author })}</span>}
         {entry.folder && <span style={pillStyle}><Folder size={10} />{entry.folder}</span>}
       </div>
 
       {bindings.length > 0 && (
         <div style={{ ...descStyle, marginTop: 8 }}>
-          Bound to {bindings.map((b) => b.displayName).join(', ')}
-          <span style={{ color: DIM, fontStyle: 'italic' }}> — bindings don&apos;t transfer to importers</span>
+          {t('Bound to {targets}', { targets: bindings.map((b) => b.displayName).join(', ') })}
+          <span style={{ color: DIM, fontStyle: 'italic' }}> {t('— bindings don\'t transfer to importers')}</span>
         </div>
       )}
     </div>
@@ -196,16 +198,16 @@ const AddFromLibrary: FC<{ library: Script[]; bundledIds: Set<string>; onAdd: (i
   });
   return (
     <div style={pickerStyle}>
-      <div style={{ fontWeight: 600, fontSize: 12.5 }}>Add scripts from your library</div>
-      {library.length === 0 && <div style={descStyle}>Loading your scripts…</div>}
-      {library.length > 0 && addable.length === 0 && <div style={descStyle}>All your scripts are already bundled into this card.</div>}
+      <div style={{ fontWeight: 600, fontSize: 12.5 }}>{t('Add scripts from your library')}</div>
+      {library.length === 0 && <div style={descStyle}>{t('Loading your scripts…')}</div>}
+      {library.length > 0 && addable.length === 0 && <div style={descStyle}>{t('All your scripts are already bundled into this card.')}</div>}
       {addable.length > 0 && (
         <ScriptPickerList scripts={addable} selected={selected} onToggle={toggle} maxHeight={220} />
       )}
       <div style={pickerActionsStyle}>
-        <button type="button" style={ghostBtnStyle} onClick={onClose}>Cancel</button>
+        <button type="button" style={ghostBtnStyle} onClick={onClose}>{t('Cancel')}</button>
         <button type="button" style={{ ...accentBtnStyle, opacity: selected.size === 0 ? 0.5 : 1 }} disabled={selected.size === 0} onClick={() => onAdd([...selected])}>
-          <Plus size={13} /> Add{selected.size > 0 ? ` ${selected.size}` : ''} to card
+          <Plus size={13} /> {selected.size > 0 ? t('Add {n} to card', { n: selected.size }) : t('Add to card')}
         </button>
       </div>
     </div>
@@ -281,10 +283,10 @@ export const CardEditorScriptsTab: FC<Props> = ({ editor, confirm, sendToBackend
 
   const handleDelete = useCallback(async (entry: EmbeddedScriptEntry) => {
     const ok = await confirm({
-      title: 'Remove bundled script',
-      message: `Remove "${entry.name}" from this character card? This edits the card only — any copy already installed in your library is left untouched.`,
+      title: t('Remove bundled script'),
+      message: t('Remove "{name}" from this character card? This edits the card only — any copy already installed in your library is left untouched.', { name: entry.name }),
       variant: 'danger',
-      confirmLabel: 'Remove',
+      confirmLabel: t('Remove'),
     });
     if (!ok) return;
     try {
@@ -319,7 +321,7 @@ export const CardEditorScriptsTab: FC<Props> = ({ editor, confirm, sendToBackend
       <div style={wrapStyle}>
         <div style={warnStyle}>
           <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
-          <span>This character has a LumiScript bundle that couldn&apos;t be read: {parsed.reason}</span>
+          <span>{t('This character has a LumiScript bundle that couldn\'t be read: {reason}', { reason: parsed.reason })}</span>
         </div>
       </div>
     );
@@ -338,15 +340,15 @@ export const CardEditorScriptsTab: FC<Props> = ({ editor, confirm, sendToBackend
       <div style={headerStyle}>
         <Package size={16} color={ACCENT} />
         <span style={{ fontWeight: 600, flex: 1 }}>
-          {isEmpty ? 'No bundled scripts' : `${scripts.length} bundled script${scripts.length === 1 ? '' : 's'}`}
+          {isEmpty ? t('No bundled scripts') : scripts.length === 1 ? t('{n} bundled script', { n: scripts.length }) : t('{n} bundled scripts', { n: scripts.length })}
         </span>
         {!isEmpty && hasActionable && (
-          <button type="button" style={accentBtnStyle} onClick={() => void handleImport()} title="Review + install these scripts into your library">
-            <Download size={13} /> Import to library
+          <button type="button" style={accentBtnStyle} onClick={() => void handleImport()} title={t('Review + install these scripts into your library')}>
+            <Download size={13} /> {t('Import to library')}
           </button>
         )}
-        <button type="button" style={ghostBtnStyle} onClick={() => setPickerOpen((o) => !o)} title="Bundle scripts from your library into this card">
-          <Plus size={13} /> Add
+        <button type="button" style={ghostBtnStyle} onClick={() => setPickerOpen((o) => !o)} title={t('Bundle scripts from your library into this card')}>
+          <Plus size={13} /> {t('Add')}
         </button>
       </div>
 
@@ -357,8 +359,8 @@ export const CardEditorScriptsTab: FC<Props> = ({ editor, confirm, sendToBackend
       {isEmpty && !pickerOpen && (
         <div style={emptyStyle}>
           <Package size={22} style={{ opacity: 0.5, marginBottom: 8 }} />
-          <div>This character has no bundled LumiScript scripts.</div>
-          <div style={{ marginTop: 6, fontSize: 11.5 }}>Use <b>Add</b> to bundle some from your library.</div>
+          <div>{t('This character has no bundled LumiScript scripts.')}</div>
+          <div style={{ marginTop: 6, fontSize: 11.5 }}>{tx('Use {add} to bundle some from your library.', { add: <b>{t('Add')}</b> })}</div>
         </div>
       )}
 
@@ -368,7 +370,9 @@ export const CardEditorScriptsTab: FC<Props> = ({ editor, confirm, sendToBackend
 
       {parsed.kind === 'ok' && parsed.skipped.length > 0 && (
         <div style={{ ...descStyle, marginTop: 4 }}>
-          {parsed.skipped.length} malformed entr{parsed.skipped.length === 1 ? 'y was' : 'ies were'} skipped.
+          {parsed.skipped.length === 1
+            ? t('{n} malformed entry was skipped.', { n: parsed.skipped.length })
+            : t('{n} malformed entries were skipped.', { n: parsed.skipped.length })}
         </div>
       )}
     </div>

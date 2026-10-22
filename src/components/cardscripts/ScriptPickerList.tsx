@@ -12,6 +12,7 @@
 import type { FC, CSSProperties } from 'react';
 import { Zap, Library } from 'lucide-react';
 import type { Script } from '../../types/script.js';
+import { t } from '../../i18n/index.js';
 
 const listStyle: CSSProperties = {
   maxHeight: 240, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2, margin: '6px 0',
@@ -42,7 +43,7 @@ export const ScriptPickerList: FC<Props> = ({ scripts, selected, onToggle, maxHe
         <input type="checkbox" checked={selected.has(s.id)} onChange={() => onToggle(s.id)} />
         <span style={badgeStyle}>
           {s.type === 'trigger' ? <Zap size={11} /> : <Library size={11} />}
-          {s.type === 'trigger' ? 'Trigger' : 'Library'}
+          {s.type === 'trigger' ? t('Trigger') : t('Library')}
         </span>
         <span style={nameStyle} title={s.name}>{s.name}</span>
       </label>

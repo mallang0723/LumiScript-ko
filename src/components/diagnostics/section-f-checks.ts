@@ -20,6 +20,7 @@
  */
 
 import type { DiagnosticSection, DiagnosticCheck } from '../../engine/diagnostics.js';
+import { t } from '../../i18n/index.js';
 
 const MONACO_CDN_PROBE_URL  = 'https://cdn.jsdelivr.net/npm/monaco-editor@0.55.1/package.json';
 const FONTS_READY_TIMEOUT_MS = 2_000;
@@ -38,18 +39,18 @@ export async function runSectionFChecks(): Promise<DiagnosticSection> {
   if ('fonts' in document) {
     const status = document.fonts.status; // 'loaded' | 'loading'
     checks.push({
-      label:   'Document fonts state',
+      label:   t('Document fonts state'),
       status:  status === 'loaded' ? 'pass' : 'warn',
       message: status === 'loaded'
-        ? `Loaded (${document.fonts.size} font face(s) registered)`
-        : 'Still loading after page mount — possible font subsystem hang',
+        ? t('Loaded ({n} font face(s) registered)', { n: document.fonts.size })
+        : t('Still loading after page mount — possible font subsystem hang'),
       details: { status, size: document.fonts.size },
     });
   } else {
     checks.push({
-      label:   'Document fonts state',
+      label:   t('Document fonts state'),
       status:  'info',
-      message: 'document.fonts API unavailable (very old browser)',
+      message: t('document.fonts API unavailable (very old browser)'),
     });
   }
 
@@ -63,7 +64,7 @@ export async function runSectionFChecks(): Promise<DiagnosticSection> {
   checks.push(workerCheck);
   checks.push(cdnCheck);
 
-  return { id: 'editor', name: 'Editor / Monaco', checks };
+  return { id: 'editor', name: t('Editor / Monaco'), checks };
 }
 
 // ─── Individual probes ──────────────────────────────────────────────────────
@@ -78,7 +79,7 @@ async function probeFontsReady(): Promise<DiagnosticCheck> {
     return {
       label:   'document.fonts.ready',
       status:  'pass',
-      message: `Resolved in ${Math.round(performance.now() - start)}ms`,
+      message: t('Resolved in {ms}ms', { ms: Math.round(performance.now() - start) }),
     };
   }
   if (result === 'timeout') {
@@ -86,13 +87,13 @@ async function probeFontsReady(): Promise<DiagnosticCheck> {
       label:   'document.fonts.ready',
       status:  'fail',
       // Tied directly to the Firefox-Windows font hang scenario.
-      message: `Did not resolve within ${FONTS_READY_TIMEOUT_MS}ms — font subsystem may be hung (Firefox + Windows: try clearing the Windows font cache)`,
+      message: t('Did not resolve within {ms}ms — font subsystem may be hung (Firefox + Windows: try clearing the Windows font cache)', { ms: FONTS_READY_TIMEOUT_MS }),
     };
   }
   return {
     label:   'document.fonts.ready',
     status:  'fail',
-    message: `Rejected: ${result instanceof Error ? result.message : String(result)}`,
+    message: t('Rejected: {error}', { error: result instanceof Error ? result.message : String(result) }),
   };
 }
 
@@ -112,9 +113,9 @@ function probeBlobWorker(): Promise<DiagnosticCheck> {
 
     const timer = setTimeout(() => {
       settle({
-        label:   'Blob-URL worker support',
+        label:   t('Blob-URL worker support'),
         status:  'warn',
-        message: `Worker created but didn't dispatch within ${WORKER_PROBE_TIMEOUT_MS}ms`,
+        message: t('Worker created but didn\'t dispatch within {ms}ms', { ms: WORKER_PROBE_TIMEOUT_MS }),
       });
     }, WORKER_PROBE_TIMEOUT_MS);
 
@@ -125,28 +126,28 @@ function probeBlobWorker(): Promise<DiagnosticCheck> {
       worker.onmessage = () => {
         clearTimeout(timer);
         settle({
-          label:   'Blob-URL worker support',
+          label:   t('Blob-URL worker support'),
           status:  'pass',
-          message: 'Worker created and dispatched a message',
+          message: t('Worker created and dispatched a message'),
         });
       };
       worker.onerror = (err) => {
         clearTimeout(timer);
         settle({
-          label:   'Blob-URL worker support',
+          label:   t('Blob-URL worker support'),
           status:  'fail',
           // Common cause: CSP worker-src 'self' without 'blob:' — that's
           // the issue mindbound relayed to Prolix; Monaco's language
           // workers fail the same way.
-          message: `Worker errored: ${err.message ?? '<unknown>'} (likely a CSP worker-src violation)`,
+          message: t('Worker errored: {error} (likely a CSP worker-src violation)', { error: err.message ?? '<unknown>' }),
         });
       };
     } catch (err) {
       clearTimeout(timer);
       settle({
-        label:   'Blob-URL worker support',
+        label:   t('Blob-URL worker support'),
         status:  'fail',
-        message: `new Worker() threw: ${err instanceof Error ? err.message : String(err)} — likely a CSP worker-src violation`,
+        message: t('new Worker() threw: {error} — likely a CSP worker-src violation', { error: err instanceof Error ? err.message : String(err) }),
       });
     }
   });
@@ -164,13 +165,13 @@ async function probeMonacoCdn(): Promise<DiagnosticCheck> {
     clearTimeout(timer);
     if (res.ok) {
       return {
-        label:   'Monaco CDN reachability',
+        label:   t('Monaco CDN reachability'),
         status:  'pass',
-        message: `HTTP ${res.status} in ${Math.round(performance.now() - start)}ms`,
+        message: t('HTTP {status} in {ms}ms', { status: res.status, ms: Math.round(performance.now() - start) }),
       };
     }
     return {
-      label:   'Monaco CDN reachability',
+      label:   t('Monaco CDN reachability'),
       status:  'fail',
       message: `HTTP ${res.status} ${res.statusText}`,
     };
@@ -178,15 +179,15 @@ async function probeMonacoCdn(): Promise<DiagnosticCheck> {
     clearTimeout(timer);
     if (err instanceof Error && err.name === 'AbortError') {
       return {
-        label:   'Monaco CDN reachability',
+        label:   t('Monaco CDN reachability'),
         status:  'fail',
-        message: `Timed out after ${CDN_HEAD_TIMEOUT_MS}ms — CDN unreachable or blocked (corporate proxy / firewall?)`,
+        message: t('Timed out after {ms}ms — CDN unreachable or blocked (corporate proxy / firewall?)', { ms: CDN_HEAD_TIMEOUT_MS }),
       };
     }
     return {
-      label:   'Monaco CDN reachability',
+      label:   t('Monaco CDN reachability'),
       status:  'fail',
-      message: `Fetch failed: ${err instanceof Error ? err.message : String(err)}`,
+      message: t('Fetch failed: {error}', { error: err instanceof Error ? err.message : String(err) }),
     };
   }
 }

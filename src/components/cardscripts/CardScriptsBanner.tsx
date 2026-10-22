@@ -6,6 +6,8 @@
  */
 import type { FC, CSSProperties } from 'react';
 import { Package, X } from 'lucide-react';
+import { t } from '../../i18n/index.js';
+import { tx } from '../../i18n/react.js';
 
 interface Props {
   characterName: string | null;
@@ -53,10 +55,12 @@ export const CardScriptsBanner: FC<Props> = ({ characterName, count, onReview, o
   <div style={bannerStyle}>
     <Package size={14} style={{ flexShrink: 0, color: 'rgb(184,154,236)' }} />
     <span style={textStyle}>
-      {characterName ? <b>{characterName}</b> : 'This character'} bundles {count} script{count === 1 ? '' : 's'} you don&apos;t have.
+      {count === 1
+        ? tx('{who} bundles {count} script you don\'t have.', { who: characterName ? <b>{characterName}</b> : t('This character'), count })
+        : tx('{who} bundles {count} scripts you don\'t have.', { who: characterName ? <b>{characterName}</b> : t('This character'), count })}
     </span>
-    <button type="button" style={reviewStyle} onClick={onReview}>Review</button>
-    <button type="button" style={dismissStyle} onClick={onDismiss} title="Dismiss — don't remind me for these" aria-label="Dismiss">
+    <button type="button" style={reviewStyle} onClick={onReview}>{t('Review')}</button>
+    <button type="button" style={dismissStyle} onClick={onDismiss} title={t('Dismiss — don\'t remind me for these')} aria-label={t('Dismiss')}>
       <X size={13} />
     </button>
   </div>

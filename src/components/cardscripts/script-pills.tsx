@@ -10,6 +10,7 @@
 import type { FC, CSSProperties } from 'react';
 import { Zap, Library } from 'lucide-react';
 import type { ScriptType } from '../../types/script.js';
+import { t } from '../../i18n/index.js';
 
 const ACCENT = 'rgb(147,112,219)';
 const DIM = 'var(--lumiverse-text-dim, rgb(150,152,165))';
@@ -28,7 +29,7 @@ export const typeBadgeStyle: CSSProperties = {
 };
 
 export function formatSizeChars(n: number): string {
-  return n >= 1024 ? `${(n / 1024).toFixed(1)} KB` : `${n} chars`;
+  return n >= 1024 ? `${(n / 1024).toFixed(1)} KB` : t('{n} chars', { n });
 }
 
 export function formatScriptSize(code: string): string {
@@ -38,7 +39,7 @@ export function formatScriptSize(code: string): string {
 export const TypeBadge: FC<{ type: ScriptType }> = ({ type }) => (
   <span style={typeBadgeStyle}>
     {type === 'trigger' ? <Zap size={11} /> : <Library size={11} />}
-    {type === 'trigger' ? 'Trigger' : 'Library'}
+    {type === 'trigger' ? t('Trigger') : t('Library')}
   </span>
 );
 
@@ -46,6 +47,6 @@ export const TypeBadge: FC<{ type: ScriptType }> = ({ type }) => (
 export const HookPills: FC<{ type: ScriptType; triggers?: string[] }> = ({ type, triggers }) => {
   if (type !== 'trigger') return null;
   const hooks = triggers ?? [];
-  if (hooks.length === 0) return <span style={{ ...pillStyle, color: DIM }}>no event hooks</span>;
-  return <>{hooks.map((t) => <span key={t} style={pillStyle}><Zap size={10} />{t}</span>)}</>;
+  if (hooks.length === 0) return <span style={{ ...pillStyle, color: DIM }}>{t('no event hooks')}</span>;
+  return <>{hooks.map((h) => <span key={h} style={pillStyle}><Zap size={10} />{h}</span>)}</>;
 };
