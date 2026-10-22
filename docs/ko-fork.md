@@ -31,7 +31,7 @@
 | `spindle.json` | `identifier`, `version`, `name`, `author`, `github`, `homepage`, `description` |
 | `README.md` | 맨 위 한국어 안내 섹션 |
 | `docs/ko-fork.md`, `docs/ko-glossary.md` | **신규.** 이 문서와 용어집 |
-| `dist/*.js` | 빌드 산출물. 한국어로 다시 생성 (직접 고치지 않음) |
+| `dist/backend.js`, `dist/frontend.js` | 빌드 산출물. 한국어로 다시 생성 (직접 고치지 않음). `dist/script-runner.js`는 번역 대상 코드가 없어 원작 파일 그대로 |
 
 `LICENSE`는 바꾸지 않았습니다.
 
