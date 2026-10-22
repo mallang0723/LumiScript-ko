@@ -15,6 +15,8 @@
 import { FC, useState } from 'react';
 import { X, Plus, Trash2, FileText, Loader2, Check } from 'lucide-react';
 import { ALLOWED_FILE_EXTENSIONS } from '../../assistant/user-files.js';
+import { t } from '../../i18n/index.js';
+import { tx } from '../../i18n/react.js';
 
 export interface PickerFile {
   path: string;
@@ -65,14 +67,14 @@ export const UserFilePicker: FC<UserFilePickerProps> = ({
   };
 
   return (
-    <div className="ls-asst-filepicker" role="dialog" aria-label="Attach a file">
+    <div className="ls-asst-filepicker" role="dialog" aria-label={t('Attach a file')}>
       <div className="ls-asst-filepicker-head">
-        <span>Attach a file</span>
+        <span>{t('Attach a file')}</span>
         <button
           type="button"
           className="ls-asst-filepicker-close"
           onClick={onClose}
-          aria-label="Close file picker"
+          aria-label={t('Close file picker')}
         >
           <X size={14} />
         </button>
@@ -83,11 +85,11 @@ export const UserFilePicker: FC<UserFilePickerProps> = ({
       <div className="ls-asst-filepicker-list">
         {files === null ? (
           <div className="ls-asst-filepicker-empty">
-            <Loader2 size={12} style={{ animation: 'ls-spin 1s linear infinite' }} /> Loading…
+            <Loader2 size={12} style={{ animation: 'ls-spin 1s linear infinite' }} /> {t('Loading…')}
           </div>
         ) : files.length === 0 ? (
           <div className="ls-asst-filepicker-empty">
-            No files yet. Add one below — or have a script write text to <code>userfiles/</code>.
+            {tx('No files yet. Add one below — or have a script write text to {path}.', { path: <code>userfiles/</code> })}
           </div>
         ) : (
           files.map((f) => {
@@ -98,7 +100,7 @@ export const UserFilePicker: FC<UserFilePickerProps> = ({
                   type="button"
                   className="ls-asst-filerow-main"
                   onClick={() => onToggle(f.path)}
-                  title={attached ? 'Detach' : 'Attach as context'}
+                  title={attached ? t('Detach') : t('Attach as context')}
                 >
                   <FileText size={12} />
                   <span className="ls-asst-filerow-name">{f.name}</span>
@@ -109,8 +111,8 @@ export const UserFilePicker: FC<UserFilePickerProps> = ({
                   type="button"
                   className="ls-asst-filerow-del"
                   onClick={() => onDelete(f.path)}
-                  title="Delete file"
-                  aria-label={`Delete ${f.name}`}
+                  title={t('Delete file')}
+                  aria-label={t('Delete {name}', { name: f.name })}
                 >
                   <Trash2 size={11} />
                 </button>
@@ -131,24 +133,24 @@ export const UserFilePicker: FC<UserFilePickerProps> = ({
           />
           <textarea
             className="ls-asst-filepicker-content"
-            placeholder="Paste the reference text…"
+            placeholder={t('Paste the reference text…')}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={4}
           />
           <div className="ls-asst-filepicker-add-actions">
-            <button type="button" className="ls-asst-fp-ghost" onClick={resetForm}>Cancel</button>
+            <button type="button" className="ls-asst-fp-ghost" onClick={resetForm}>{t('Cancel')}</button>
             <button type="button" className="ls-asst-fp-accent" onClick={submitAdd} disabled={!name.trim()}>
-              Add file
+              {t('Add file')}
             </button>
           </div>
           <div className="ls-asst-filepicker-hint">
-            Allowed: {ALLOWED_FILE_EXTENSIONS.slice(0, 6).join(' ')} … · 256 KB max
+            {t('Allowed: {exts} … · 256 KB max', { exts: ALLOWED_FILE_EXTENSIONS.slice(0, 6).join(' ') })}
           </div>
         </div>
       ) : (
         <button type="button" className="ls-asst-filepicker-addbtn" onClick={() => setAdding(true)}>
-          <Plus size={12} /> Add a file
+          <Plus size={12} /> {t('Add a file')}
         </button>
       )}
     </div>

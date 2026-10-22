@@ -41,6 +41,8 @@ import { UserFilePicker, type PickerFile } from './UserFilePicker.js';
 import { computeCodeDiff } from './code-diff.js';
 import { ATTACHED_SCRIPT_CODE_CAP } from '../../assistant/types.js';
 import { userFileDisplayName } from '../../assistant/user-files.js';
+import { t } from '../../i18n/index.js';
+import { tx } from '../../i18n/react.js';
 
 /**
  * How often (ms) the streaming-bubble's markdown content is allowed to
@@ -167,7 +169,9 @@ export const AssistantModal: FC<AssistantModalProps> = ({
     () => (connections ?? []).map((c) => ({
       value: c.id,
       label: c.name,
-      sublabel: `${c.provider} · ${c.model}${c.isDefault ? ' · default' : ''}`,
+      sublabel: c.isDefault
+        ? t('{provider} · {model} · default', { provider: c.provider, model: c.model })
+        : `${c.provider} · ${c.model}`,
     })),
     [connections],
   );
@@ -453,7 +457,7 @@ export const AssistantModal: FC<AssistantModalProps> = ({
             // Manual compaction has no streaming turn to signal "done" — a
             // transient toast confirms it (the "compacted here" divider appears on
             // the next reload). Auto-compaction's signal is the gauge drop itself.
-            if (wasManual) setApplyToast({ kind: 'success', text: 'Context compacted — older messages summarized.' });
+            if (wasManual) setApplyToast({ kind: 'success', text: t('Context compacted — older messages summarized.') });
           } else if (!msg.ok && msg.error) {
             // Transient toast, not the sticky error banner — these are benign
             // ("nothing to compact", "busy", "conversation changed").
@@ -472,8 +476,12 @@ export const AssistantModal: FC<AssistantModalProps> = ({
           setApplyToast({
             kind: 'success',
             text: msg.updated
-              ? `Updated ${msg.scriptType} script "${msg.scriptName}" in place.`
-              : `Created ${msg.scriptType} script "${msg.scriptName}". Open it in the Script Manager to edit.`,
+              ? (msg.scriptType === 'library'
+                ? t('Updated library script "{name}" in place.', { name: msg.scriptName })
+                : t('Updated trigger script "{name}" in place.', { name: msg.scriptName }))
+              : (msg.scriptType === 'library'
+                ? t('Created library script "{name}". Open it in the Script Manager to edit.', { name: msg.scriptName })
+                : t('Created trigger script "{name}". Open it in the Script Manager to edit.', { name: msg.scriptName })),
           });
           // Live transcript marker (persisted backend-side as an appliedEvent, so
           // it reconstructs on reload). Apply happens after the latest message →
@@ -486,7 +494,7 @@ export const AssistantModal: FC<AssistantModalProps> = ({
         case 'assistant_apply_error':
           setApplyToast({
             kind: 'error',
-            text: `Couldn't apply to script: ${msg.error}`,
+            text: t("Couldn't apply to script: {error}", { error: msg.error }),
           });
           break;
         case 'assistant_memory':
@@ -497,7 +505,7 @@ export const AssistantModal: FC<AssistantModalProps> = ({
           setMemoryStatus(
             msg.error
               ? { kind: 'error', text: msg.error }
-              : { kind: 'success', text: `Consolidated ${msg.before} → ${msg.after} notes.` },
+              : { kind: 'success', text: t('Consolidated {before} → {after} notes.', { before: msg.before, after: msg.after }) },
           );
           break;
         case 'assistant_thread_exported': {
@@ -521,7 +529,7 @@ export const AssistantModal: FC<AssistantModalProps> = ({
           } catch (err) {
             setApplyToast({
               kind: 'error',
-              text: `Couldn't export thread: ${err instanceof Error ? err.message : String(err)}`,
+              text: t("Couldn't export thread: {error}", { error: err instanceof Error ? err.message : String(err) }),
             });
           }
           break;
@@ -620,7 +628,7 @@ export const AssistantModal: FC<AssistantModalProps> = ({
     const content = input.trim();
     if (!content || isGenerating) return;
     if (!connectionId) {
-      setError('Pick a connection before sending — see the dropdown at the top of the modal.');
+      setError(t('Pick a connection before sending — see the dropdown at the top of the modal.'));
       return;
     }
     setError(null);
@@ -729,7 +737,7 @@ export const AssistantModal: FC<AssistantModalProps> = ({
   const handleRetry = () => {
     if (isGenerating || lastUserIdx === -1) return;
     if (!connectionId) {
-      setError('Pick a connection before retrying — see the dropdown at the top of the modal.');
+      setError(t('Pick a connection before retrying — see the dropdown at the top of the modal.'));
       return;
     }
     const content = messages[lastUserIdx]!.content;
@@ -765,7 +773,7 @@ export const AssistantModal: FC<AssistantModalProps> = ({
     const content = editDraft.trim();
     if (!content) return;
     if (!connectionId) {
-      setError('Pick a connection before resending — see the dropdown at the top of the modal.');
+      setError(t('Pick a connection before resending — see the dropdown at the top of the modal.'));
       return;
     }
     // Optimistically replace the last user bubble's content and drop everything
@@ -808,7 +816,7 @@ export const AssistantModal: FC<AssistantModalProps> = ({
 
   const handleCommitRename = () => {
     if (!renamingThreadId) return;
-    const title = renameDraft.trim() || 'Untitled';
+    const title = renameDraft.trim() || t('Untitled');
     sendToBackend({ type: 'assistant_rename_thread', threadId: renamingThreadId, title });
     setRenamingThreadId(null);
     setRenameDraft('');
@@ -844,7 +852,7 @@ export const AssistantModal: FC<AssistantModalProps> = ({
   const handleCompact = () => {
     if (isGenerating || compacting) return;
     if (!connectionId) {
-      setError('Pick a connection before compacting — see the dropdown at the top of the modal.');
+      setError(t('Pick a connection before compacting — see the dropdown at the top of the modal.'));
       return;
     }
     setCompacting(true);
@@ -905,7 +913,7 @@ export const AssistantModal: FC<AssistantModalProps> = ({
           code,
           languageHint,
           targetScriptId,
-          scriptName: target?.name ?? 'this script',
+          scriptName: target?.name ?? t('this script'),
         });
       } else {
         sendToBackend({
@@ -983,11 +991,11 @@ export const AssistantModal: FC<AssistantModalProps> = ({
           <div className="ls-asst-title-wrap">
             <div className="ls-asst-eyebrow">
               <Coffee size={10} />
-              ASSISTANT
+              {t('ASSISTANT')}
             </div>
-            <h3 className="ls-asst-title">Lisa — LumiScript code assistant</h3>
+            <h3 className="ls-asst-title">{t('Lisa — LumiScript code assistant')}</h3>
             <p className="ls-asst-subtitle">
-              Ask about LumiScript or Spindle APIs. Response quality depends on the model you select.
+              {t('Ask about LumiScript or Spindle APIs. Response quality depends on the model you select.')}
             </p>
           </div>
           <div className="ls-asst-header-actions">
@@ -995,7 +1003,7 @@ export const AssistantModal: FC<AssistantModalProps> = ({
               type="button"
               className="ls-asst-iconbtn"
               onClick={() => { setMemoryOpen(true); sendToBackend({ type: 'request_assistant_memory' }); }}
-              title="Memory — what Lisa remembers about you"
+              title={t('Memory — what Lisa remembers about you')}
             >
               <NotebookPen size={15} />
             </button>
@@ -1003,7 +1011,7 @@ export const AssistantModal: FC<AssistantModalProps> = ({
               type="button"
               className="ls-asst-iconbtn"
               onClick={onClose}
-              title="Close"
+              title={t('Close')}
             >
               <X size={16} />
             </button>
@@ -1018,7 +1026,7 @@ export const AssistantModal: FC<AssistantModalProps> = ({
             onDelete={(id) => sendToBackend({ type: 'assistant_memory_delete', id })}
             onConsolidate={() => {
               if (!connectionId) {
-                setMemoryStatus({ kind: 'error', text: 'Pick a connection first (top of the modal).' });
+                setMemoryStatus({ kind: 'error', text: t('Pick a connection first (top of the modal).') });
                 return;
               }
               setMemoryConsolidating(true);
@@ -1052,19 +1060,19 @@ export const AssistantModal: FC<AssistantModalProps> = ({
           <div className="ls-asst-main-col">
 
             <div className="ls-asst-connection-bar">
-              <span className="ls-asst-connection-label">Connection</span>
+              <span className="ls-asst-connection-label">{t('Connection')}</span>
               <HostSelect
                 options={connectionOptions}
                 value={connectionId}
                 onChange={setConnectionId}
-                placeholder={connections === null ? 'Loading…' : '— Pick a connection —'}
+                placeholder={connections === null ? t('Loading…') : t('— Pick a connection —')}
                 disabled={isGenerating || connections === null}
-                ariaLabel="Connection"
+                ariaLabel={t('Connection')}
                 searchThreshold={8}
               />
               {connections !== null && connections.length === 0 && (
                 <span className="ls-asst-connection-empty">
-                  Configure one in Lumiverse Settings → LLM Connections.
+                  {t('Configure one in Lumiverse Settings → LLM Connections.')}
                 </span>
               )}
             </div>
@@ -1073,7 +1081,7 @@ export const AssistantModal: FC<AssistantModalProps> = ({
               <main className="ls-asst-body" ref={scrollRef} onScroll={handleTranscriptScroll}>
                 {messages.length === 0 && !streaming && !isGenerating && (
                   <div className="ls-asst-empty">
-                    <p>Ask about LumiScript or Spindle APIs. Try one of these:</p>
+                    <p>{t('Ask about LumiScript or Spindle APIs. Try one of these:')}</p>
                     <ul>
                       {EXAMPLE_PROMPTS.map((ex) => (
                         <li key={ex}>
@@ -1106,7 +1114,7 @@ export const AssistantModal: FC<AssistantModalProps> = ({
                       />
                       <div className="ls-asst-edit-actions">
                         <button type="button" className="ls-asst-edit-cancel" onClick={() => setEditDraft(null)}>
-                          Cancel
+                          {t('Cancel')}
                         </button>
                         <button
                           type="button"
@@ -1114,7 +1122,7 @@ export const AssistantModal: FC<AssistantModalProps> = ({
                           onClick={handleEditResend}
                           disabled={!editDraft.trim()}
                         >
-                          Save &amp; resend
+                          {t('Save & resend')}
                         </button>
                       </div>
                     </div>
@@ -1143,23 +1151,23 @@ export const AssistantModal: FC<AssistantModalProps> = ({
                 {isGenerating && !streaming && !streamingReasoning && (
                   <div className="ls-asst-thinking">
                     <Loader2 size={14} className="ls-asst-spin" />
-                    <span>Lisa is thinking…</span>
+                    <span>{t('Lisa is thinking…')}</span>
                   </div>
                 )}
 
                 {error && (
                   <div className="ls-asst-error">
-                    <div className="ls-asst-error-text"><strong>Error:</strong> {error}</div>
+                    <div className="ls-asst-error-text"><strong>{t('Error:')}</strong> {error}</div>
                     {canRetry && (
                       <button
                         type="button"
                         className="ls-asst-retry-btn"
                         onClick={handleRetry}
                         disabled={isGenerating || compacting}
-                        title="Re-send the last message"
+                        title={t('Re-send the last message')}
                       >
                         <RotateCcw size={12} />
-                        Retry
+                        {t('Retry')}
                       </button>
                     )}
                   </div>
@@ -1186,9 +1194,9 @@ export const AssistantModal: FC<AssistantModalProps> = ({
                     <button
                       type="button"
                       className={`ls-asst-usage-gauge ls-asst-usage-gauge-${level}`}
-                      title={`Context window: ${contextFill.estimated ? '~' : ''}${formatTokens(contextFill.promptTokens)} of ${formatTokens(contextTokens)} tokens (${pctDisplay}%). Click for a breakdown of what's filling it.`}
+                      title={t("Context window: {used} of {budget} tokens ({pct}%). Click for a breakdown of what's filling it.", { used: `${contextFill.estimated ? '~' : ''}${formatTokens(contextFill.promptTokens)}`, budget: formatTokens(contextTokens), pct: pctDisplay })}
                       onClick={toggleBreakdown}
-                      aria-label="Context usage — click for a breakdown"
+                      aria-label={t('Context usage — click for a breakdown')}
                     >
                       <span className="ls-asst-usage-gauge-track">
                         <span
@@ -1196,12 +1204,12 @@ export const AssistantModal: FC<AssistantModalProps> = ({
                           style={{ width: `${Math.min(100, pctDisplay)}%` }}
                         />
                       </span>
-                      <span className="ls-asst-usage-label">{contextFill.estimated ? '~' : ''}{pctDisplay}% ctx</span>
+                      <span className="ls-asst-usage-label">{t('{pct}% ctx', { pct: `${contextFill.estimated ? '~' : ''}${pctDisplay}` })}</span>
                     </button>
                     {breakdownOpen && (
                       contextBreakdown
                         ? <ContextBreakdownPopover breakdown={contextBreakdown} budget={contextTokens} onClose={() => setBreakdownOpen(false)} />
-                        : <div className="ls-asst-bd-popover ls-asst-bd-loading">{breakdownFailed ? "Couldn't compute the breakdown — try reopening." : 'Calculating breakdown…'}</div>
+                        : <div className="ls-asst-bd-popover ls-asst-bd-loading">{breakdownFailed ? t("Couldn't compute the breakdown — try reopening.") : t('Calculating breakdown…')}</div>
                     )}
                   </span>
                 );
@@ -1212,8 +1220,8 @@ export const AssistantModal: FC<AssistantModalProps> = ({
                   className="ls-asst-compact-btn"
                   onClick={handleCompact}
                   disabled={isGenerating || compacting}
-                  title="Compact now — summarize the older messages to free up context, keeping the recent ones verbatim. Most useful once the conversation is long; it also runs automatically as the context nears full."
-                  aria-label="Compact conversation context"
+                  title={t('Compact now — summarize the older messages to free up context, keeping the recent ones verbatim. Most useful once the conversation is long; it also runs automatically as the context nears full.')}
+                  aria-label={t('Compact conversation context')}
                 >
                   {compacting ? <Loader2 size={11} className="ls-asst-spin" /> : <FoldVertical size={11} />}
                 </button>
@@ -1226,24 +1234,24 @@ export const AssistantModal: FC<AssistantModalProps> = ({
                   <span
                     className={`ls-asst-usage-segment${lastTurnUsage.estimated ? ' ls-asst-usage-segment-estimated' : ''}`}
                     title={lastTurnUsage.estimated
-                      ? "Estimated client-side via spindle.tokens.countText because the provider didn't surface streaming usage. Treat numbers as approximate."
+                      ? t("Estimated client-side via spindle.tokens.countText because the provider didn't surface streaming usage. Treat numbers as approximate.")
                       : undefined}
                   >
                     <span className="ls-asst-usage-num">{lastTurnUsage.estimated ? '~' : ''}{formatTokens(lastTurnUsage.promptTokens)}</span>
-                    <span className="ls-asst-usage-label">in</span>
+                    <span className="ls-asst-usage-label">{t('in')}</span>
                     <span className="ls-asst-usage-sep">/</span>
                     <span className="ls-asst-usage-num">{lastTurnUsage.estimated ? '~' : ''}{formatTokens(lastTurnUsage.completionTokens)}</span>
-                    <span className="ls-asst-usage-label">out · this turn</span>
+                    <span className="ls-asst-usage-label">{t('out · this turn')}</span>
                   </span>
                   <span className="ls-asst-usage-dot">·</span>
                   <span
                     className={`ls-asst-usage-segment${totalUsage.estimated ? ' ls-asst-usage-segment-estimated' : ''}`}
                     title={totalUsage.estimated
-                      ? "Includes at least one estimated turn — treat as approximate."
+                      ? t('Includes at least one estimated turn — treat as approximate.')
                       : undefined}
                   >
                     <span className="ls-asst-usage-num">{totalUsage.estimated ? '~' : ''}{formatTokens(totalUsage.totalTokens)}</span>
-                    <span className="ls-asst-usage-label">total · this thread</span>
+                    <span className="ls-asst-usage-label">{t('total · this thread')}</span>
                   </span>
                 </>
               )}
@@ -1253,30 +1261,30 @@ export const AssistantModal: FC<AssistantModalProps> = ({
               {(attachedScripts.length > 0 || attachedFilePaths.length > 0) && (
                 <div className="ls-asst-chips">
                   {attachedScripts.map((s) => (
-                    <span key={s.id} className="ls-asst-chip" title={`${s.type} script — attached as context`}>
+                    <span key={s.id} className="ls-asst-chip" title={s.type === 'library' ? t('library script — attached as context') : t('trigger script — attached as context')}>
                       {s.type === 'library' ? <BookMarked size={11} /> : <Code2 size={11} />}
                       <span className="ls-asst-chip-name">{s.name}</span>
                       <button
                         type="button"
                         className="ls-asst-chip-remove"
                         onClick={() => removeChip(s.id)}
-                        title="Remove"
-                        aria-label={`Remove ${s.name}`}
+                        title={t('Remove')}
+                        aria-label={t('Remove {name}', { name: s.name })}
                       >
                         <X size={10} />
                       </button>
                     </span>
                   ))}
                   {attachedFilePaths.map((p) => (
-                    <span key={p} className="ls-asst-chip ls-asst-chip-file" title="reference file — attached as context">
+                    <span key={p} className="ls-asst-chip ls-asst-chip-file" title={t('reference file — attached as context')}>
                       <FileText size={11} />
                       <span className="ls-asst-chip-name">{userFileDisplayName(p)}</span>
                       <button
                         type="button"
                         className="ls-asst-chip-remove"
                         onClick={() => removeFileChip(p)}
-                        title="Remove"
-                        aria-label={`Remove ${userFileDisplayName(p)}`}
+                        title={t('Remove')}
+                        aria-label={t('Remove {name}', { name: userFileDisplayName(p) })}
                       >
                         <X size={10} />
                       </button>
@@ -1308,8 +1316,8 @@ export const AssistantModal: FC<AssistantModalProps> = ({
                   type="button"
                   className={`ls-asst-attach${filePickerOpen ? ' ls-asst-attach-on' : ''}`}
                   onClick={() => (filePickerOpen ? setFilePickerOpen(false) : openFilePicker())}
-                  title="Attach a file from your storage"
-                  aria-label="Attach a file"
+                  title={t('Attach a file from your storage')}
+                  aria-label={t('Attach a file')}
                   disabled={isGenerating}
                 >
                   <Paperclip size={15} />
@@ -1321,7 +1329,7 @@ export const AssistantModal: FC<AssistantModalProps> = ({
                   onChange={handleInputChange}
                   onKeyDown={handleKeyDown}
                   onBlur={() => setMention(null)}
-                  placeholder="Ask Lisa…  (Enter to send · Shift+Enter for newline · @ to attach a script)"
+                  placeholder={t('Ask Lisa…  (Enter to send · Shift+Enter for newline · @ to attach a script)')}
                   rows={2}
                   disabled={isGenerating || compacting}
                 />
@@ -1330,7 +1338,7 @@ export const AssistantModal: FC<AssistantModalProps> = ({
                     type="button"
                     className="ls-asst-send ls-asst-stop"
                     onClick={handleAbort}
-                    title="Stop generating"
+                    title={t('Stop generating')}
                   >
                     <Square size={12} fill="currentColor" />
                   </button>
@@ -1340,7 +1348,7 @@ export const AssistantModal: FC<AssistantModalProps> = ({
                     className="ls-asst-send"
                     onClick={handleSend}
                     disabled={!input.trim() || compacting}
-                    title="Send (Enter)"
+                    title={t('Send (Enter)')}
                   >
                     <Send size={14} />
                   </button>
@@ -1355,10 +1363,10 @@ export const AssistantModal: FC<AssistantModalProps> = ({
             portal, so its position in the tree here is just logical grouping. */}
         {pendingApply && (
           <ConfirmDialog
-            title="Update script?"
+            title={t('Update script?')}
             icon={<RefreshCw size={15} style={{ color: 'var(--lumiverse-danger, rgb(246, 130, 130))' }} />}
             variant="danger"
-            confirmLabel="Update & overwrite"
+            confirmLabel={t('Update & overwrite')}
             confirmIcon={<RefreshCw size={12} />}
             // Lisa's modal backdrop is z-index 10001; sit above it so the
             // confirm isn't occluded (default overlay z-index is 9999).
@@ -1376,25 +1384,29 @@ export const AssistantModal: FC<AssistantModalProps> = ({
             onCancel={() => setPendingApply(null)}
           >
             <p className="ls-confirm-message">
-              Review the changes to <strong>{pendingApply.scriptName}</strong> before overwriting
-              {applyDiff && !applyDiff.diff.identical && (
-                <>
-                  {' '}— <span className="ls-apply-diff-stat-add">+{applyDiff.diff.added}</span>
-                  {' / '}<span className="ls-apply-diff-stat-del">−{applyDiff.diff.removed}</span> lines
-                </>
-              )}.
+              {applyDiff && !applyDiff.diff.identical
+                ? tx('Review the changes to {name} before overwriting — {added} / {removed} lines.', {
+                  name: <strong>{pendingApply.scriptName}</strong>,
+                  added: <span className="ls-apply-diff-stat-add">+{applyDiff.diff.added}</span>,
+                  removed: <span className="ls-apply-diff-stat-del">−{applyDiff.diff.removed}</span>,
+                })
+                : tx('Review the changes to {name} before overwriting.', {
+                  name: <strong>{pendingApply.scriptName}</strong>,
+                })}
             </p>
             {applyDiff?.diff.identical ? (
               <div className="ls-confirm-warning">
                 <AlertTriangle size={12} />
-                <span>Lisa's code is identical to the current script — applying changes nothing.</span>
+                <span>{t("Lisa's code is identical to the current script — applying changes nothing.")}</span>
               </div>
             ) : (
-              <div className="ls-apply-diff" role="group" aria-label={`Proposed changes to ${pendingApply.scriptName}`}>
+              <div className="ls-apply-diff" role="group" aria-label={t('Proposed changes to {name}', { name: pendingApply.scriptName })}>
                 {applyDiff?.diff.rows.map((r, idx) =>
                   r.type === 'gap' ? (
                     <div key={idx} className="ls-apply-diff-row ls-apply-diff-gap">
-                      ⋯ {r.count} unchanged line{r.count === 1 ? '' : 's'}
+                      {r.count === 1
+                        ? t('⋯ {count} unchanged line', { count: r.count ?? 0 })
+                        : t('⋯ {count} unchanged lines', { count: r.count ?? 0 })}
                     </div>
                   ) : (
                     <div key={idx} className={`ls-apply-diff-row ls-apply-diff-${r.type}`}>
@@ -1405,7 +1417,7 @@ export const AssistantModal: FC<AssistantModalProps> = ({
                 )}
                 {applyDiff?.diff.truncatedRows && (
                   <div className="ls-apply-diff-row ls-apply-diff-gap">
-                    … diff truncated — review the rest in the editor after applying.
+                    {t('… diff truncated — review the rest in the editor after applying.')}
                   </div>
                 )}
               </div>
@@ -1414,14 +1426,13 @@ export const AssistantModal: FC<AssistantModalProps> = ({
               <div className="ls-confirm-warning">
                 <AlertTriangle size={12} />
                 <span>
-                  This script is longer than Lisa can see ({ATTACHED_SCRIPT_CODE_CAP.toLocaleString()} chars),
-                  so she may not have had the full file — check the diff for code being removed.
+                  {t('This script is longer than Lisa can see ({cap} chars), so she may not have had the full file — check the diff for code being removed.', { cap: ATTACHED_SCRIPT_CODE_CAP.toLocaleString() })}
                 </span>
               </div>
             )}
             <div className="ls-confirm-warning">
               <AlertTriangle size={12} />
-              <span>Overwrites the current code — this can't be undone.</span>
+              <span>{t("Overwrites the current code — this can't be undone.")}</span>
             </div>
           </ConfirmDialog>
         )}
@@ -1471,22 +1482,22 @@ const ThreadSidebar: FC<ThreadSidebarProps> = ({
         className="ls-asst-sidebar-newchat"
         onClick={onNewThread}
         disabled={disabled}
-        title="Start a new thread"
+        title={t('Start a new thread')}
       >
         <MessageSquarePlus size={14} />
-        <span>New chat</span>
+        <span>{t('New chat')}</span>
       </button>
 
       <div className="ls-asst-sidebar-list">
         {threads.length === 0 && (
-          <div className="ls-asst-sidebar-empty">No threads yet.</div>
+          <div className="ls-asst-sidebar-empty">{t('No threads yet.')}</div>
         )}
-        {threads.map((t) => {
-          const isActive   = t.id === activeThreadId;
-          const isRenaming = t.id === renamingThreadId;
+        {threads.map((th) => {
+          const isActive   = th.id === activeThreadId;
+          const isRenaming = th.id === renamingThreadId;
           return (
             <div
-              key={t.id}
+              key={th.id}
               className={`ls-asst-thread-row${isActive ? ' ls-asst-thread-row-active' : ''}`}
             >
               {isRenaming ? (
@@ -1515,7 +1526,7 @@ const ThreadSidebar: FC<ThreadSidebarProps> = ({
                       e.preventDefault();
                       onCommitRename();
                     }}
-                    title="Commit rename"
+                    title={t('Commit rename')}
                   >
                     <Check size={11} />
                   </button>
@@ -1524,13 +1535,13 @@ const ThreadSidebar: FC<ThreadSidebarProps> = ({
                 <button
                   type="button"
                   className="ls-asst-thread-main"
-                  onClick={() => onSwitchThread(t.id)}
+                  onClick={() => onSwitchThread(th.id)}
                   disabled={disabled}
-                  title={t.title}
+                  title={th.title}
                 >
-                  <span className="ls-asst-thread-title">{t.title}</span>
+                  <span className="ls-asst-thread-title">{th.title}</span>
                   <span className="ls-asst-thread-meta">
-                    {formatRelativeTime(t.updatedAt)} · {t.messageCount} msg
+                    {t('{time} · {count} msg', { time: formatRelativeTime(th.updatedAt), count: th.messageCount })}
                   </span>
                 </button>
               )}
@@ -1542,10 +1553,10 @@ const ThreadSidebar: FC<ThreadSidebarProps> = ({
                     className="ls-asst-thread-action"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onStartRename(t);
+                      onStartRename(th);
                     }}
                     disabled={disabled}
-                    title="Rename thread"
+                    title={t('Rename thread')}
                   >
                     <Pencil size={11} />
                   </button>
@@ -1554,10 +1565,10 @@ const ThreadSidebar: FC<ThreadSidebarProps> = ({
                     className="ls-asst-thread-action"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onExportThread(t.id);
+                      onExportThread(th.id);
                     }}
                     disabled={disabled}
-                    title="Export thread as Markdown"
+                    title={t('Export thread as Markdown')}
                   >
                     <Download size={11} />
                   </button>
@@ -1566,10 +1577,10 @@ const ThreadSidebar: FC<ThreadSidebarProps> = ({
                     className="ls-asst-thread-action ls-asst-thread-action-danger"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onDeleteThread(t.id);
+                      onDeleteThread(th.id);
                     }}
                     disabled={disabled}
-                    title="Delete thread"
+                    title={t('Delete thread')}
                   >
                     <Trash2 size={11} />
                   </button>
@@ -1639,7 +1650,9 @@ const MessageBubble = memo(({
     return (
       <div className="ls-asst-applied">
         <Check size={11} />
-        <span>{message.appliedUpdated ? 'Updated' : 'Created'} <strong>{message.scriptName}</strong> from this conversation</span>
+        <span>{message.appliedUpdated
+          ? tx('Updated {name} from this conversation', { name: <strong>{message.scriptName}</strong> })
+          : tx('Created {name} from this conversation', { name: <strong>{message.scriptName}</strong> })}</span>
       </div>
     );
   }
@@ -1647,31 +1660,33 @@ const MessageBubble = memo(({
     return (
       <div className="ls-asst-compacted">
         <FoldVertical size={11} />
-        <span>Earlier messages compacted — Lisa sees a summary of everything above this point</span>
+        <span>{t('Earlier messages compacted — Lisa sees a summary of everything above this point')}</span>
       </div>
     );
   }
   // Display label: assistant bubbles show the persona's name ("Lisa")
   // instead of the bare 'assistant' role. User / error / tool labels are
   // unchanged.
-  const roleLabel = message.role === 'assistant' ? ASSISTANT_DISPLAY_NAME : message.role;
+  const roleLabel = message.role === 'assistant'
+    ? ASSISTANT_DISPLAY_NAME
+    : message.role === 'user' ? t('user') : message.role === 'error' ? t('error') : message.role;
   return (
     <div ref={bubbleRef} className={`ls-asst-bubble ls-asst-bubble-${message.role}${message.aborted ? ' ls-asst-bubble-aborted' : ''}`}>
       <div className="ls-asst-bubble-role">
         <span>
           {roleLabel}
-          {message.aborted && <span className="ls-asst-bubble-aborted-tag"> · stopped</span>}
+          {message.aborted && <span className="ls-asst-bubble-aborted-tag"> · {t('stopped')}</span>}
         </span>
         {message.role === 'assistant' && message.content && (
-          <CopyButton text={message.content} className="ls-asst-bubble-copy" title="Copy reply" />
+          <CopyButton text={message.content} className="ls-asst-bubble-copy" title={t('Copy reply')} />
         )}
         {message.role === 'user' && onEdit && (
           <button
             type="button"
             className="ls-asst-bubble-edit"
             onClick={onEdit}
-            title="Edit & resend"
-            aria-label="Edit and resend this message"
+            title={t('Edit & resend')}
+            aria-label={t('Edit and resend this message')}
           >
             <Pencil size={12} />
           </button>
@@ -1684,11 +1699,11 @@ const MessageBubble = memo(({
             className={`ls-asst-reasoning-toggle${reasoningExpanded ? ' ls-asst-reasoning-toggle-open' : ''}`}
             onClick={() => setReasoningExpanded((v) => !v)}
             aria-expanded={reasoningExpanded}
-            title={reasoningExpanded ? 'Hide reasoning' : 'Show reasoning'}
+            title={reasoningExpanded ? t('Hide reasoning') : t('Show reasoning')}
           >
             <ChevronRight size={11} className="ls-asst-reasoning-chevron" />
             <Brain size={11} />
-            <span>{streaming ? 'Thinking…' : 'Reasoning'}</span>
+            <span>{streaming ? t('Thinking…') : t('Reasoning')}</span>
           </button>
           {reasoningExpanded && (
             <div className="ls-asst-reasoning-content">{message.reasoning}</div>

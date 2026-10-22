@@ -17,6 +17,7 @@
 import type { FC } from 'react';
 import { Code2, BookMarked } from 'lucide-react';
 import type { Script } from '../../types/script.js';
+import { t } from '../../i18n/index.js';
 
 interface ScriptMentionMenuProps {
   /** Scripts matching the current `@query` (already filtered + capped). */
@@ -38,7 +39,7 @@ export const ScriptMentionMenu: FC<ScriptMentionMenuProps> = ({
   if (matches.length === 0) {
     return (
       <div className="ls-asst-mention-menu">
-        <div className="ls-asst-mention-empty">No matching scripts</div>
+        <div className="ls-asst-mention-empty">{t('No matching scripts')}</div>
       </div>
     );
   }
@@ -57,7 +58,7 @@ export const ScriptMentionMenu: FC<ScriptMentionMenuProps> = ({
         >
           {s.type === 'library' ? <BookMarked size={12} /> : <Code2 size={12} />}
           <span className="ls-asst-mention-name">{s.name}</span>
-          <span className="ls-asst-mention-type">{s.type}</span>
+          <span className="ls-asst-mention-type">{s.type === 'library' ? t('library') : s.type === 'trigger' ? t('trigger') : s.type}</span>
         </button>
       ))}
     </div>

@@ -17,6 +17,7 @@
 import type { LlmMessageDTO } from 'lumiverse-spindle-types';
 import type { LlmMessagePart } from '../../types/script.js';
 import type { AppliedEvent } from '../../assistant/types.js';
+import { t } from '../../i18n/index.js';
 
 export interface DisplayMessage {
   role: 'user' | 'assistant' | 'tool' | 'error' | 'applied' | 'compacted';
@@ -53,10 +54,10 @@ export function formatTokens(n: number): string {
  */
 export function formatRelativeTime(epochMs: number): string {
   const seconds = (Date.now() - epochMs) / 1000;
-  if (seconds < 60) return 'just now';
-  if (seconds < 3600) return `${Math.round(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.round(seconds / 3600)}h ago`;
-  if (seconds < 604800) return `${Math.round(seconds / 86400)}d ago`;
+  if (seconds < 60) return t('just now');
+  if (seconds < 3600) return t('{n}m ago', { n: Math.round(seconds / 60) });
+  if (seconds < 86400) return t('{n}h ago', { n: Math.round(seconds / 3600) });
+  if (seconds < 604800) return t('{n}d ago', { n: Math.round(seconds / 86400) });
   return new Date(epochMs).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
@@ -142,7 +143,7 @@ export function historyToDisplay(history: LlmMessageDTO[], appliedEvents: Applie
               result.push({
                 role: 'tool',
                 toolName: part.name,
-                content: r?.content ?? '(no result recorded)',
+                content: r?.content ?? t('(no result recorded)'),
                 isError: r?.isError ?? false,
               });
             } else if (part.type === 'text') {

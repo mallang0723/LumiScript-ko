@@ -35,6 +35,7 @@ import css from 'react-syntax-highlighter/dist/esm/languages/prism/css';
 import markup from 'react-syntax-highlighter/dist/esm/languages/prism/markup';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { FilePlus, ChevronDown, RefreshCw, Copy, Check } from 'lucide-react';
+import { t } from '../../i18n/index.js';
 
 // ─── Apply-to-script context ─────────────────────────────────────────────────
 //
@@ -128,17 +129,17 @@ export const CopyButton: FC<{
     timerRef.current = setTimeout(() => setCopied(false), 1500);
   };
 
-  const label = title ?? 'Copy';
+  const label = title ?? t('Copy');
   return (
     <button
       type="button"
       className={className}
       onClick={onClick}
-      title={copied ? 'Copied' : label}
-      aria-label={copied ? 'Copied' : label}
+      title={copied ? t('Copied') : label}
+      aria-label={copied ? t('Copied') : label}
     >
       {copied ? <Check size={11} /> : <Copy size={11} />}
-      {withLabel && <span>{copied ? 'Copied' : 'Copy'}</span>}
+      {withLabel && <span>{copied ? t('Copied') : t('Copy')}</span>}
     </button>
   );
 };
@@ -202,19 +203,19 @@ const FencedCode = ({ code, lang }: { code: string; lang: string }) => {
     // rounded top + the highlighter's rounded bottom read as a single block.
     <div className="ls-asst-md-code-wrap">
       <div className="ls-asst-md-code-actions">
-        <span className="ls-asst-md-code-lang">{lang || 'code'}</span>
+        <span className="ls-asst-md-code-lang">{lang || t('code')}</span>
         <div className="ls-asst-md-code-buttons">
-        <CopyButton text={code} className="ls-asst-md-copy" withLabel title="Copy code" />
+        <CopyButton text={code} className="ls-asst-md-copy" withLabel title={t('Copy code')} />
         {apply && (targets.length === 0 ? (
         <button
           type="button"
           className="ls-asst-md-apply"
           onClick={() => apply.onApply(code, lang)}
-          title="Apply to script — create a new LumiScript from this code"
-          aria-label="Apply — create new script"
+          title={t('Apply to script — create a new LumiScript from this code')}
+          aria-label={t('Apply — create new script')}
         >
           <FilePlus size={11} />
-          <span>Apply</span>
+          <span>{t('Apply')}</span>
         </button>
       ) : (
         <div className="ls-asst-md-apply-wrap" ref={wrapRef}>
@@ -222,12 +223,12 @@ const FencedCode = ({ code, lang }: { code: string; lang: string }) => {
             type="button"
             className="ls-asst-md-apply"
             onClick={() => setMenuOpen((o) => !o)}
-            title="Apply this code…"
+            title={t('Apply this code…')}
             aria-haspopup="menu"
             aria-expanded={menuOpen}
           >
             <FilePlus size={11} />
-            <span>Apply</span>
+            <span>{t('Apply')}</span>
             <ChevronDown size={10} />
           </button>
           {menuOpen && (
@@ -239,18 +240,18 @@ const FencedCode = ({ code, lang }: { code: string; lang: string }) => {
                 onClick={() => { setMenuOpen(false); apply.onApply(code, lang); }}
               >
                 <FilePlus size={11} />
-                <span>Create new script</span>
+                <span>{t('Create new script')}</span>
               </button>
-              {targets.map((t) => (
+              {targets.map((target) => (
                 <button
-                  key={t.id}
+                  key={target.id}
                   type="button"
                   role="menuitem"
                   className="ls-asst-md-apply-item"
-                  onClick={() => { setMenuOpen(false); apply.onApply(code, lang, t.id); }}
+                  onClick={() => { setMenuOpen(false); apply.onApply(code, lang, target.id); }}
                 >
                   <RefreshCw size={11} />
-                  <span>Update “{t.name}”</span>
+                  <span>{t('Update “{name}”', { name: target.name })}</span>
                 </button>
               ))}
             </div>

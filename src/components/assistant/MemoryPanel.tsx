@@ -16,6 +16,7 @@
 import { FC, useState } from 'react';
 import { X, Plus, Pencil, Trash2, Check, Combine, Loader2 } from 'lucide-react';
 import type { MemoryNote } from '../../engine/assistant-memory.js';
+import { t } from '../../i18n/index.js';
 
 export interface MemoryPanelProps {
   notes: MemoryNote[];
@@ -79,42 +80,40 @@ export const MemoryPanel: FC<MemoryPanelProps> = ({ notes, onAdd, onEdit, onDele
     <div className="ls-mem-panel">
       <div className="ls-mem-header">
         <span className="ls-mem-title">
-          Memory <span className="ls-mem-count">{notes.length}</span>
+          {t('Memory')} <span className="ls-mem-count">{notes.length}</span>
         </span>
         <button
           type="button"
           className="ls-mem-consolidate"
           onClick={onConsolidate}
           disabled={notes.length === 0 || consolidating}
-          title="Consolidate — merge duplicates and tidy up the notes (uses the LLM)"
+          title={t('Consolidate — merge duplicates and tidy up the notes (uses the LLM)')}
         >
           {consolidating ? <Loader2 size={12} className="ls-asst-spin" /> : <Combine size={12} />}
-          <span>{consolidating ? 'Consolidating…' : 'Consolidate'}</span>
+          <span>{consolidating ? t('Consolidating…') : t('Consolidate')}</span>
         </button>
-        <button type="button" className="ls-asst-iconbtn" onClick={onClose} title="Back to chat">
+        <button type="button" className="ls-asst-iconbtn" onClick={onClose} title={t('Back to chat')}>
           <X size={16} />
         </button>
       </div>
       {status && <div className={`ls-mem-status ls-mem-status-${status.kind}`}>{status.text}</div>}
 
       <p className="ls-mem-intro">
-        Durable notes Lisa keeps about you across sessions. The API reference always overrides
-        these — they hold your preferences and project context. Edit or delete anything; Lisa
-        sees your changes on her next turn.
+        {t('Durable notes Lisa keeps about you across sessions. The API reference always overrides these — they hold your preferences and project context. Edit or delete anything; Lisa sees your changes on her next turn.')}
       </p>
 
       {/* Add form */}
       <div className="ls-mem-add">
         <input
           className="ls-mem-input"
-          placeholder="New note — a short hook…"
+          placeholder={t('New note — a short hook…')}
           value={newHook}
           onChange={(e) => setNewHook(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); submitAdd(); } }}
         />
         <textarea
           className="ls-mem-textarea"
-          placeholder="detail (optional)"
+          placeholder={t('detail (optional)')}
           rows={2}
           value={newDetail}
           onChange={(e) => setNewDetail(e.target.value)}
@@ -122,12 +121,12 @@ export const MemoryPanel: FC<MemoryPanelProps> = ({ notes, onAdd, onEdit, onDele
         <div className="ls-mem-add-row">
           <input
             className="ls-mem-input ls-mem-input-cat"
-            placeholder="category (optional)"
+            placeholder={t('category (optional)')}
             value={newCategory}
             onChange={(e) => setNewCategory(e.target.value)}
           />
           <button type="button" className="ls-mem-add-btn" onClick={submitAdd} disabled={!newHook.trim()}>
-            <Plus size={13} /> Add note
+            <Plus size={13} /> {t('Add note')}
           </button>
         </div>
       </div>
@@ -136,12 +135,12 @@ export const MemoryPanel: FC<MemoryPanelProps> = ({ notes, onAdd, onEdit, onDele
       <div className="ls-mem-list">
         {notes.length === 0 ? (
           <div className="ls-mem-empty">
-            No notes yet. Lisa adds them as you work, or add your own above.
+            {t('No notes yet. Lisa adds them as you work, or add your own above.')}
           </div>
         ) : (
           sortedCats.map((cat) => (
             <div key={cat} className="ls-mem-group">
-              <div className="ls-mem-group-head">{cat}</div>
+              <div className="ls-mem-group-head">{cat === 'misc' ? t('misc') : cat}</div>
               {groups.get(cat)!.map((n) => (
                 <div key={n.id} className="ls-mem-note">
                   {editingId === n.id ? (
@@ -150,24 +149,24 @@ export const MemoryPanel: FC<MemoryPanelProps> = ({ notes, onAdd, onEdit, onDele
                         className="ls-mem-input"
                         value={editHook}
                         onChange={(e) => setEditHook(e.target.value)}
-                        aria-label="Edit hook"
+                        aria-label={t('Edit hook')}
                       />
                       <textarea
                         className="ls-mem-textarea"
                         rows={2}
-                        placeholder="detail"
+                        placeholder={t('detail')}
                         value={editDetail}
                         onChange={(e) => setEditDetail(e.target.value)}
                       />
                       <div className="ls-mem-edit-actions">
                         <input
                           className="ls-mem-input ls-mem-input-cat"
-                          placeholder="category"
+                          placeholder={t('category')}
                           value={editCategory}
                           onChange={(e) => setEditCategory(e.target.value)}
                         />
                         <button type="button" className="ls-mem-mini" onClick={() => setEditingId(null)}>
-                          Cancel
+                          {t('Cancel')}
                         </button>
                         <button
                           type="button"
@@ -175,7 +174,7 @@ export const MemoryPanel: FC<MemoryPanelProps> = ({ notes, onAdd, onEdit, onDele
                           onClick={submitEdit}
                           disabled={!editHook.trim()}
                         >
-                          <Check size={11} /> Save
+                          <Check size={11} /> {t('Save')}
                         </button>
                       </div>
                     </div>
@@ -184,19 +183,19 @@ export const MemoryPanel: FC<MemoryPanelProps> = ({ notes, onAdd, onEdit, onDele
                       <div className="ls-mem-note-main">
                         <span className="ls-mem-note-hook">{n.hook}</span>
                         <span className={`ls-mem-src ls-mem-src-${n.source}`}>
-                          {n.source === 'lisa' ? 'Lisa' : 'you'}
+                          {n.source === 'lisa' ? 'Lisa' : t('you')}
                         </span>
                       </div>
                       {n.detail && <div className="ls-mem-note-detail">{n.detail}</div>}
                       <div className="ls-mem-note-actions">
-                        <button type="button" className="ls-mem-mini" onClick={() => startEdit(n)} title="Edit">
+                        <button type="button" className="ls-mem-mini" onClick={() => startEdit(n)} title={t('Edit')}>
                           <Pencil size={11} />
                         </button>
                         <button
                           type="button"
                           className="ls-mem-mini ls-mem-mini-danger"
                           onClick={() => onDelete(n.id)}
-                          title="Delete"
+                          title={t('Delete')}
                         >
                           <Trash2 size={11} />
                         </button>

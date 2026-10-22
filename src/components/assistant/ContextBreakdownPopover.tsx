@@ -1,5 +1,6 @@
 import { FC } from 'react';
 import { formatTokens } from './assistant-logic.js';
+import { t } from '../../i18n/index.js';
 
 export interface ContextBreakdown {
   corpus: number;
@@ -21,10 +22,10 @@ export const ContextBreakdownPopover: FC<{
   onClose: () => void;
 }> = ({ breakdown, budget, onClose }) => {
   const segs = [
-    { key: 'corpus', label: 'Corpus (API reference)', tokens: breakdown.corpus },
-    { key: 'memory', label: 'Memories', tokens: breakdown.memory },
-    { key: 'chat', label: 'This chat', tokens: breakdown.chat },
-    { key: 'attachments', label: 'Attachments', tokens: breakdown.attachments },
+    { key: 'corpus', label: t('Corpus (API reference)'), tokens: breakdown.corpus },
+    { key: 'memory', label: t('Memories'), tokens: breakdown.memory },
+    { key: 'chat', label: t('This chat'), tokens: breakdown.chat },
+    { key: 'attachments', label: t('Attachments'), tokens: breakdown.attachments },
   ].filter((s) => s.key !== 'attachments' || s.tokens > 0);
   const total = breakdown.corpus + breakdown.memory + breakdown.chat + breakdown.attachments;
   // Denominator: the budget normally, or the total when over budget (so the bar
@@ -32,10 +33,10 @@ export const ContextBreakdownPopover: FC<{
   const denom = Math.max(budget, total, 1);
   const free = Math.max(0, budget - total);
   return (
-    <div className="ls-asst-bd-popover" role="dialog" aria-label="Context breakdown">
+    <div className="ls-asst-bd-popover" role="dialog" aria-label={t('Context breakdown')}>
       <div className="ls-asst-bd-head">
-        <span className="ls-asst-bd-title">Context · ~{formatTokens(total)} / {formatTokens(budget)}</span>
-        <button type="button" className="ls-asst-bd-close" onClick={onClose} aria-label="Close breakdown">×</button>
+        <span className="ls-asst-bd-title">{t('Context · ~{total} / {budget}', { total: formatTokens(total), budget: formatTokens(budget) })}</span>
+        <button type="button" className="ls-asst-bd-close" onClick={onClose} aria-label={t('Close breakdown')}>×</button>
       </div>
       <div className="ls-asst-bd-bar">
         {segs.map((s) => (
@@ -59,15 +60,15 @@ export const ContextBreakdownPopover: FC<{
         ))}
         <li>
           <span className="ls-asst-bd-swatch ls-asst-bd-free" />
-          <span className="ls-asst-bd-label">Free</span>
+          <span className="ls-asst-bd-label">{t('Free')}</span>
           <span className="ls-asst-bd-tok">{formatTokens(free)}</span>
         </li>
       </ul>
       {total > budget && (
-        <p className="ls-asst-bd-over">Over budget — Lisa drops or compacts the oldest turns to fit.</p>
+        <p className="ls-asst-bd-over">{t('Over budget — Lisa drops or compacts the oldest turns to fit.')}</p>
       )}
       <p className="ls-asst-bd-note">
-        Estimates. Corpus is Lisa's fixed API knowledge — prompt-cached, so it costs little even though it occupies space.
+        {t("Estimates. Corpus is Lisa's fixed API knowledge — prompt-cached, so it costs little even though it occupies space.")}
       </p>
     </div>
   );
