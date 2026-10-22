@@ -262,4 +262,11 @@ export const KO_BACKEND: Readonly<Record<string, string>> = {
   'No overrides (all defaults inherited from active connection)': '덮어쓴 값 없음 (모두 활성 연결의 기본값을 따름)',
   'Tool iterations ceiling': '도구 반복 상한',
   '{count} per turn': '턴당 {count}회',
+  // ── assistant/consolidate-memory.ts (Lisa memory panel) ──
+  'Only {n} note — nothing worth consolidating yet.': '메모가 {n}개뿐이라 아직 정리할 게 없어요.',
+  'Only {n} notes — nothing worth consolidating yet.': '메모가 {n}개뿐이라 아직 정리할 게 없어요.',
+  'Consolidation request failed: {error}. Memory left unchanged.': '정리 요청에 실패했어요: {error}. 메모는 그대로예요.',
+  'The model did not return a usable note list — memory left unchanged.': '모델이 쓸 수 있는 메모 목록을 돌려주지 않았어요. 메모는 그대로예요.',
+  'Consolidation produced no valid notes — memory left unchanged.': '정리 결과에 올바른 메모가 없어요. 메모는 그대로예요.',
+  'Your memory changed during consolidation (a note was added or edited) — left unchanged. Try again.': '정리하는 동안 메모가 바뀌어서(추가 또는 편집) 그대로 두었어요. 다시 시도하세요.',
 };

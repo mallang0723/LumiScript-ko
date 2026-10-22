@@ -16,6 +16,7 @@
 declare const spindle: import('lumiverse-spindle-types').SpindleAPI;
 
 import { appendNote, loadNotes, commitNotesIfUnchanged, type MemoryNote } from '../engine/assistant-memory.js';
+import { t } from '../i18n/index.js';
 
 /** Below this, consolidation isn't worth a round-trip. */
 const MIN_NOTES_TO_CONSOLIDATE = 6;
@@ -31,7 +32,7 @@ export async function consolidateMemory(
 ): Promise<ConsolidateResult> {
   const notes = await loadNotes(userId);
   if (notes.length < MIN_NOTES_TO_CONSOLIDATE) {
-    return { ok: false, error: `Only ${notes.length} note${notes.length === 1 ? '' : 's'} — nothing worth consolidating yet.` };
+    return { ok: false, error: notes.length === 1 ? t('Only {n} note — nothing worth consolidating yet.', { n: notes.length }) : t('Only {n} notes — nothing worth consolidating yet.', { n: notes.length }) };
   }
 
   // Resolve provider/model from the connection (mirrors agent.ts — some
@@ -80,12 +81,12 @@ export async function consolidateMemory(
     };
     raw = await spindle.generate.raw(req as unknown as Parameters<typeof spindle.generate.raw>[0]);
   } catch (err) {
-    return { ok: false, error: `Consolidation request failed: ${err instanceof Error ? err.message : String(err)}. Memory left unchanged.` };
+    return { ok: false, error: t('Consolidation request failed: {error}. Memory left unchanged.', { error: err instanceof Error ? err.message : String(err) }) };
   }
 
   const parsed = parseNotesArray(extractContent(raw));
   if (!parsed) {
-    return { ok: false, error: 'The model did not return a usable note list — memory left unchanged.' };
+    return { ok: false, error: t('The model did not return a usable note list — memory left unchanged.') };
   }
 
   // Rebuild via appendNote: free id generation, hook truncation, and the
@@ -102,7 +103,7 @@ export async function consolidateMemory(
     rebuilt = r.notes;
   }
   if (rebuilt.length === 0) {
-    return { ok: false, error: 'Consolidation produced no valid notes — memory left unchanged.' };
+    return { ok: false, error: t('Consolidation produced no valid notes — memory left unchanged.') };
   }
 
   // G-04 — commit under the per-user write lock with a re-validate: if a
@@ -112,7 +113,7 @@ export async function consolidateMemory(
   // clobber that concurrent write with our stale rebuild.
   const committed = await commitNotesIfUnchanged(userId, notes, rebuilt);
   if (!committed) {
-    return { ok: false, error: 'Your memory changed during consolidation (a note was added or edited) — left unchanged. Try again.' };
+    return { ok: false, error: t('Your memory changed during consolidation (a note was added or edited) — left unchanged. Try again.') };
   }
   return { ok: true, before: notes.length, after: rebuilt.length };
 }
