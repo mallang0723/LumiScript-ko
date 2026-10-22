@@ -254,7 +254,7 @@ export const KO_BACKEND: Readonly<Record<string, string>> = {
   'LLM connections': 'LLM 연결',
   '{count} connection(s) · default: "{name}" ({model} via {provider})': '연결 {count}개 · 기본: "{name}" ({provider}의 {model})',
   '<no model>': '<모델 없음>',
-  '<no provider>': '<제공자 없음>',
+  '<no provider>': '<프로바이더 없음>',
   '{count} connection(s) · no default set': '연결 {count}개 · 기본 연결 없음',
   'No LLM connections configured — Lisa cannot generate responses': '설정된 LLM 연결이 없어요 — Lisa가 답변을 만들 수 없어요',
   'Generation defaults': '생성 기본값',

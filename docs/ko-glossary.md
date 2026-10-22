@@ -24,6 +24,7 @@
 
 | 영어 | 한국어 |
 |---|---|
+| provider (LLM·이미지·OAuth) | 프로바이더 (`제공자`로 쓰지 않음) |
 | extension / extensions | 확장 / 확장 기능 |
 | permission | 권한 |
 | connection | 연결 |

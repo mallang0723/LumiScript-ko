@@ -2,7 +2,7 @@
 
 `api.llm.*`는 스크립트가 사용자가 구성한 LLM 연결과 상호작용할 수 있는 네 가지 방법을 제공해요: 일반 텍스트 생성, 검증된 구조화된 JSON 생성, 도구 사용(tool-using) 생성, 그리고 모델을 호출하지 않고 프롬프트를 조립해 보는 모의 실행(dry-run) — 여기에 일반 텍스트 생성의 스트리밍 변형이 추가돼요. 5가지 기능 모두 `generation` 권한이 필요해요([`concepts/permissions.md`](../concepts/permissions.md) 참고).
 
-호스트가 `spindle.generate.raw()`를 감싸고 있으므로 모든 요청은 사용자가 선택한 연결 프로필을 통해 전달돼요. 스크립트는 제공자의 API 키를 보거나 엔드포인트를 직접 고를 필요가 없으며, 사용자가 OpenAI를 쓰는지, Anthropic을 쓰는지, 로컬 모델을 쓰는지 알 필요가 없어요. 메시지를 보내고 응답을 받기만 하면 돼요.
+호스트가 `spindle.generate.raw()`를 감싸고 있으므로 모든 요청은 사용자가 선택한 연결 프로필을 통해 전달돼요. 스크립트는 프로바이더의 API 키를 보거나 엔드포인트를 직접 고를 필요가 없으며, 사용자가 OpenAI를 쓰는지, Anthropic을 쓰는지, 로컬 모델을 쓰는지 알 필요가 없어요. 메시지를 보내고 응답을 받기만 하면 돼요.
 
 ## 네 가지 기본 기능과 의사결정 트리
 
@@ -78,7 +78,7 @@ type LlmMessagePart =
   | { type: 'tool_result'; tool_use_id: string; content: string;  is_error?: boolean };
 ```
 
-이미지와 오디오 파트는 base64로 인코딩된 `data`와 MIME 타입을 담아요. LLM이 첨부 이미지를 직접 확인해야 할 때 사용하세요(비전 지원 제공자 전용).
+이미지와 오디오 파트는 base64로 인코딩된 `data`와 MIME 타입을 담아요. LLM이 첨부 이미지를 직접 확인해야 할 때 사용하세요(비전 지원 프로바이더 전용).
 
 ```js
 const text = await api.llm.generate([
@@ -97,7 +97,7 @@ const text = await api.llm.generate([
 generateStream(messages: LLMMessage[], options?: LLMOptions): AsyncGenerator<StreamChunk, void, void>
 ```
 
-`generate`의 스트리밍 변형이에요. 제공자로부터 토큰 단위 청크가 도착할 때마다 이를 전달하는 비동기 이터레이터를 반환하며, 마지막에 전체 텍스트와 종료 이유, (제공자가 지원하는 경우) `usage` 토큰 사용량이 포함된 단 하나의 종단 `'done'` 청크를 전달해요.
+`generate`의 스트리밍 변형이에요. 프로바이더로부터 토큰 단위 청크가 도착할 때마다 이를 전달하는 비동기 이터레이터를 반환하며, 마지막에 전체 텍스트와 종료 이유, (프로바이더가 지원하는 경우) `usage` 토큰 사용량이 포함된 단 하나의 종단 `'done'` 청크를 전달해요.
 
 ```js
 let buffer = '';
@@ -117,13 +117,13 @@ type StreamChunk =
       type:          'done';
       content:       string;       // 전체 누적 텍스트
       reasoning?:    string;       // 전체 누적 생각 과정 (존재하는 경우)
-      finish_reason: string;       // 'stop' | 'length' | 'tool_calls' | 'content_filter' | 제공자 고유 값
+      finish_reason: string;       // 'stop' | 'length' | 'tool_calls' | 'content_filter' | 프로바이더 고유 값
       tool_calls?:   ToolCall[];   // finish_reason === 'tool_calls'일 때 설정됨
       usage?:        { prompt_tokens: number; completion_tokens: number; total_tokens: number };
     };
 ```
 
-세 가지 변형이 있으며 `type`으로 분기해요. `'token'` 청크는 화면에 보일 점진적인 내용 델타예요 — 이어 붙이면 스트리밍 텍스트가 돼요. `'reasoning'` 청크는 생각 모드 모델(DeepSeek 생각 모드, Anthropic 확장 생각 모드 등)의 점진적인 생각 과정(chain-of-thought) 델타예요(생각 모드가 없는 제공자는 건너뛰어요). 종단 `'done'` 청크는 생성이 성공적으로 완료되었을 때 정확히 한 번 발생해요.
+세 가지 변형이 있으며 `type`으로 분기해요. `'token'` 청크는 화면에 보일 점진적인 내용 델타예요 — 이어 붙이면 스트리밍 텍스트가 돼요. `'reasoning'` 청크는 생각 모드 모델(DeepSeek 생각 모드, Anthropic 확장 생각 모드 등)의 점진적인 생각 과정(chain-of-thought) 델타예요(생각 모드가 없는 프로바이더는 건너뛰어요). 종단 `'done'` 청크는 생성이 성공적으로 완료되었을 때 정확히 한 번 발생해요.
 
 필드 이름은 `LLMRawResult` 및 업스트림 DTO와 일치하도록 전체적으로 snake_case를 사용해요. `usage` 필드는 **스트리밍 전용**이에요 — 비스트리밍 `generate`, `generateStructured`, `generateWithTools`는 현재 토큰 사용량을 반환하지 않아요.
 
@@ -180,7 +180,7 @@ try {
 
 ### 오류는 첫 번째 반복에서 발생해요
 
-권한 거부, 알 수 없는 제공자, 연결 미발견 등의 검증 실패는 함수 호출 위치에서 즉시 던져지지 않고, 이터레이터에 대한 첫 번째 `await`(일반적으로 `for await`의 첫 반복)에서 발생해요. `generateStream`이 반환하는 비동기 제너레이터는 가벼운 핸들이며, 실제 검증과 연결 조회, HTTP 요청은 소비자가 청크를 당겨오기 시작할 때 일어나기 때문이에요. 스트림 도중의 오류와 초기 검증 오류를 구분하고 싶다면 루프를 `try / catch`로 감싸세요:
+권한 거부, 알 수 없는 프로바이더, 연결 미발견 등의 검증 실패는 함수 호출 위치에서 즉시 던져지지 않고, 이터레이터에 대한 첫 번째 `await`(일반적으로 `for await`의 첫 반복)에서 발생해요. `generateStream`이 반환하는 비동기 제너레이터는 가벼운 핸들이며, 실제 검증과 연결 조회, HTTP 요청은 소비자가 청크를 당겨오기 시작할 때 일어나기 때문이에요. 스트림 도중의 오류와 초기 검증 오류를 구분하고 싶다면 루프를 `try / catch`로 감싸세요:
 
 ```js
 try {
@@ -189,7 +189,7 @@ try {
   }
 } catch (err) {
   console.error('stream failed:', err.message);
-  // PERMISSION_DENIED, 알 수 없는 제공자, 연결 미발견,
+  // PERMISSION_DENIED, 알 수 없는 프로바이더, 연결 미발견,
   // 업스트림 HTTP 실패, AbortError 등이 모두 여기로 들어와요.
 }
 ```
@@ -210,8 +210,8 @@ LLM의 역할이 구조화된 데이터(채점, 추출, 분류, 분석 등)를 �
 
 `schema` 인수에는 두 가지 형태를 전달할 수 있어요:
 
-- **Zod 스키마** (`.parse(unknown): T` 메서드를 가진 객체 — `ZodLike<T>` 구조적 인터페이스). 엔진은 Zod의 `toJSONSchema()`를 통해 스키마를 분석하여 제공자의 네이티브 구조화 출력 모드(OpenAI structured output, Anthropic `output_config`, Google `responseMimeType` 등)로 전달해 모델의 출력을 제한하는 동시에, 반환된 응답을 동일한 Zod 객체로 검증해요.
-- **일반 JSON Schema 객체** (`Record<string, unknown>`). Zod 검증 단계는 건너뛰지만 제공자의 네이티브 구조화 출력 모드로 스키마는 계속 전달해요. Zod로 표현하기 까다로운 스키마 형태이거나 검증 오버헤드를 건너뛰고 싶을 때 사용하세요.
+- **Zod 스키마** (`.parse(unknown): T` 메서드를 가진 객체 — `ZodLike<T>` 구조적 인터페이스). 엔진은 Zod의 `toJSONSchema()`를 통해 스키마를 분석하여 프로바이더의 네이티브 구조화 출력 모드(OpenAI structured output, Anthropic `output_config`, Google `responseMimeType` 등)로 전달해 모델의 출력을 제한하는 동시에, 반환된 응답을 동일한 Zod 객체로 검증해요.
+- **일반 JSON Schema 객체** (`Record<string, unknown>`). Zod 검증 단계는 건너뛰지만 프로바이더의 네이티브 구조화 출력 모드로 스키마는 계속 전달해요. Zod로 표현하기 까다로운 스키마 형태이거나 검증 오버헤드를 건너뛰고 싶을 때 사용하세요.
 
 <a id="schema-validation--errors-not-retries"></a>
 
@@ -267,7 +267,7 @@ tools: Array<{
 }>
 ```
 
-`tools` 배열은 평면적인 목록이에요(제공자별 `{ type: 'function', function: {...} }` 같은 래퍼 레이어가 없으며, 엔진이 알아서 포맷을 맞춰 줘요).
+`tools` 배열은 평면적인 목록이에요(프로바이더별 `{ type: 'function', function: {...} }` 같은 래퍼 레이어가 없으며, 엔진이 알아서 포맷을 맞춰 줘요).
 
 ```js
 const tools = [
@@ -301,7 +301,7 @@ interface LLMRawResult {
 interface ToolCall {
   name:    string;
   args:    Record<string, unknown>;
-  call_id: string;  // 제공자 call id 또는 합성 UUID
+  call_id: string;  // 프로바이더 call id 또는 합성 UUID
 }
 ```
 
@@ -376,7 +376,7 @@ await api.llm.generateWithTools(messages, tools, {
 });
 ```
 
-Mistral이 아닌 다른 제공자는 이 플래그를 지원하지 않으면 그냥 무시해요.
+Mistral이 아닌 다른 프로바이더는 이 플래그를 지원하지 않으면 그냥 무시해요.
 
 ## `dryRun(options?)` — 호출 없이 조립 결과 확인하기
 
@@ -435,7 +435,7 @@ interface LLMOptions {
 2. `connectionId`가 지정되지 않았을 때 **`connectionName`**을 확인해요 — 대소문자를 구분하지 않고 저장된 프로필 이름을 검색해요(일치하는 것이 없으면 오류 발생).
 3. **기본 프로필** — `is_default: true`로 표시된 연결을 사용하며, 기본값이 지정되어 있지 않다면 첫 번째 사용 가능한 프로필을 써요.
 
-`provider`와 `model`은 결정된 프로필 위에 **추가로 덮어쓰는 재정의값**이에요. 따라서 `{ connectionId: 'X', model: 'gpt-4o' }`를 전달하면 연결 X의 제공자와 API 키를 그대로 쓰면서 이번 호출에서만 모델을 `gpt-4o`로 강제해요. 연결의 인증 정보는 유지하면서 프로필의 기본 모델과 다른 모델을 쓰고 싶을 때 활용하세요.
+`provider`와 `model`은 결정된 프로필 위에 **추가로 덮어쓰는 재정의값**이에요. 따라서 `{ connectionId: 'X', model: 'gpt-4o' }`를 전달하면 연결 X의 프로바이더와 API 키를 그대로 쓰면서 이번 호출에서만 모델을 `gpt-4o`로 강제해요. 연결의 인증 정보는 유지하면서 프로필의 기본 모델과 다른 모델을 쓰고 싶을 때 활용하세요.
 
 ### 샘플러 재정의
 
@@ -597,13 +597,13 @@ for (let step = 0; step < 5; step++) {
 
 - **인자 4개 형태의 스키마는 최종 응답만 검증해요.** `tool_calls`가 반환되는 중간 단계의 도구 인수에는 적용되지 않아요(도구 인수는 해당 도구의 `parameters` JSON Schema로 규정돼요). 도구 호출 없이 최종 답변이 도착했을 때 비로소 스키마 검증이 이루어져요.
 
-- **스트리밍은 오직 `generateStream`으로만 가능해요.** rc.9에서 추가된 비동기 제너레이터 [`generateStream`](#generatestreammessages-options--streaming-text)이 유일한 스트리밍 API예요. 제공자 스타일의 이름인 `stream` / `quietStream` / `rawStream`이나 다른 메서드의 `AsyncIterable` 반환 타입은 존재하지 않아요. `generateStructured`와 `generateWithTools`는 부분적인 구조화/도구 루프 결과가 쓸모없으므로 스트리밍 변형이 없어요. 점진적인 텍스트가 필요하면 `generateStream`을, 그 밖의 경우에는 전체 응답 메서드를 쓰세요.
+- **스트리밍은 오직 `generateStream`으로만 가능해요.** rc.9에서 추가된 비동기 제너레이터 [`generateStream`](#generatestreammessages-options--streaming-text)이 유일한 스트리밍 API예요. 프로바이더 스타일의 이름인 `stream` / `quietStream` / `rawStream`이나 다른 메서드의 `AsyncIterable` 반환 타입은 존재하지 않아요. `generateStructured`와 `generateWithTools`는 부분적인 구조화/도구 루프 결과가 쓸모없으므로 스트리밍 변형이 없어요. 점진적인 텍스트가 필요하면 `generateStream`을, 그 밖의 경우에는 전체 응답 메서드를 쓰세요.
 
 - **검증 실패 시 동작 차이에 유의하세요.** `generateStructured`는 스키마 검증 실패 시 동기적으로 오류를 던지지만, `generateWithTools`의 인자 4개 형태는 검증에 실패하면 조용히 원시 파싱 값으로 대체돼요 — 위의 **스키마 유효성 검사 — 재시도 없는 오류 발생** 절에서 다뤘어요. 필요한 곳에서는 직접 재시도 로직을 감싸 쓰고, 도구 루프 경로에서는 오류가 던져질 것이라고 가정하지 마세요.
 
 - **`LLMMessage`에 `role: 'tool'`은 없어요.** 도구 호출 요청과 결과는 모두 `content` 안의 `tool_use` / `tool_result` 파트로 들어가요. `{ role: 'tool', content: '...' }` 형태로 넣으면 거부돼요.
 
-- **Mistral에서 구조화된 출력과 도구를 함께 쓰는 조합은 제공자가 거부해요.** 엔진이 이 상황을 감지하면 도구 호출을 유지하기 위해 `response_format`을 조용히 제외해요. Mistral에서 둘 다 엄격하게 써야 한다면 두 번의 독립된 호출로 나누어 처리해야 해요.
+- **Mistral에서 구조화된 출력과 도구를 함께 쓰는 조합은 프로바이더가 거부해요.** 엔진이 이 상황을 감지하면 도구 호출을 유지하기 위해 `response_format`을 조용히 제외해요. Mistral에서 둘 다 엄격하게 써야 한다면 두 번의 독립된 호출로 나누어 처리해야 해요.
 
 - **토큰 예산 초과에 주의하세요.** 큰 시스템 프롬프트에 긴 대화 기록, JSON Schema 구조화 출력까지 더해지면 모델의 컨텍스트 창을 쉽게 초과할 수 있어요. 대화 도중 컨텍스트 넘침 오류가 발생하지 않도록 개발 중 `dryRun()`으로 실제 조립된 토큰 총량을 미리 확인해 두세요.
 

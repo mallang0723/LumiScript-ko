@@ -152,13 +152,13 @@ export const KO_PANEL: Readonly<Record<string, string>> = {
     '턴당 출력 토큰 상한이에요. 낮추면 응답 길이가 제한되고, 긴 답변이 필요하면 올리세요. 비워 두면 연결 프리셋 값을 써요.',
   'Parallel tool calls': '병렬 도구 호출',
   'When unchecked, Lisa requests serialised (one-at-a-time) tool calls. Most providers handle parallel calls fine; uncheck only for Mistral and other providers that choke on parallelism.':
-    '끄면 Lisa가 도구 호출을 한 번에 하나씩 요청해요. 대부분의 제공자는 병렬 호출을 잘 처리해요. Mistral처럼 병렬 호출에 문제가 있는 제공자에서만 끄세요.',
+    '끄면 Lisa가 도구 호출을 한 번에 하나씩 요청해요. 대부분의 프로바이더는 병렬 호출을 잘 처리해요. Mistral처럼 병렬 호출에 문제가 있는 프로바이더에서만 끄세요.',
   'Auto-compact context': '컨텍스트 자동 압축',
   'When on, Lisa automatically summarizes the older part of a long conversation once its context fills past ~85%, so the chat can keep going without overflowing. The summary runs as a background LLM call on the turn that crosses the line. Turn off to compact only manually (the “Compact now” button in chat still works).':
     '켜면 긴 대화의 컨텍스트가 ~85%를 넘을 때 Lisa가 오래된 부분을 자동으로 요약해서, 넘치지 않고 대화를 이어갈 수 있어요. 요약은 그 선을 넘는 턴에서 백그라운드 LLM 호출로 실행돼요. 끄면 수동으로만 압축해요(채팅의 “지금 압축” 버튼은 계속 동작해요).',
   'Cache system prompt': '시스템 프롬프트 캐싱',
   "When on, Lisa marks the stable part of her system prompt (her persona + the API cheat-sheet) for prompt caching, so caching providers (Anthropic and others) read it from cache instead of re-billing ~44K tokens every turn — a large cost/latency saving. Harmless on providers that don't cache. Turn off only if a provider misbehaves with cache markers.":
-    '켜면 Lisa가 시스템 프롬프트의 고정 부분(페르소나 + API 요약표)에 프롬프트 캐싱 표시를 달아, 캐싱을 지원하는 제공자(Anthropic 등)가 매 턴 ~44K 토큰을 다시 청구하지 않고 캐시에서 읽게 해요 — 비용과 지연이 크게 줄어요. 캐싱하지 않는 제공자에서는 해가 없어요. 제공자가 캐시 표시 때문에 오작동할 때만 끄세요.',
+    '켜면 Lisa가 시스템 프롬프트의 고정 부분(페르소나 + API 요약표)에 프롬프트 캐싱 표시를 달아, 캐싱을 지원하는 프로바이더(Anthropic 등)가 매 턴 ~44K 토큰을 다시 청구하지 않고 캐시에서 읽게 해요 — 비용과 지연이 크게 줄어요. 캐싱하지 않는 프로바이더에서는 해가 없어요. 프로바이더가 캐시 표시 때문에 오작동할 때만 끄세요.',
   'Conversation management': '대화 관리',
   'Clear all threads': '모든 대화 지우기',
   'Permanently delete every Lisa thread and its conversation history. Confirms before acting.':

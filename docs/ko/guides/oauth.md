@@ -1,8 +1,8 @@
 # OAuth 콜백
 
-`api.oauth.*`는 Spindle이 LumiScript 확장에 제공하는 유일한 수신(inbound) HTTP 훅이에요. 특히 OAuth 방식의 인증 흐름을 위해 마련되었어요 — 사용자가 서드파티 서비스(GitHub, Discord, 자체 호스팅 API 등)에 대한 접근 권한을 스크립트에 부여하고, 제공자가 사용자의 브라우저를 스크립트가 가로채야 하는 특정 URL로 리디렉션하는 경우에 사용해요.
+`api.oauth.*`는 Spindle이 LumiScript 확장에 제공하는 유일한 수신(inbound) HTTP 훅이에요. 특히 OAuth 방식의 인증 흐름을 위해 마련되었어요 — 사용자가 서드파티 서비스(GitHub, Discord, 자체 호스팅 API 등)에 대한 접근 권한을 스크립트에 부여하고, 프로바이더가 사용자의 브라우저를 스크립트가 가로채야 하는 특정 URL로 리디렉션하는 경우에 사용해요.
 
-세 가지 메서드를 제공해요: 제공자에 등록할 URL을 확인하는 `getCallbackUrl()`, CSRF 방지용 논스를 발급하는 `createState()`, 리디렉션 요청이 도달했을 때 실행될 핸들러를 등록하는 `onCallback(handler)`. 그 외의 모든 작업(인증 URL 생성, 토큰 교환, 저장, 갱신 등)은 스크립트가 직접 처리해요. 호스트는 훅을 제공하고 CSRF 상태를 검증해 주며, 스크립트가 전체 흐름을 조율하는 구조예요.
+세 가지 메서드를 제공해요: 프로바이더에 등록할 URL을 확인하는 `getCallbackUrl()`, CSRF 방지용 논스를 발급하는 `createState()`, 리디렉션 요청이 도달했을 때 실행될 핸들러를 등록하는 `onCallback(handler)`. 그 외의 모든 작업(인증 URL 생성, 토큰 교환, 저장, 갱신 등)은 스크립트가 직접 처리해요. 호스트는 훅을 제공하고 CSRF 상태를 검증해 주며, 스크립트가 전체 흐름을 조율하는 구조예요.
 
 `oauth` 권한이 필요해요. 세 메서드 모두 권한이 없으면 `Error: PERMISSION_DENIED:oauth — grant this permission to use this API` 오류가 발생해요.
 
@@ -14,14 +14,14 @@ OAuth 2.0 권한 부여 코드(authorization code) 흐름은 8단계로 진행�
 |---|---|---|
 | 1 — 인증 URL 구성 | `client_id`, `redirect_uri`, `scope`, `state`를 포함한 URL 생성 | **스크립트** |
 | 2 — 브라우저 사용자 유도 | 사용자를 인증 URL로 이동하도록 안내 | **스크립트** |
-| 3 — 권한 승인 | 사용자가 제공자 페이지에서 "승인(Authorize)" 클릭 | 제공자 + 사용자 |
-| 4 — 리디렉션 | 제공자가 `<redirect_uri>?code=…&state=…`로 리디렉션 | 제공자 |
+| 3 — 권한 승인 | 사용자가 프로바이더 페이지에서 "승인(Authorize)" 클릭 | 프로바이더 + 사용자 |
+| 4 — 리디렉션 | 프로바이더가 `<redirect_uri>?code=…&state=…`로 리디렉션 | 프로바이더 |
 | 5 — State 검증 | 호스트가 `state`가 최근 발급된 논스와 일치하는지 확인 | **호스트** |
 | 6 — 핸들러 디스패치 | 호스트가 쿼리 파라미터와 함께 콜백 핸들러를 호출 | **호스트** + 스크립트 |
-| 7 — 토큰 교환 | `code`를 포함해 제공자의 토큰 엔드포인트로 POST 요청 | **스크립트** (`api.utils.http` 사용) |
+| 7 — 토큰 교환 | `code`를 포함해 프로바이더의 토큰 엔드포인트로 POST 요청 | **스크립트** (`api.utils.http` 사용) |
 | 8 — 저장 및 갱신 | 토큰을 안전하게 암호화 저장하고 만료 전 갱신 | **스크립트** (`api.enclave` 사용) |
 
-호스트의 역할은 수신 HTTP 훅 제공, CSRF state 검증, 핸들러 호출로 명확하게 한정되어 있어요. 토큰 교환과 저장, 갱신 방식은 제공자마다 요구하는 파라미터와 만료 정책이 다르므로 스크립트가 직접 작성해야 해요.
+호스트의 역할은 수신 HTTP 훅 제공, CSRF state 검증, 핸들러 호출로 명확하게 한정되어 있어요. 토큰 교환과 저장, 갱신 방식은 프로바이더마다 요구하는 파라미터와 만료 정책이 다르므로 스크립트가 직접 작성해야 해요.
 
 ## 빠른 시작
 
@@ -121,9 +121,9 @@ onCallback(
 ): () => void
 ```
 
-- **`handler`** — 제공자가 콜백 URL로 리디렉션했을 때 호출되는 비동기 함수예요. 핸들러가 실행되는 시점에는 호스트가 **이미 CSRF state 검증을 마친 상태**예요(일치하지 않는 state 요청은 핸들러에 도달하기 전에 차단됨).
+- **`handler`** — 프로바이더가 콜백 URL로 리디렉션했을 때 호출되는 비동기 함수예요. 핸들러가 실행되는 시점에는 호스트가 **이미 CSRF state 검증을 마친 상태**예요(일치하지 않는 state 요청은 핸들러에 도달하기 전에 차단됨).
 - **`params`** — 리디렉션 시 전달된 쿼리 파라미터예요. 성공 시에는 `{ code, state }`, 오류 시에는 `{ error, error_description?, state }`가 들어와요.
-- **반환값** — 선택 사항이에요. `{ html: '...' }`를 반환하면 브라우저 탭에 커스텀 HTML 페이지를 렌더링해요. 아무것도 반환하지 않으면(`void`) 호스트의 기본 완료 화면이 표시돼요. 제공자는 몇 초 안에 리디렉션 응답이 끝나기를 기대하므로 핸들러는 신속하게 반환되어야 해요.
+- **반환값** — 선택 사항이에요. `{ html: '...' }`를 반환하면 브라우저 탭에 커스텀 HTML 페이지를 렌더링해요. 아무것도 반환하지 않으면(`void`) 호스트의 기본 완료 화면이 표시돼요. 프로바이더는 몇 초 안에 리디렉션 응답이 끝나기를 기대하므로 핸들러는 신속하게 반환되어야 해요.
 
 ```js
 const unsub = api.oauth.onCallback(async (params) => {
@@ -150,7 +150,7 @@ const path = await api.oauth.getCallbackUrl();
 
 확장 단위로 고정돼요. 모든 스크립트가 같은 콜백 URL을 공유해요. 경로는 불투명한 값으로 다루세요. 정확한 형식은 호스트가 정해요.
 
-제공자가 `redirect_uri`로 요구하는 **절대 URL**을 만들려면 Lumiverse 오리진을 앞에 붙이세요:
+프로바이더가 `redirect_uri`로 요구하는 **절대 URL**을 만들려면 Lumiverse 오리진을 앞에 붙이세요:
 
 ```js
 const callbackUrl  = await api.oauth.getCallbackUrl();
@@ -162,7 +162,7 @@ const absoluteUrl  = LUMIVERSE_ORIGIN + callbackUrl;
 
 - 직접 상수로 적어 둬요(개인 스크립트라면 괜찮아요).
 - 프런트엔드 상호작용에서 `window.location.origin`을 가져오는 일회성 UI 명령으로 `api.scriptStorage`에 한 번 저장해 둬요.
-- 토큰 교환을 할 때 `api.utils.http` 헤더에서 읽어요(일부 제공자는 값을 되돌려 줘요).
+- 토큰 교환을 할 때 `api.utils.http` 헤더에서 읽어요(일부 프로바이더는 값을 되돌려 줘요).
 
 ### `createState()`
 
@@ -173,7 +173,7 @@ const state = await api.oauth.createState();
 // → "f4a8c1b2..."
 ```
 
-호스트가 이 논스를 기억하고 있다가 **콜백 도달 시점에 검증**해요. 제공자가 돌려준 `state` 파라미터가 최근 발급된 논스와 일치하지 않으면 핸들러를 호출하지 않고 요청을 거부해요.
+호스트가 이 논스를 기억하고 있다가 **콜백 도달 시점에 검증**해요. 프로바이더가 돌려준 `state` 파라미터가 최근 발급된 논스와 일치하지 않으면 핸들러를 호출하지 않고 요청을 거부해요.
 
 이 단계는 꼭 필요해요. state 검증이 없으면 공격자가 *자기* 계정으로 얻은 코드를 담아 사용자의 브라우저가 콜백 URL을 호출하게 만들 수 있고, 그러면 사용자가 공격자의 세션에 묶여 버려요. 인증 URL에는 항상 `state=<값>`을 넣으세요.
 
@@ -186,7 +186,7 @@ state를 직접 검증할 필요는 없어요. 핸들러가 실행될 때는 호
 
 ## `api.utils.http`와 함께 토큰 교환하기
 
-토큰 교환은 제공자의 토큰 엔드포인트로 보내는 POST 요청이에요. `cors_proxy` 권한이 필요해요([`concepts/permissions.md`](../concepts/permissions.md)).
+토큰 교환은 프로바이더의 토큰 엔드포인트로 보내는 POST 요청이에요. `cors_proxy` 권한이 필요해요([`concepts/permissions.md`](../concepts/permissions.md)).
 
 ```js
 const body = new URLSearchParams({
@@ -211,8 +211,8 @@ const tokens = JSON.parse(resp.body);
 
 주의할 점 두 가지예요.
 
-- **`redirect_uri`가 정확히 일치해야 해요.** 대부분의 제공자는 토큰 교환의 `redirect_uri`가 인증 URL에 넣었던 값과 바이트 단위로 같기를 요구해요. 두 곳에서 같은 `LUMIVERSE_ORIGIN + callbackUrl` 값을 쓰세요.
-- **Content-Type이 중요해요.** 제공자마다 달라요. GitHub, Discord, Google은 토큰 엔드포인트에 `application/x-www-form-urlencoded`를 쓰고, Spotify, Twitch 같은 일부 서비스는 JSON도 받아요. 제공자 문서를 확인하세요.
+- **`redirect_uri`가 정확히 일치해야 해요.** 대부분의 프로바이더는 토큰 교환의 `redirect_uri`가 인증 URL에 넣었던 값과 바이트 단위로 같기를 요구해요. 두 곳에서 같은 `LUMIVERSE_ORIGIN + callbackUrl` 값을 쓰세요.
+- **Content-Type이 중요해요.** 프로바이더마다 달라요. GitHub, Discord, Google은 토큰 엔드포인트에 `application/x-www-form-urlencoded`를 쓰고, Spotify, Twitch 같은 일부 서비스는 JSON도 받아요. 프로바이더 문서를 확인하세요.
 
 <a id="pairing-with-apienclave"></a>
 
@@ -255,14 +255,14 @@ async function refreshAccessToken() {
 
   await api.enclave.put('github.access_token', next.access_token);
   await api.enclave.put('github.expires_at',   String(Date.now() + next.expires_in * 1000));
-  if (next.refresh_token) {                                          // 일부 제공자는 리프레시 토큰을 순환 갱신해요
+  if (next.refresh_token) {                                          // 일부 프로바이더는 리프레시 토큰을 순환 갱신해요
     await api.enclave.put('github.refresh_token', next.refresh_token);
   }
   return next.access_token;
 }
 ```
 
-일부 제공자는 순환 리프레시 토큰을 발급해요(갱신 응답에 이전 토큰을 대체하는 *새* `refresh_token`이 들어와요). 조건문 `await api.enclave.put('github.refresh_token', ...)`이 순환하는 제공자와 순환하지 않는 제공자를 모두 처리해요.
+일부 프로바이더는 순환 리프레시 토큰을 발급해요(갱신 응답에 이전 토큰을 대체하는 *새* `refresh_token`이 들어와요). 조건문 `await api.enclave.put('github.refresh_token', ...)`이 순환하는 프로바이더와 순환하지 않는 프로바이더를 모두 처리해요.
 
 <a id="public-clients--pkce"></a>
 
@@ -270,9 +270,9 @@ async function refreshAccessToken() {
 
 스크립트 소스에 `client_secret`을 적어 두는 것은 **절대 공유하지 않을 개인용 스크립트에서만 안전**해요. 다른 사용자에게 배포하거나 공유할 스크립트라면 시크릿이 전혀 필요 없는 OAuth 2.0 PKCE 흐름을 사용하세요:
 
-1. 제공자 콘솔에서 앱을 공개 클라이언트(Public Client)로 등록해요 (`client_secret` 미발급).
+1. 프로바이더 콘솔에서 앱을 공개 클라이언트(Public Client)로 등록해요 (`client_secret` 미발급).
 2. 인증 URL에 `code_challenge`(임의의 검증자 문자열의 SHA-256 해시)와 `code_challenge_method=S256`을 포함해요.
-3. 토큰 교환 시 원래의 `code_verifier`를 전달하면 제공자가 SHA-256 해시 일치 여부를 검증해요.
+3. 토큰 교환 시 원래의 `code_verifier`를 전달하면 프로바이더가 SHA-256 해시 일치 여부를 검증해요.
 
 ```js
 // 인증 URL 생성:
@@ -326,7 +326,7 @@ await api.enclave.delete('pending_verifier');                        // 임시 �
 | 워커 하위 프로세스 재시작 | **해제됨** — 등록 상태는 워커에 있으므로 재시작 시 지워져요. |
 | 다른 `onCallback` 호출 | **대체됨** — 마지막 등록이 우선하며 충돌 경고가 기록돼요. |
 
-생각해 둘 항목은 "워커 재시작 시 해제됨"이에요. 사용자가 "승인"을 누른 뒤 제공자가 리디렉션하기 전에 워커 하위 프로세스가 재시작되면, 콜백을 받을 핸들러가 없어서 사용자에게 알 수 없는 기본 오류 페이지가 보여요.
+생각해 둘 항목은 "워커 재시작 시 해제됨"이에요. 사용자가 "승인"을 누른 뒤 프로바이더가 리디렉션하기 전에 워커 하위 프로세스가 재시작되면, 콜백을 받을 핸들러가 없어서 사용자에게 알 수 없는 기본 오류 페이지가 보여요.
 
 대비책은 두 가지예요.
 
@@ -354,7 +354,7 @@ no longer fire.
 
 <a id="multi-provider-extensions"></a>
 
-### 다중 제공자 지원 패턴
+### 다중 프로바이더 지원 패턴
 
 하나의 확장 안에서 여러 서비스(예: GitHub과 Discord 둘 다)의 OAuth를 지원해야 한다면, 단일 핸들러 안에서 분기하도록 작성하세요. 인증 URL을 열기 전에 어떤 흐름인지 저장소에 적어 두고 콜백에서 이를 읽어 분기하는 패턴이 가장 깔끔해요:
 
@@ -381,11 +381,11 @@ api.oauth.onCallback(async (params) => {
 });
 ```
 
-`state` 논스 값 자체에 제공자 이름을 임의로 이어 붙이지 마세요. 호스트의 state 검증은 `createState()`가 반환한 값과의 엄격한 일치를 검사하므로 검증에 실패하게 돼요.
+`state` 논스 값 자체에 프로바이더 이름을 임의로 이어 붙이지 마세요. 호스트의 state 검증은 `createState()`가 반환한 값과의 엄격한 일치를 검사하므로 검증에 실패하게 돼요.
 
 ## 흔한 실수
 
-- **인증 URL과 토큰 교환의 `redirect_uri` 불일치.** 대부분의 제공자는 `redirect_uri`가 처음 인증 URL에 넣었던 값과 바이트 단위로 같지 않으면 토큰 요청을 거부해요. `LUMIVERSE_ORIGIN + (await api.oauth.getCallbackUrl())`로 한 번만 만들어 두 곳에서 같은 문자열을 쓰세요.
+- **인증 URL과 토큰 교환의 `redirect_uri` 불일치.** 대부분의 프로바이더는 `redirect_uri`가 처음 인증 URL에 넣었던 값과 바이트 단위로 같지 않으면 토큰 요청을 거부해요. `LUMIVERSE_ORIGIN + (await api.oauth.getCallbackUrl())`로 한 번만 만들어 두 곳에서 같은 문자열을 쓰세요.
 
 - **핸들러는 리디렉션이 아니라 `html` 페이지를 반환해요.** 핸들러 안에서 사용자를 Lumiverse로 되돌려 보내려 하지 말고, 탭을 닫으라고 안내하는 HTML 페이지를 반환하세요. Lumiverse UI를 다시 여는 일은 따로 처리할 수 있어요(예: UI 스크립트가 반응하는 브로드캐스트 이벤트).
 
@@ -393,9 +393,9 @@ api.oauth.onCallback(async (params) => {
 
 - **CSRF state 생략.** "내부용"이나 "개인용" 스크립트라면 `createState()`를 건너뛰고 싶을 수 있어요. 하지 마세요. 비용은 거의 없고(흐름을 시작할 때 `await api.oauth.createState()` 한 번) 실패하면 계정 탈취로 이어져요. 항상 `state=…`를 넘기세요.
 
-- **(PKCE) 인증과 콜백 사이에 `code_verifier`를 잃어버림.** verifier는 사용자가 제공자를 다녀오는 동안 살아 있어야 해요. `api.enclave`나 `api.scriptStorage`에 보관하세요. 두 이벤트 사이에 워커가 재시작될 수 있으니 `globalThis`에 의존하지 마세요.
+- **(PKCE) 인증과 콜백 사이에 `code_verifier`를 잃어버림.** verifier는 사용자가 프로바이더를 다녀오는 동안 살아 있어야 해요. `api.enclave`나 `api.scriptStorage`에 보관하세요. 두 이벤트 사이에 워커가 재시작될 수 있으니 `globalThis`에 의존하지 마세요.
 
-- **핸들러 안의 오래 걸리는 토큰 교환.** 제공자는 리디렉션 응답을 길어야 몇 초 기다려요. 토큰 교환이 더 걸리면(느린 제공자, 재시도 로직) 핸들러가 반환하기 전에 사용자의 브라우저가 포기할 수 있어요. 핸들러 작업은 짧게 하세요. 코드를 교환하고 토큰을 저장한 뒤 HTML 응답을 반환하면 돼요. 오래 걸리는 후속 작업은 브로드캐스트 구독자에게 넘기세요.
+- **핸들러 안의 오래 걸리는 토큰 교환.** 프로바이더는 리디렉션 응답을 길어야 몇 초 기다려요. 토큰 교환이 더 걸리면(느린 프로바이더, 재시도 로직) 핸들러가 반환하기 전에 사용자의 브라우저가 포기할 수 있어요. 핸들러 작업은 짧게 하세요. 코드를 교환하고 토큰을 저장한 뒤 HTML 응답을 반환하면 돼요. 오래 걸리는 후속 작업은 브로드캐스트 구독자에게 넘기세요.
 
 - **만료 시 갱신 없음.** 오래 이어지는 세션은 액세스 토큰을 만료 시 갱신하는 래퍼(위의 `getValidAccessToken` 패턴)로 감싸야 해요. 없으면 토큰이 처음 만료될 때 스크립트가 조용히 멈춰요.
 

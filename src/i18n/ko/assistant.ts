@@ -92,7 +92,7 @@ export const KO_ASSISTANT: Readonly<Record<string, string>> = {
     '지금 압축 — 오래된 메시지를 요약해 컨텍스트를 비우고, 최근 메시지는 그대로 둬요. 대화가 길어졌을 때 가장 유용해요. 컨텍스트가 거의 차면 자동으로도 실행돼요.',
   'Compact conversation context': '대화 컨텍스트 압축',
   "Estimated client-side via spindle.tokens.countText because the provider didn't surface streaming usage. Treat numbers as approximate.":
-    '제공자가 스트리밍 사용량을 알려 주지 않아 spindle.tokens.countText로 클라이언트에서 추정했어요. 숫자는 대략적인 값이에요.',
+    '프로바이더가 스트리밍 사용량을 알려 주지 않아 spindle.tokens.countText로 클라이언트에서 추정했어요. 숫자는 대략적인 값이에요.',
   'in': '입력',
   'out · this turn': '출력 · 이번 턴',
   'Includes at least one estimated turn — treat as approximate.': '추정한 턴이 하나 이상 포함돼 있어요 — 대략적인 값이에요.',

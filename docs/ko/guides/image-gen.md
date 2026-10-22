@@ -1,11 +1,11 @@
 # 이미지 생성
 
-`api.imageGen.*`는 사용자가 설정한 연결 프로필을 기반으로 이미지 생성을 실행하고, base64 데이터 URL과 함께 저장을 위한 고유 `imageId`를 반환해 줘요. 또한 제공자(provider), 연결, 모델 메타데이터를 제공하므로 스크립트 코드에 하드코딩하지 않고도 동적인 파라미터 UI를 구성할 수 있어요. 이전 `imageId`를 제공자별 파라미터에 전달하면 img2img 및 인페인팅(inpainting)도 지원해요.
+`api.imageGen.*`는 사용자가 설정한 연결 프로필을 기반으로 이미지 생성을 실행하고, base64 데이터 URL과 함께 저장을 위한 고유 `imageId`를 반환해 줘요. 또한 프로바이더(provider), 연결, 모델 메타데이터를 제공하므로 스크립트 코드에 하드코딩하지 않고도 동적인 파라미터 UI를 구성할 수 있어요. 이전 `imageId`를 프로바이더별 파라미터에 전달하면 img2img 및 인페인팅(inpainting)도 지원해요.
 
 5가지 메서드와 1가지 권한:
 
 - **`generate(input)`** — 이미지 생성을 실행하고, 이미지 바이트 데이터 및 영구 저장 핸들을 반환해요.
-- **`getProviders()`** — 사용 가능한 이미지 제공자 목록과 기능 스키마를 열거해요.
+- **`getProviders()`** — 사용 가능한 이미지 프로바이더 목록과 기능 스키마를 열거해요.
 - **`listConnections()`** / **`getConnection(id)`** — 사용자의 연결 프로필 목록을 조회해요(API 키는 노출되지 않아요).
 - **`getModels(connectionId)`** — 특정 연결에서 사용 가능한 모델 목록을 조회해요(네트워크 요청이 발생할 수 있어요).
 
@@ -13,11 +13,11 @@
 
 ## 핵심 개념
 
-LumiScript는 자체 이미지 생성 백엔드를 내장하고 있지 않아요. Lumiverse가 이미 훌륭한 백엔드를 갖추고 있기 때문이에요. Lumiverse에는 제공자 레지스트리(Stable Diffusion, ComfyUI, DALL-E, Imagen, Midjourney 프록시 등)와 사용자별 연결 프로필(API URL + 키 + 기본 모델 + 기본 파라미터), 그리고 선택된 연결의 제공자로 요청을 라우팅해 주는 통합 `generate(request)` 엔트리포인트가 있어요. `api.imageGen.*`는 이를 가볍게 감싼 것이며, 스크립트는 사용자가 어떤 제공자를 설정해 두었는지 구체적으로 알 필요 없이 이미지 생성을 실행할 수 있어요.
+LumiScript는 자체 이미지 생성 백엔드를 내장하고 있지 않아요. Lumiverse가 이미 훌륭한 백엔드를 갖추고 있기 때문이에요. Lumiverse에는 프로바이더 레지스트리(Stable Diffusion, ComfyUI, DALL-E, Imagen, Midjourney 프록시 등)와 사용자별 연결 프로필(API URL + 키 + 기본 모델 + 기본 파라미터), 그리고 선택된 연결의 프로바이더로 요청을 라우팅해 주는 통합 `generate(request)` 엔트리포인트가 있어요. `api.imageGen.*`는 이를 가볍게 감싼 것이며, 스크립트는 사용자가 어떤 프로바이더를 설정해 두었는지 구체적으로 알 필요 없이 이미지 생성을 실행할 수 있어요.
 
 따라서 스크립트 작성자는 `await api.imageGen.generate({ prompt: '...' })` 한 줄만 작성하면 돼요. 사용자가 로컬 ComfyUI를 쓰든, 클라우드 엔드포인트의 Stable Diffusion을 쓰든, OpenAI 이미지 계정을 쓰든 상관없이 알아서 동작해요. 사용자의 기본 연결이 자동으로 사용되므로, 연결을 강제로 지정해야 할 특별한 이유가 있을 때만 `connectionId`를 전달하면 돼요.
 
-나머지 네 가지 메서드는 설정을 탐색하기 위한 것이에요. 특정 연결을 고르는 선택기나 모델 드롭다운을 만들고, 생성을 실행하기 전에 제공자가 선언한 스키마에 맞춰 `parameters`의 유효성을 검사하고 싶을 때 사용하세요.
+나머지 네 가지 메서드는 설정을 탐색하기 위한 것이에요. 특정 연결을 고르는 선택기나 모델 드롭다운을 만들고, 생성을 실행하기 전에 프로바이더가 선언한 스키마에 맞춰 `parameters`의 유효성을 검사하고 싶을 때 사용하세요.
 
 ## 빠른 시작
 
@@ -44,7 +44,7 @@ await api.chat.sendMessage(
 );
 ```
 
-이것이 전체 흐름이에요. 사용자의 기본 연결이 제공자와 모델, 기본 파라미터 세트를 결정하고, 스크립트는 프롬프트와 재정의할 파라미터만 제공해요. `result.imageId`는 영구 저장을 위한 정식 핸들이며(아래 [다른 API와의 연동](#integration-with-the-rest-of-the-api) 참고), 채팅이 다시 로드되어도 유지되고 이미지 핸들을 받는 다른 모든 `api.*`의 입력값으로 쓰여요.
+이것이 전체 흐름이에요. 사용자의 기본 연결이 프로바이더와 모델, 기본 파라미터 세트를 결정하고, 스크립트는 프롬프트와 재정의할 파라미터만 제공해요. `result.imageId`는 영구 저장을 위한 정식 핸들이며(아래 [다른 API와의 연동](#integration-with-the-rest-of-the-api) 참고), 채팅이 다시 로드되어도 유지되고 이미지 핸들을 받는 다른 모든 `api.*`의 입력값으로 쓰여요.
 
 ## API 구성
 
@@ -64,10 +64,10 @@ interface ImageGenAPI {
 interface ImageGenInput {
   prompt:             string;          // 필수.
   connectionId?:      string;          // 기본값: 사용자의 기본 연결.
-  negativePrompt?:    string;          // 제공자 지원 여부에 따름.
+  negativePrompt?:    string;          // 프로바이더 지원 여부에 따름.
   model?:             string;          // 연결의 기본 모델을 재정의.
   parameters?:        Record<string, unknown>;
-                                       // 제공자별 파라미터 (width/height/steps/cfg_scale/input_images/...).
+                                       // 프로바이더별 파라미터 (width/height/steps/cfg_scale/input_images/...).
                                        // 호스트 측에서 연결의 `defaultParameters`와 병합돼요.
   ownerCharacterId?:  string;          // 저장 결과에 캐릭터 소유권 태그 부여.
   ownerChatId?:       string;          // 저장 결과에 채팅 소유권 태그 부여.
@@ -76,7 +76,7 @@ interface ImageGenInput {
 interface ImageGenResult {
   imageDataUrl:  string;               // base64 데이터 URL — <img src>에 바로 할당 가능.
   model:         string;               // 실제로 실행된 모델 (input.model과 다를 수 있음).
-  provider:      string;               // 생성을 처리한 제공자 ID.
+  provider:      string;               // 생성을 처리한 프로바이더 ID.
   imageId?:      string;               // 영구 저장 핸들 (저장에 성공한 경우 존재).
   imageUrl?:     string;               // 저장된 이미지의 인증 불필요 공개 URL.
 }
@@ -115,15 +115,15 @@ const result = await api.imageGen.generate({
 
 `listConnections`는 절대 API 키를 노출하지 않아요. `hasApiKey: boolean` 필드만 포함되어 반환되며 키는 호스트 외부로 나가지 않아요. 스크립트에서 연결을 *실제로 사용할 수 있는지*(키가 입력되어 있는지) 확인해야 한다면 `hasApiKey`를 검사하고, 키가 없으면 부드럽게 대체 동작으로 넘어가도록 처리하세요.
 
-`getModels`의 동작은 제공자에 따라 달라져요:
+`getModels`의 동작은 프로바이더에 따라 달라져요:
 
-- **`modelListStyle: 'static'`** 제공자 (보통 로컬 호스팅): 제공자가 선언한 `capabilities.staticModels`에서 가져와요. 네트워크 요청 없이 빠르고 가벼워요.
-- **`modelListStyle: 'dynamic'`** 제공자 (대부분의 클라우드 API): 매 호출 시 업스트림 API에서 실시간으로 가져와요. 본문 안에서 여러 번 호출해야 한다면 결과를 캐싱해 두세요.
-- **`modelListStyle: 'google'`**: 제공자 특화 동작이 있는 동적 방식이에요. 캐싱 관점에서는 동적 방식으로 취급하세요.
+- **`modelListStyle: 'static'`** 프로바이더 (보통 로컬 호스팅): 프로바이더가 선언한 `capabilities.staticModels`에서 가져와요. 네트워크 요청 없이 빠르고 가벼워요.
+- **`modelListStyle: 'dynamic'`** 프로바이더 (대부분의 클라우드 API): 매 호출 시 업스트림 API에서 실시간으로 가져와요. 본문 안에서 여러 번 호출해야 한다면 결과를 캐싱해 두세요.
+- **`modelListStyle: 'google'`**: 프로바이더 특화 동작이 있는 동적 방식이에요. 캐싱 관점에서는 동적 방식으로 취급하세요.
 
-## 제공자 기능 스키마
+## 프로바이더 기능 스키마
 
-`getProviders()`는 제공자별 특성을 하드코딩하지 않고도 파라미터 UI를 구성할 수 있게 해 주는 스키마 정보예요:
+`getProviders()`는 프로바이더별 특성을 하드코딩하지 않고도 파라미터 UI를 구성할 수 있게 해 주는 스키마 정보예요:
 
 ```js
 const providers = await api.imageGen.getProviders();
@@ -157,11 +157,11 @@ interface ImageGenParameterSchema {
 }
 ```
 
-6가지 `type` 값으로 현실적인 파라미터 UI를 모두 구성할 수 있어요: 숫자 범위(슬라이더), 불리언(토글), 자유 텍스트(입력창), 선택지(셀렉트 박스), 그리고 **이미지 배열**(img2img / 인페인팅 / 참조 이미지용 — 아래 설명 참고). `group?` 필드는 UI에서 관련 파라미터들을 제목("샘플러", "출력 크기", "ControlNet" 등) 아래로 묶어 주기 위한 힌트예요. 그룹 정보를 제공하는 제공자는 논리적으로 묶어 표시하고, 생략된 제공자는 평면적인 목록으로 렌더링하면 돼요.
+6가지 `type` 값으로 현실적인 파라미터 UI를 모두 구성할 수 있어요: 숫자 범위(슬라이더), 불리언(토글), 자유 텍스트(입력창), 선택지(셀렉트 박스), 그리고 **이미지 배열**(img2img / 인페인팅 / 참조 이미지용 — 아래 설명 참고). `group?` 필드는 UI에서 관련 파라미터들을 제목("샘플러", "출력 크기", "ControlNet" 등) 아래로 묶어 주기 위한 힌트예요. 그룹 정보를 제공하는 프로바이더는 논리적으로 묶어 표시하고, 생략된 프로바이더는 평면적인 목록으로 렌더링하면 돼요.
 
 ## img2img와 인페인팅
 
-이미지 입력을 지원하는 제공자는 `image_array` 타입의 파라미터를 선언해요. 사용 규칙: 해당 파라미터의 값으로 `imageId` 문자열 배열을 전달하세요. 호스트가 제공자에게 요청을 보내기 전에 저장소에서 각 `imageId`의 실제 이미지를 찾아 전달해 줘요.
+이미지 입력을 지원하는 프로바이더는 `image_array` 타입의 파라미터를 선언해요. 사용 규칙: 해당 파라미터의 값으로 `imageId` 문자열 배열을 전달하세요. 호스트가 프로바이더에게 요청을 보내기 전에 저장소에서 각 `imageId`의 실제 이미지를 찾아 전달해 줘요.
 
 ```js
 // 먼저 베이스 이미지를 생성해요.
@@ -173,7 +173,7 @@ const base = await api.imageGen.generate({
 const variant = await api.imageGen.generate({
   prompt:     'The same cat, but wearing a wizard hat',
   parameters: {
-    input_images: [base.imageId],   // 제공자별 파라미터 이름
+    input_images: [base.imageId],   // 프로바이더별 파라미터 이름
     denoising_strength: 0.55,
   },
 });
@@ -184,7 +184,7 @@ await api.chat.sendMessage(
 );
 ```
 
-파라미터 이름(이 예제의 `input_images`)은 제공자마다 달라요. 어떤 제공자가 어떤 이름을 쓰는지 확인하려면 `getProviders()`를 호출해 `capabilities.parameters` 안의 `image_array` 타입 항목을 확인하세요. 흔히 쓰이는 이름으로는 `input_images`, `init_images`, `reference_image`, `mask_image` 등이 있어요.
+파라미터 이름(이 예제의 `input_images`)은 프로바이더마다 달라요. 어떤 프로바이더가 어떤 이름을 쓰는지 확인하려면 `getProviders()`를 호출해 `capabilities.parameters` 안의 `image_array` 타입 항목을 확인하세요. 흔히 쓰이는 이름으로는 `input_images`, `init_images`, `reference_image`, `mask_image` 등이 있어요.
 
 입력 이미지는 어떤 `imageId` 출처든 상관없어요 — 이전 `api.imageGen.generate` 결과, `api.images.upload` 호출(예: `api.utils.http`로 가져온 바이트 업로드), 또는 저장소에 이미 있는 기존 이미지(예: 캐릭터 아바타) 모두 가능해요. 호스트 입장에서는 똑같은 `imageId`일 뿐이에요.
 
@@ -265,9 +265,9 @@ const transformed = await api.images.upload({
 
 - **권한 거부** — `Error: PERMISSION_DENIED:image_gen — grant this permission to use this API`. LumiScript 확장에 `image_gen` 권한이 부여되지 않은 경우예요.
 - **알 수 없는 연결** — 지정한 `connectionId`를 찾을 수 없는 경우. 사용자 입력을 받을 때는 먼저 `listConnections()`로 확인하세요.
-- **API 키 누락** — 클라우드 제공자인데 연결 프로필의 `hasApiKey: false`인 경우. Lumiverse 설정에서 API 키를 입력하라는 안내를 사용자에게 보여 주세요.
-- **제공자 거부** — 업스트림 API가 오류(호출 빈도 초과, 콘텐츠 필터 차단, 잘못된 파라미터 등)를 반환한 경우. 오류 메시지에 가능한 경우 업스트림 제공자의 텍스트가 포함돼요.
-- **네트워크 오류** — 클라우드 제공자 호출 시 발생. 일시적 오류로 취급하고 재시도를 제안하세요.
+- **API 키 누락** — 클라우드 프로바이더인데 연결 프로필의 `hasApiKey: false`인 경우. Lumiverse 설정에서 API 키를 입력하라는 안내를 사용자에게 보여 주세요.
+- **프로바이더 거부** — 업스트림 API가 오류(호출 빈도 초과, 콘텐츠 필터 차단, 잘못된 파라미터 등)를 반환한 경우. 오류 메시지에 가능한 경우 업스트림 프로바이더의 텍스트가 포함돼요.
+- **네트워크 오류** — 클라우드 프로바이더 호출 시 발생. 일시적 오류로 취급하고 재시도를 제안하세요.
 
 안정적인 예외 처리 패턴:
 
@@ -300,10 +300,10 @@ try {
 | 이미 가지고 있는 바이트 업로드 (HTTP 다운로드, 외부 base64 등) | `api.images.upload` / `uploadFromDataUrl` | `images` |
 | 저장소에 이미 있는 이미지 바이트 읽기 | `api.images.get` | `images` |
 | 저장된 이미지 삭제 | `api.images.delete` | `images` |
-| 사용 가능한 제공자 / 연결 / 모델 탐색 | `api.imageGen.getProviders` / `listConnections` / `getModels` | `image_gen` |
+| 사용 가능한 프로바이더 / 연결 / 모델 탐색 | `api.imageGen.getProviders` / `listConnections` / `getModels` | `image_gen` |
 
 생성과 후처리를 모두 수행하는 스크립트는 일반적으로 두 권한이 모두 필요해요. 이미 저장된 이미지만 읽어 활용하는 스크립트(예: 기존 캐릭터 아바타로부터 테마 색상 추출)는 `images` 권한만 있으면 돼요.
 
 ## 버전 참고 사항
 
-**v1.0.0-rc.5+**에서 구현되었어요. 5개 메서드는 rc.5 이후 안정적으로 유지되고 있어요. 기반이 되는 제공자 레지스트리(사용 가능한 제공자 종류)는 호스트 측에 있으므로 LumiScript 버전과 별개로 업데이트될 수 있어요. `getProviders()`는 호출 시점에 호스트가 인식하고 있는 최신 정보를 반영해요.
+**v1.0.0-rc.5+**에서 구현되었어요. 5개 메서드는 rc.5 이후 안정적으로 유지되고 있어요. 기반이 되는 프로바이더 레지스트리(사용 가능한 프로바이더 종류)는 호스트 측에 있으므로 LumiScript 버전과 별개로 업데이트될 수 있어요. `getProviders()`는 호출 시점에 호스트가 인식하고 있는 최신 정보를 반영해요.

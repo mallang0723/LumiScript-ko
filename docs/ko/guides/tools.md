@@ -93,7 +93,7 @@ interface ToolDefinition {
 |---|---|
 | `display_name` | Lumiverse Council UI에서 멤버에게 도구를 할당할 때 표시되는 사람이 읽을 수 있는 레이블이에요. 여기서는 snake_case 이름을 반복하지 마세요. |
 | `description` | LLM 대상 설명문 — 모델은 이 설명을 읽고 도구를 언제 호출할지 결정해요. 구현 내용("난수를 생성합니다")보다는 구체적인 **트리거 조건**("장면에서 무작위 결과가 필요할 때 사용하세요")을 명시하세요. |
-| `parameters` | 인자 객체를 위한 JSON Schema예요. 표준 형식 — `{ type: 'object', properties: { … }, required: [ … ] }`을 사용해요. Lumiverse는 이를 AI 제공자의 네이티브 함수 호출 인터페이스로 전달해요. 도구에 인자가 없는 경우 생략하세요. |
+| `parameters` | 인자 객체를 위한 JSON Schema예요. 표준 형식 — `{ type: 'object', properties: { … }, required: [ … ] }`을 사용해요. Lumiverse는 이를 AI 프로바이더의 네이티브 함수 호출 인터페이스로 전달해요. 도구에 인자가 없는 경우 생략하세요. |
 | `council_eligible` | Council UI에서 도구를 할당할 수 있도록 하려면 `true`로 설정하세요. 기본값은 `false`예요 — 인라인 함수 호출에만 유용한 도구로 Council 선택기 목록을 어지럽히지 않도록 하기 위함이에요. |
 
 <a id="the-handler-signature"></a>

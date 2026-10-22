@@ -26,7 +26,7 @@ for (const c of conns) {
   preset_id,            // 바인딩된 생성 프리셋 ID (없으면 null)
   is_default,           // boolean
   has_api_key,          // boolean — API 키가 저장되어 있는지 여부
-  metadata,             // 제공자별 메타데이터 맵
+  metadata,             // 프로바이더별 메타데이터 맵
   reasoning_bindings,   // ConnectionReasoningBindings | null — { settings, promptBias? }
   created_at, updated_at,
 }
@@ -38,7 +38,7 @@ for (const c of conns) {
 
 ## 읽기 전용으로 설계된 이유
 
-이 네임스페이스에는 `create`, `update`, `delete` 같은 변경 메서드가 없어요. 연결 프로필은 외부 제공자의 인증 자격 증명을 담고 있으므로 오직 사용자 본인만 소유하며 Lumiverse 설정 화면을 통해서만 수정할 수 있어요. 스크립트는 어떤 연결이 존재하는지 확인하고 거기로 생성을 라우팅할 수는 있지만, 연결을 새로 만들거나 설정을 변조할 수는 없어요. (만약 *사용자를 연결 설정 화면으로 안내*하고 싶다면 탐색 API인 `api.ui.openSettings('connections')`를 호출하세요. [UI 탐색](ui-navigation.md) 참고.)
+이 네임스페이스에는 `create`, `update`, `delete` 같은 변경 메서드가 없어요. 연결 프로필은 외부 프로바이더의 인증 자격 증명을 담고 있으므로 오직 사용자 본인만 소유하며 Lumiverse 설정 화면을 통해서만 수정할 수 있어요. 스크립트는 어떤 연결이 존재하는지 확인하고 거기로 생성을 라우팅할 수는 있지만, 연결을 새로 만들거나 설정을 변조할 수는 없어요. (만약 *사용자를 연결 설정 화면으로 안내*하고 싶다면 탐색 API인 `api.ui.openSettings('connections')`를 호출하세요. [UI 탐색](ui-navigation.md) 참고.)
 
 ## 원하는 연결로 생성 요청 라우팅하기
 

@@ -128,7 +128,7 @@ console.log(answer);
 
 - **`generateWithTools`는 루프가 아니에요.** 가장 흔히 하는 오해예요. 1회 호출 = 1회 왕복이에요. (4번째 인자로 최종 스키마를 받는 형태도 루프를 돌지는 않으며, 스키마 불일치 시 예외를 던지는 `generateStructured`와 달리 검증되지 않은 원시 내용을 *조용히* 반환해요. [4인자 형태 스펙](../guides/llm.md#generatewithtoolsmessages-tools-options-schema--tool-using-generation) 참고).
 - **`tool_result`의 `content`는 반드시 문자열이어야 해요.** 구조화된 데이터라면 직접 `JSON.stringify(obj)`로 문자열화하고, 시스템 프롬프트에서 모델에게 어떤 형태의 JSON이 반환되는지 알려주세요.
-- **`tool_result` 전에 `tool_use` 턴을 추가하는 것을 잊지 마세요.** 이를 건너뛰면 모델이 혼란스러워하며 일부 AI 제공자는 불일치한 대화 이력이라며 요청을 거부해요. 항상 어시스턴트의 `tool_use` 메시지를 먼저 push한 뒤 결과를 push하세요.
+- **`tool_result` 전에 `tool_use` 턴을 추가하는 것을 잊지 마세요.** 이를 건너뛰면 모델이 혼란스러워하며 일부 AI 프로바이더는 불일치한 대화 이력이라며 요청을 거부해요. 항상 어시스턴트의 `tool_use` 메시지를 먼저 push한 뒤 결과를 push하세요.
 - **디스패치 루프 내의 순차 실행 vs 병렬 실행.** 위의 예제에서는 각 도구가 순차적으로 실행돼요. 도구들이 서로 독립적이고 느리다면 `Promise.all`로 병렬화하세요 — 단, 결과를 push할 때 `call_id`의 순서가 꼬이지 않도록 주의하세요.
 
 ## 관련 항목
