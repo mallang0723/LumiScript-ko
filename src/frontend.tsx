@@ -21,6 +21,7 @@ import { installAppMountHandler } from './app-mount-handler.js';
 import { installDrawerTabHandler } from './drawer-tab-handler.js';
 import { setHostComponents } from './host-ui.js';
 import { t } from './i18n/index.js';
+import { LOCALE_CSS } from './i18n/locale-css.js';
 
 // ─── LumiScript Frontend ──────────────────────────────────────────────────
 // Runs in the browser via dynamic import.
@@ -61,7 +62,7 @@ export function setup(ctx: SpindleFrontendContext) {
   if (typeof ctx.deferReady === 'function') ctx.deferReady();
 
   // ─── CSS ────────────────────────────────────────────────────────────────
-  const removeStyle = ctx.dom.addStyle(PANEL_CSS);
+  const removeStyle = ctx.dom.addStyle(PANEL_CSS + LOCALE_CSS);
   cleanups.push(removeStyle);
 
   // ─── Backend message multiplexer ─────────────────────────────────────
