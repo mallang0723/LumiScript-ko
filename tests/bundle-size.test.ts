@@ -20,7 +20,10 @@
 import { test, expect } from 'bun:test';
 
 const BUDGETS: Record<string, number> = {
-  'dist/backend.js':       1_350_000,
+  // LumiScript-ko: the Korean build bundles the whole UI catalog (src/i18n/ko/*,
+  // ~140 KB of UTF-8) into the backend too. Post-catalog size ~1,368,306; bumped
+  // from 1_350_000 with the same ~15% headroom.
+  'dist/backend.js':       1_550_000,
   'dist/frontend.js':      1_900_000,
   // #11 P1 — the script-runner bundle now embeds the QuickJS-WASM singlefile
   // variant (@jitl/quickjs-singlefile-mjs-release-sync, ~1.39 MB of base64
