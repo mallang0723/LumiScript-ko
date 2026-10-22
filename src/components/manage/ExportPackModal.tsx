@@ -21,6 +21,8 @@ import { Download } from 'lucide-react';
 import type { Script } from '../../types/script.js';
 import { ConfirmDialog } from '../common/ConfirmDialog.js';
 import { ScriptPickerList } from '../cardscripts/ScriptPickerList.js';
+import { t } from '../../i18n/index.js';
+import { tx } from '../../i18n/react.js';
 
 const TEXT = 'rgb(222,223,230)';
 const MUTED = 'rgba(222,223,230,0.6)';
@@ -59,49 +61,53 @@ export const ExportPackModal: FC<Props> = ({ scripts, onExport, onCancel }) => {
 
   const confirm = (): void => {
     const name = packName.trim();
-    if (selected.size === 0) { setError('Select at least one script to export.'); return; }
-    if (!name) { setError('Enter a pack name.'); return; }
+    if (selected.size === 0) { setError(t('Select at least one script to export.')); return; }
+    if (!name) { setError(t('Enter a pack name.')); return; }
     onExport(scripts.filter((s) => selected.has(s.id)), name);
   };
 
-  const confirmLabel = selected.size > 0
-    ? `Export ${selected.size} script${selected.size === 1 ? '' : 's'}`
-    : 'Export';
+  const confirmLabel = selected.size === 0
+    ? t('Export')
+    : selected.size === 1
+      ? t('Export {n} script', { n: selected.size })
+      : t('Export {n} scripts', { n: selected.size });
 
   return (
     <ConfirmDialog
-      title="Export scripts as pack"
+      title={t('Export scripts as pack')}
       confirmLabel={confirmLabel}
       confirmIcon={<Download size={12} />}
-      cancelLabel="Cancel"
+      cancelLabel={t('Cancel')}
       wide
       onConfirm={confirm}
       onCancel={onCancel}
     >
       <p style={noteStyle}>
-        Choose the scripts to include, then download a shareable <b>.lumiscript.zip</b> pack. Scripts install
-        {' '}<b>disabled</b> when the pack is imported.
+        {tx('Choose the scripts to include, then download a shareable {file} pack. Scripts install {disabled} when the pack is imported.', {
+          file: <b>.lumiscript.zip</b>,
+          disabled: <b>{t('disabled')}</b>,
+        })}
       </p>
 
-      <div className="ls-prompt-label">Pack name</div>
+      <div className="ls-prompt-label">{t('Pack name')}</div>
       <input
         className="ls-prompt-input"
         type="text"
         value={packName}
         placeholder="my-scripts"
-        aria-label="Pack name"
+        aria-label={t('Pack name')}
         onChange={(e) => { setPackName(e.target.value); if (error) setError(null); }}
         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); confirm(); } }}
       />
 
       <div style={sectionLabel}>
-        <span>Scripts ({selected.size}/{scripts.length} selected)</span>
+        <span>{t('Scripts ({selected}/{total} selected)', { selected: selected.size, total: scripts.length })}</span>
         {scripts.length > 0 ? (
-          <button type="button" onClick={toggleAll} style={linkBtn}>{allSelected ? 'Clear' : 'Select all'}</button>
+          <button type="button" onClick={toggleAll} style={linkBtn}>{allSelected ? t('Clear') : t('Select all')}</button>
         ) : null}
       </div>
       {scripts.length === 0 ? (
-        <div style={{ ...noteStyle, marginBottom: 0 }}>No scripts to export.</div>
+        <div style={{ ...noteStyle, marginBottom: 0 }}>{t('No scripts to export.')}</div>
       ) : (
         <ScriptPickerList scripts={scripts} selected={selected} onToggle={toggle} />
       )}

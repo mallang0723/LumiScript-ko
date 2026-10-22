@@ -1,6 +1,7 @@
 import { FC, useRef, useEffect, useState } from 'react';
 import { Terminal, Copy, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import type { ConsoleEntry } from '../../types/script.js';
+import { t } from '../../i18n/index.js';
 
 interface ScriptConsoleProps {
   entries: ConsoleEntry[];
@@ -42,12 +43,16 @@ export const ScriptConsole: FC<ScriptConsoleProps> = ({ entries, isRunning, onCl
       <div className="ls-console-header" onClick={() => setCollapsed(c => !c)}>
         <Terminal size={12} style={{ color: 'var(--lumiverse-text-muted)', flexShrink: 0 }} />
         <span className="ls-console-title">
-          Console{isRunning ? ' — running…' : entries.length > 0 ? ` (${entries.length})` : ''}
+          {isRunning
+            ? t('Console — running…')
+            : entries.length > 0
+              ? t('Console ({n})', { n: entries.length })
+              : t('Console')}
         </span>
         <button
           className="ls-icon-btn"
           onClick={e => { e.stopPropagation(); handleCopy(); }}
-          title="Copy output"
+          title={t('Copy output')}
           disabled={entries.length === 0}
         >
           <Copy size={11} />
@@ -55,7 +60,7 @@ export const ScriptConsole: FC<ScriptConsoleProps> = ({ entries, isRunning, onCl
         <button
           className="ls-icon-btn"
           onClick={e => { e.stopPropagation(); onClear(); }}
-          title="Clear console"
+          title={t('Clear console')}
           disabled={entries.length === 0}
         >
           <Trash2 size={11} />
@@ -70,7 +75,7 @@ export const ScriptConsole: FC<ScriptConsoleProps> = ({ entries, isRunning, onCl
         <div className="ls-console-output" ref={outputRef}>
           {entries.length === 0 ? (
             <div className="ls-console-empty">
-              {isRunning ? 'Running…' : 'No output yet. Click Run to execute the script.'}
+              {isRunning ? t('Running…') : t('No output yet. Click Run to execute the script.')}
             </div>
           ) : (
             entries.map((entry, i) => (

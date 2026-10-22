@@ -7,6 +7,7 @@ import type { ActiveContext } from './BindingsSection.js';
 import type { ExecutionDot } from './ScriptListItem.js';
 import { ScriptList } from './ScriptList.js';
 import { ScriptEditor } from './ScriptEditor.js';
+import { t } from '../../i18n/index.js';
 
 interface ScriptExecInfo {
   dot: ExecutionDot;
@@ -81,9 +82,9 @@ export const ScriptModal: FC<ScriptModalProps> = ({
         <div className="ls-modal-header">
           <span className="ls-modal-title">
             <Terminal size={15} style={{ color: 'var(--lumiverse-accent)' }} />
-            Script Manager
+            {t('Script Manager')}
           </span>
-          <button className="ls-modal-close" onClick={onClose} title="Close (Esc)">
+          <button className="ls-modal-close" onClick={onClose} title={t('Close (Esc)')}>
             <X size={16} />
           </button>
         </div>
@@ -120,7 +121,7 @@ export const ScriptModal: FC<ScriptModalProps> = ({
             ) : (
               <div className="ls-placeholder">
                 <Terminal size={32} style={{ color: 'var(--lumiverse-border)' }} />
-                <p>Select a script from the left to edit it</p>
+                <p>{t('Select a script from the left to edit it')}</p>
               </div>
             )}
           </div>

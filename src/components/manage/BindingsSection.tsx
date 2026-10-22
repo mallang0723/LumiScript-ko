@@ -1,6 +1,7 @@
 import { FC } from 'react';
 import { Link2, UserPlus, MessageSquarePlus, X } from 'lucide-react';
 import type { ScriptBindingEntry } from '../../types/script.js';
+import { t } from '../../i18n/index.js';
 
 export interface ActiveContext {
   characterId: string | null;
@@ -42,7 +43,7 @@ export const BindingsSection: FC<BindingsSectionProps> = ({
         <Link2 size={11} style={{ color: 'var(--lumiverse-text-muted)', flexShrink: 0 }} />
 
         {bindings.length === 0 ? (
-          <span className="ls-bindings-global">Runs globally</span>
+          <span className="ls-bindings-global">{t('Runs globally')}</span>
         ) : (
           bindings.map((b, i) => (
             <span key={i} className="ls-binding-chip">
@@ -52,7 +53,7 @@ export const BindingsSection: FC<BindingsSectionProps> = ({
               <span style={{ maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {b.displayName}
               </span>
-              <button className="ls-chip-remove" onClick={() => onRemove(i)} title="Remove binding">
+              <button className="ls-chip-remove" onClick={() => onRemove(i)} title={t('Remove binding')}>
                 <X size={9} />
               </button>
             </span>
@@ -63,19 +64,19 @@ export const BindingsSection: FC<BindingsSectionProps> = ({
           className="ls-bindings-add"
           onClick={handleAddCharacter}
           disabled={!activeContext.characterId}
-          title={activeContext.characterId ? 'Bind to current character' : 'Open a chat first'}
+          title={activeContext.characterId ? t('Bind to current character') : t('Open a chat first')}
         >
           <UserPlus size={10} />
-          +char
+          {t('+char')}
         </button>
         <button
           className="ls-bindings-add"
           onClick={handleAddChat}
           disabled={!activeContext.chatId}
-          title={activeContext.chatId ? 'Bind to current chat' : 'Open a chat first'}
+          title={activeContext.chatId ? t('Bind to current chat') : t('Open a chat first')}
         >
           <MessageSquarePlus size={10} />
-          +chat
+          {t('+chat')}
         </button>
       </div>
     </div>

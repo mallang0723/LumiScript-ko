@@ -10,6 +10,8 @@ import { LUMISCRIPT_DEFS } from '../../types/editor-lib.js';
 import { ReferenceTab } from '../reference/ReferenceTab.js';
 import { dispatchOpenAssistant } from '../assistant/openAssistant.js';
 import { PromptDialog } from '../common/PromptDialog.js';
+import { t } from '../../i18n/index.js';
+import { tx } from '../../i18n/react.js';
 
 // Register the LumiScript ambient type definitions with Monaco's JavaScript
 // language service once — subsequent editor mounts reuse the existing registration.
@@ -324,31 +326,31 @@ export const ScriptEditor: FC<ScriptEditorProps> = ({
           <span
             className="ls-editor-name"
             onClick={() => setRenaming(true)}
-            title="Click to rename"
+            title={t('Click to rename')}
             style={{ cursor: 'text' }}
           >
             {script.name}
           </span>
         )}
 
-        {unsaved && <span className="ls-editor-unsaved" title="Unsaved changes" />}
+        {unsaved && <span className="ls-editor-unsaved" title={t('Unsaved changes')} />}
 
         {/* View mode toggle */}
         <button
           className={`ls-tab-pill${viewMode === 'code' ? ' ls-active' : ''}`}
           onClick={() => setViewMode('code')}
-          title="Code editor"
+          title={t('Code editor')}
         >
           <Code2 size={10} style={{ display: 'inline', marginRight: 3 }} />
-          Code
+          {t('Code')}
         </button>
         <button
           className={`ls-tab-pill${viewMode === 'docs' ? ' ls-active' : ''}`}
           onClick={() => setViewMode('docs')}
-          title="API reference"
+          title={t('API reference')}
         >
           <BookOpen size={10} style={{ display: 'inline', marginRight: 3 }} />
-          Docs
+          {t('Docs')}
         </button>
 
         {/* v0.30.x — open the in-app code assistant (persona: Lisa) directly
@@ -365,8 +367,8 @@ export const ScriptEditor: FC<ScriptEditorProps> = ({
           className="ls-btn"
           style={{ borderColor: 'var(--lumiverse-accent)' }}
           onClick={() => dispatchOpenAssistant()}
-          title="Ask Lisa about LumiScript"
-          aria-label="Ask Lisa about LumiScript"
+          title={t('Ask Lisa about LumiScript')}
+          aria-label={t('Ask Lisa about LumiScript')}
         >
           <MessageCircle size={15} />
           Lisa
@@ -385,18 +387,18 @@ export const ScriptEditor: FC<ScriptEditorProps> = ({
             className="ls-btn"
             style={{ borderColor: 'var(--lumiverse-accent)' }}
             onClick={() => sendToBackend({ type: 'reload_script', id: script.id })}
-            title="Reload script — re-fire the body to refresh handler closures. Works for any enabled trigger script regardless of directives."
-            aria-label="Reload script"
+            title={t('Reload script — re-fire the body to refresh handler closures. Works for any enabled trigger script regardless of directives.')}
+            aria-label={t('Reload script')}
           >
             <RotateCcw size={15} />
-            Reload
+            {t('Reload')}
           </button>
         )}
 
         {script.type !== 'library' && (
           <button className={`ls-btn${isRunning ? '' : ' ls-accent'}`} onClick={handleRun} disabled={isRunning}>
             {isRunning ? <Loader2 size={15} style={{ animation: 'ls-spin 1s linear infinite' }} /> : <Play size={15} />}
-            {isRunning ? 'Running…' : 'Run'}
+            {isRunning ? t('Running…') : t('Run')}
           </button>
         )}
       </div>
@@ -446,47 +448,50 @@ export const ScriptEditor: FC<ScriptEditorProps> = ({
             <div className="ls-editor-failed-overlay">
               <h3 className="ls-editor-failed-title">
                 {editorHealth === 'mount-timeout'
-                  ? 'The script editor failed to load.'
-                  : "The editor isn't accepting input."}
+                  ? t('The script editor failed to load.')
+                  : t("The editor isn't accepting input.")}
               </h3>
               <p className="ls-editor-failed-desc">
                 {editorHealth === 'mount-timeout'
-                  ? 'Monaco did not finish initialising within 15 seconds. This usually means the Monaco CDN is blocked (corporate firewall, browser extension, restrictive network), or the browser environment is preventing the bundle from running.'
-                  : 'You clicked into the editor but it did not receive focus within 1 second. This usually means a browser-specific Monaco init failure — most commonly seen on Firefox with corrupted Windows font cache or aggressive security software.'}
+                  ? t('Monaco did not finish initialising within 15 seconds. This usually means the Monaco CDN is blocked (corporate firewall, browser extension, restrictive network), or the browser environment is preventing the bundle from running.')
+                  : t('You clicked into the editor but it did not receive focus within 1 second. This usually means a browser-specific Monaco init failure — most commonly seen on Firefox with corrupted Windows font cache or aggressive security software.')}
               </p>
-              <p className="ls-editor-failed-steps-label">Try these steps:</p>
+              <p className="ls-editor-failed-steps-label">{t('Try these steps:')}</p>
               <ul className="ls-editor-failed-steps">
-                <li>Reload the page (Ctrl+R / Cmd+R).</li>
-                <li>Try a different browser — Chrome and Edge are generally most reliable.</li>
+                <li>{t('Reload the page (Ctrl+R / Cmd+R).')}</li>
+                <li>{t('Try a different browser — Chrome and Edge are generally most reliable.')}</li>
                 {editorHealth === 'unresponsive' && (
                   <>
                     <li>
-                      On Firefox + Windows: clear the Windows Font Cache.
-                      Open <code>services.msc</code>, stop <em>Windows Font Cache Service</em>,
-                      delete <code>C:\Windows\System32\FNTCACHE.DAT</code>, start the service
-                      again, then reload the page.
+                      {tx('On Firefox + Windows: clear the Windows Font Cache. Open {services}, stop {service}, delete {file}, start the service again, then reload the page.', {
+                        services: <code>services.msc</code>,
+                        service: <em>Windows Font Cache Service</em>,
+                        file: <code>C:\Windows\System32\FNTCACHE.DAT</code>,
+                      })}
                     </li>
                     <li>
-                      Try a fresh Firefox profile via <code>about:profiles</code> to rule
-                      out profile-level configuration interference.
+                      {tx('Try a fresh Firefox profile via {profiles} to rule out profile-level configuration interference.', {
+                        profiles: <code>about:profiles</code>,
+                      })}
                     </li>
                   </>
                 )}
                 {editorHealth === 'mount-timeout' && (
-                  <li>Open the browser console and look for network errors or CSP violations against <code>cdn.jsdelivr.net</code>.</li>
+                  <li>{tx('Open the browser console and look for network errors or CSP violations against {cdn}.', { cdn: <code>cdn.jsdelivr.net</code> })}</li>
                 )}
                 <li>
-                  Open <strong>LumiScript Settings &rarr; Support &rarr; View Diagnostics</strong> for a runtime
-                  state snapshot — there&apos;s a <strong>Copy Report</strong> button that produces a
-                  Markdown dump you can paste into Discord support reports.
+                  {tx("Open {path} for a runtime state snapshot — there's a {copyReport} button that produces a Markdown dump you can paste into Discord support reports.", {
+                    path: <strong>{t('LumiScript Settings → Support → View Diagnostics')}</strong>,
+                    copyReport: <strong>{t('Copy Report')}</strong>,
+                  })}
                 </li>
-                <li>If none of the above resolves it, please report on Discord with browser + OS details and any console output.</li>
+                <li>{t('If none of the above resolves it, please report on Discord with browser + OS details and any console output.')}</li>
               </ul>
               <button
                 className="ls-editor-failed-dismiss"
                 onClick={() => setEditorHealth('ok')}
               >
-                Dismiss
+                {t('Dismiss')}
               </button>
             </div>
           )}
@@ -529,22 +534,22 @@ export const ScriptEditor: FC<ScriptEditorProps> = ({
         <div className="ls-danger-confirm">
           <ShieldAlert size={10} />
           <span className="ls-danger-confirm-msg">
-            Enable dangerous mode? The script can make HTTP requests and access files.
+            {t('Enable dangerous mode? The script can make HTTP requests and access files.')}
           </span>
-          <button className="ls-danger-confirm-yes" onClick={handleToggleDangerous}>Enable</button>
-          <button className="ls-danger-confirm-no" onClick={() => setConfirmDangerous(false)}>Cancel</button>
+          <button className="ls-danger-confirm-yes" onClick={handleToggleDangerous}>{t('Enable')}</button>
+          <button className="ls-danger-confirm-no" onClick={() => setConfirmDangerous(false)}>{t('Cancel')}</button>
         </div>
       )}
 
       {/* Metadata footer */}
       <div className="ls-meta-footer">
         <span className="ls-meta-item">
-          <button className="ls-danger-btn" onClick={handleToggleDangerous} title="Toggle dangerous mode">
+          <button className="ls-danger-btn" onClick={handleToggleDangerous} title={t('Toggle dangerous mode')}>
             {script.allowDangerous
               ? <ShieldAlert size={11} className="ls-dangerous" />
               : <Shield size={11} />}
             <span className={script.allowDangerous ? 'ls-dangerous' : ''}>
-              {script.allowDangerous ? 'Dangerous' : 'Safe'}
+              {script.allowDangerous ? t('Dangerous') : t('Safe')}
             </span>
           </button>
         </span>
@@ -562,15 +567,15 @@ export const ScriptEditor: FC<ScriptEditorProps> = ({
               }
             }}
           >
-            <option value="">No folder</option>
+            <option value="">{t('No folder')}</option>
             {[...new Set(allScripts.map(s => s.folder).filter((f): f is string => !!f))].sort().map(f => (
               <option key={f} value={f}>{f}</option>
             ))}
-            <option value="__new__">+ New folder...</option>
+            <option value="__new__">{t('+ New folder...')}</option>
           </select>
         </span>
-        <span className="ls-meta-item"><Clock size={10} /><span>Updated {fmt(script.updatedAt)}</span></span>
-        <span className="ls-meta-item"><Calendar size={10} /><span>Created {fmt(script.createdAt)}</span></span>
+        <span className="ls-meta-item"><Clock size={10} /><span>{t('Updated {date}', { date: fmt(script.updatedAt) })}</span></span>
+        <span className="ls-meta-item"><Calendar size={10} /><span>{t('Created {date}', { date: fmt(script.createdAt) })}</span></span>
         <span
           className="ls-meta-item ls-meta-id"
           title={script.id}
@@ -589,9 +594,9 @@ export const ScriptEditor: FC<ScriptEditorProps> = ({
 
     {namingFolder && (
       <PromptDialog
-        title="New folder"
-        label="Folder name:"
-        confirmLabel="Create"
+        title={t('New folder')}
+        label={t('Folder name:')}
+        confirmLabel={t('Create')}
         onConfirm={name => {
           sendToBackend({ type: 'update_script', id: script.id, patch: { folder: name } });
           setNamingFolder(false);

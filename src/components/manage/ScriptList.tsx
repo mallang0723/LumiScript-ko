@@ -11,6 +11,8 @@ import { openBundleModal } from '../cardscripts/bundle-helpers.js';
 import { dispatchOpenAssistant } from '../assistant/openAssistant.js';
 import { bytesToBase64, groupByFolder } from './script-list-logic.js';
 import { ExportPackModal } from './ExportPackModal.js';
+import { t } from '../../i18n/index.js';
+import { tx } from '../../i18n/react.js';
 
 interface ScriptExecInfo {
   dot: ExecutionDot;
@@ -152,9 +154,9 @@ export const ScriptList: FC<ScriptListProps> = ({
       case 'newScript':
         return (
           <PromptDialog
-            title={`New ${activeType === 'library' ? 'library' : 'script'}`}
-            label={activeType === 'library' ? 'Library name:' : 'Script name:'}
-            confirmLabel="Create"
+            title={activeType === 'library' ? t('New library') : t('New script')}
+            label={activeType === 'library' ? t('Library name:') : t('Script name:')}
+            confirmLabel={t('Create')}
             onConfirm={handlePromptConfirm}
             onCancel={onCancel}
           />
@@ -163,11 +165,11 @@ export const ScriptList: FC<ScriptListProps> = ({
         const current = p.folder;
         return (
           <PromptDialog
-            title="Rename folder"
-            label="Folder name:"
+            title={t('Rename folder')}
+            label={t('Folder name:')}
             initialValue={current}
-            confirmLabel="Rename"
-            validate={v => (v === current ? 'Enter a different folder name.' : null)}
+            confirmLabel={t('Rename')}
+            validate={v => (v === current ? t('Enter a different folder name.') : null)}
             onConfirm={handlePromptConfirm}
             onCancel={onCancel}
           />
@@ -201,26 +203,26 @@ export const ScriptList: FC<ScriptListProps> = ({
           <button
             className={`ls-type-tab${activeType === 'trigger' ? ' ls-active' : ''}`}
             onClick={() => setActiveType('trigger')}
-            title="Scripts"
+            title={t('Scripts')}
           >
             <Code2 size={15} />
           </button>
           <button
             className={`ls-type-tab${activeType === 'library' ? ' ls-active' : ''}`}
             onClick={() => setActiveType('library')}
-            title="Libraries"
+            title={t('Libraries')}
           >
             <BookMarked size={15} />
           </button>
         </div>
         <div className="ls-list-actions">
-          <button className="ls-icon-btn" onClick={handleImportClick} title="Import script pack">
+          <button className="ls-icon-btn" onClick={handleImportClick} title={t('Import script pack')}>
             <Upload size={15} />
           </button>
           <button
             className="ls-icon-btn"
             onClick={handleExport}
-            title="Export scripts as a pack (Shift+click: save the current tab to extension storage)"
+            title={t('Export scripts as a pack (Shift+click: save the current tab to extension storage)')}
             disabled={scripts.length === 0}
           >
             <Download size={15} />
@@ -228,7 +230,7 @@ export const ScriptList: FC<ScriptListProps> = ({
           <button
             className="ls-icon-btn"
             onClick={() => openBundleModal(scripts)}
-            title="Bundle scripts into a character card"
+            title={t('Bundle scripts into a character card')}
             disabled={scripts.length === 0}
           >
             <Package size={15} />
@@ -236,12 +238,12 @@ export const ScriptList: FC<ScriptListProps> = ({
           <button
             className="ls-icon-btn"
             onClick={() => dispatchOpenAssistant()}
-            title="Ask Lisa — the LumiScript chat assistant"
-            aria-label="Ask Lisa"
+            title={t('Ask Lisa — the LumiScript chat assistant')}
+            aria-label={t('Ask Lisa')}
           >
             <MessageCircle size={15} />
           </button>
-          <button className="ls-icon-btn" onClick={handleNew} title="New script">
+          <button className="ls-icon-btn" onClick={handleNew} title={t('New script')}>
             <Plus size={15} />
           </button>
         </div>
@@ -260,10 +262,10 @@ export const ScriptList: FC<ScriptListProps> = ({
           <div className="ls-list-empty">
             <FileCode2 size={28} style={{ color: 'var(--lumiverse-border)', margin: '0 auto 8px' }} />
             <p>
-              No {activeType === 'library' ? 'libraries' : 'scripts'} yet
+              {activeType === 'library' ? t('No libraries yet') : t('No scripts yet')}
             </p>
             <p style={{ marginTop: 4, color: 'var(--lumiverse-text-muted)' }}>
-              Click + to create one
+              {t('Click + to create one')}
             </p>
           </div>
         ) : hasFolders ? (
@@ -286,7 +288,7 @@ export const ScriptList: FC<ScriptListProps> = ({
                   <span className="ls-folder-name">{folder}</span>
                   <span
                     className="ls-folder-rename"
-                    title="Rename folder"
+                    title={t('Rename folder')}
                     role="button"
                     onClick={e => {
                       e.stopPropagation();
@@ -297,9 +299,9 @@ export const ScriptList: FC<ScriptListProps> = ({
                   </span>
                   <span
                     className="ls-folder-remove"
-                    title="Remove folder (moves its scripts to No folder)"
+                    title={t('Remove folder (moves its scripts to No folder)')}
                     role="button"
-                    aria-label="Remove folder"
+                    aria-label={t('Remove folder')}
                     onClick={e => {
                       e.stopPropagation();
                       setFolderToRemove(folder);
@@ -322,16 +324,19 @@ export const ScriptList: FC<ScriptListProps> = ({
 
     {pendingImport !== null && (
       <ConfirmDialog
-        title={`Import ${pendingImport.length} script${pendingImport.length === 1 ? '' : 's'}?`}
+        title={pendingImport.length === 1
+          ? t('Import {n} script?', { n: pendingImport.length })
+          : t('Import {n} scripts?', { n: pendingImport.length })}
         icon={<Upload size={15} style={{ color: 'var(--lumiverse-accent, rgb(147, 112, 219))' }} />}
-        confirmLabel="Import"
+        confirmLabel={t('Import')}
         confirmIcon={<Upload size={12} />}
         onConfirm={confirmImport}
         onCancel={() => setPendingImport(null)}
       >
         <p className="ls-confirm-message">
-          Imported scripts are added <strong>disabled</strong> — review and
-          enable them manually.
+          {tx('Imported scripts are added {disabled} — review and enable them manually.', {
+            disabled: <strong>{t('disabled')}</strong>,
+          })}
         </p>
         <ul className="ls-confirm-list">
           {pendingImport.map((s, i) => {
@@ -341,18 +346,18 @@ export const ScriptList: FC<ScriptListProps> = ({
               <li key={i} style={{ display: 'block' }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
                   <span className="ls-confirm-list-type">
-                    {s.type === 'library' ? 'Library' : 'Script'}
+                    {s.type === 'library' ? t('Library') : t('Script')}
                   </span>
                   <span className="ls-confirm-list-name">{s.name}</span>
                 </div>
                 {hooks ? (
                   <div style={{ marginTop: 2, color: 'rgb(150,166,205)', fontSize: 11, lineHeight: 1.4 }}>
-                    Event hooks: {hooks.join(', ')}
+                    {t('Event hooks: {hooks}', { hooks: hooks.join(', ') })}
                   </div>
                 ) : null}
                 {hasBindings ? (
                   <div style={{ marginTop: 3, color: 'rgb(214,158,46)', fontSize: 11, lineHeight: 1.4 }}>
-                    ⚠ Bound to specific characters/chats — those won&apos;t match after import; re-bind it in the script&apos;s settings.
+                    {t("⚠ Bound to specific characters/chats — those won't match after import; re-bind it in the script's settings.")}
                   </div>
                 ) : null}
               </li>
@@ -364,11 +369,11 @@ export const ScriptList: FC<ScriptListProps> = ({
 
     {importError !== null && (
       <ConfirmDialog
-        title="Import failed"
+        title={t('Import failed')}
         icon={<AlertTriangle size={15} style={{ color: 'var(--lumiverse-danger, rgb(246, 130, 130))' }} />}
         variant="danger"
         hideCancel
-        confirmLabel="OK"
+        confirmLabel={t('OK')}
         onConfirm={() => setImportError(null)}
         onCancel={() => setImportError(null)}
       >
@@ -378,18 +383,23 @@ export const ScriptList: FC<ScriptListProps> = ({
 
     {folderToRemove !== null && (
       <ConfirmDialog
-        title={`Remove folder "${folderToRemove}"?`}
+        title={t('Remove folder "{folder}"?', { folder: folderToRemove })}
         icon={<AlertTriangle size={15} style={{ color: 'var(--lumiverse-danger, rgb(246, 130, 130))' }} />}
         variant="danger"
-        confirmLabel="Remove folder"
+        confirmLabel={t('Remove folder')}
         confirmIcon={<Trash2 size={12} />}
         onConfirm={confirmRemoveFolder}
         onCancel={() => setFolderToRemove(null)}
       >
         <p className="ls-confirm-message">
           {folderRemovalTargets.length === 1
-            ? <>The script inside will be moved to <strong>No&nbsp;folder</strong> — nothing is deleted.</>
-            : <>The {folderRemovalTargets.length} scripts inside will be moved to <strong>No&nbsp;folder</strong> — nothing is deleted.</>}
+            ? tx('The script inside will be moved to {noFolder} — nothing is deleted.', {
+                noFolder: <strong>{t('No\u00a0folder')}</strong>,
+              })
+            : tx('The {n} scripts inside will be moved to {noFolder} — nothing is deleted.', {
+                n: folderRemovalTargets.length,
+                noFolder: <strong>{t('No\u00a0folder')}</strong>,
+              })}
         </p>
       </ConfirmDialog>
     )}

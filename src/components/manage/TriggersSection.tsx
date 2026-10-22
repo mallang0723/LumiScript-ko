@@ -1,6 +1,7 @@
 import { FC, useState } from 'react';
 import { Zap, ChevronDown, ChevronUp } from 'lucide-react';
 import type { FrontendToBackend } from '../../types/messages.js';
+import { t } from '../../i18n/index.js';
 
 // ─── Available events grouped by category ─────────────────────────────────────
 
@@ -13,74 +14,74 @@ export const TRIGGER_EVENT_GROUPS: EventGroup[] = [
   {
     label: 'LumiScript',
     events: [
-      { name: 'ls:startup', description: "Fires when the script enters the active state: at LumiScript boot AND after the user toggles the script from disabled→enabled. Symmetric partner to ls:teardown. Use for tool registration, cache pre-warming, broadcast subscription setup, and other init that should run whenever the script becomes runnable. After a disable→enable round-trip, the case body re-runs in full — bottom-of-body api.broadcast.on(...) calls also re-execute and re-register the subscriptions that disable's cleanup wiped, so the case body itself can be empty if the only thing you need is the body firing." },
-      { name: 'ls:teardown', description: "Fires before the script is disabled or deleted. Use for cleanup of external state (dynamic world-book entries, registered tools outside api.tools lifecycle, persistent storage). Handler has full api access and a 10s budget — errors are logged, not toasted. data.reason is 'disabled' | 'deleted'." },
+      { name: 'ls:startup', description: t("Fires when the script enters the active state: at LumiScript boot AND after the user toggles the script from disabled→enabled. Symmetric partner to ls:teardown. Use for tool registration, cache pre-warming, broadcast subscription setup, and other init that should run whenever the script becomes runnable. After a disable→enable round-trip, the case body re-runs in full — bottom-of-body api.broadcast.on(...) calls also re-execute and re-register the subscriptions that disable's cleanup wiped, so the case body itself can be empty if the only thing you need is the body firing.") },
+      { name: 'ls:teardown', description: t("Fires before the script is disabled or deleted. Use for cleanup of external state (dynamic world-book entries, registered tools outside api.tools lifecycle, persistent storage). Handler has full api access and a 10s budget — errors are logged, not toasted. data.reason is 'disabled' | 'deleted'.") },
     ],
   },
   {
-    label: 'Chat',
+    label: t('Chat'),
     events: [
-      { name: 'MESSAGE_SENT',               description: 'A message was appended to the chat' },
-      { name: 'MESSAGE_EDITED',             description: 'A message was edited' },
-      { name: 'MESSAGE_DELETED',            description: 'A message was deleted' },
-      { name: 'MESSAGE_SWIPED',             description: 'A swipe action occurred. Fine-grained: action=added|updated|deleted|navigated + swipeId + previousSwipeId discriminators' },
-      { name: 'SWIPE_EDITED',               description: 'Coarser swipe-edit event — fires when a message edit touches swipes/swipe_id/swipe_dates. Use MESSAGE_SWIPED for per-action semantics' },
-      { name: 'CHARACTER_MESSAGE_RENDERED', description: 'A character message finished rendering' },
-      { name: 'USER_MESSAGE_RENDERED',      description: 'A user message finished rendering' },
+      { name: 'MESSAGE_SENT',               description: t('A message was appended to the chat') },
+      { name: 'MESSAGE_EDITED',             description: t('A message was edited') },
+      { name: 'MESSAGE_DELETED',            description: t('A message was deleted') },
+      { name: 'MESSAGE_SWIPED',             description: t('A swipe action occurred. Fine-grained: action=added|updated|deleted|navigated + swipeId + previousSwipeId discriminators') },
+      { name: 'SWIPE_EDITED',               description: t('Coarser swipe-edit event — fires when a message edit touches swipes/swipe_id/swipe_dates. Use MESSAGE_SWIPED for per-action semantics') },
+      { name: 'CHARACTER_MESSAGE_RENDERED', description: t('A character message finished rendering') },
+      { name: 'USER_MESSAGE_RENDERED',      description: t('A user message finished rendering') },
     ],
   },
   {
-    label: 'Generation',
+    label: t('Generation'),
     events: [
-      { name: 'GENERATION_STARTED', description: 'LLM generation started' },
-      { name: 'GENERATION_ENDED',   description: 'LLM generation completed' },
-      { name: 'GENERATION_STOPPED', description: 'LLM generation was stopped' },
+      { name: 'GENERATION_STARTED', description: t('LLM generation started') },
+      { name: 'GENERATION_ENDED',   description: t('LLM generation completed') },
+      { name: 'GENERATION_STOPPED', description: t('LLM generation was stopped') },
     ],
   },
   {
-    label: 'Entities',
+    label: t('Entities'),
     events: [
-      { name: 'CHAT_CHANGED',         description: 'A chat was updated (rename, metadata, or message reattribution). Does NOT fire on navigation — use CHAT_SWITCHED for open/close.' },
-      { name: 'CHAT_SWITCHED',        description: 'The user opened a chat or returned to the home screen. data.chatId is the new chatId, or null on return-to-home.' },
-      { name: 'CHAT_FORKED',          description: 'A chat was forked (branched) from a message into a new chat sharing the source character. data carries sourceChatId, forkedChatId, chat, branchId, forkedAtMessageId, forkedAtMessageIndex. Emitted by the host branch-chat flow on newer Lumiverse builds.' },
-      { name: 'CHARACTER_CREATED',    description: 'A character was created OR imported (including card import). data.character is the new character record (carries its extensions blob). NOTE: LumiScript also uses this internally for card-embedded-script detection — your handler runs alongside that.' },
-      { name: 'CHARACTER_EDITED',     description: 'A character card was saved' },
-      { name: 'CHARACTER_DELETED',    description: 'A character was deleted' },
-      { name: 'CHARACTER_DUPLICATED', description: 'A character was duplicated' },
-      { name: 'PERSONA_CHANGED',      description: 'Active persona changed' },
+      { name: 'CHAT_CHANGED',         description: t('A chat was updated (rename, metadata, or message reattribution). Does NOT fire on navigation — use CHAT_SWITCHED for open/close.') },
+      { name: 'CHAT_SWITCHED',        description: t('The user opened a chat or returned to the home screen. data.chatId is the new chatId, or null on return-to-home.') },
+      { name: 'CHAT_FORKED',          description: t('A chat was forked (branched) from a message into a new chat sharing the source character. data carries sourceChatId, forkedChatId, chat, branchId, forkedAtMessageId, forkedAtMessageIndex. Emitted by the host branch-chat flow on newer Lumiverse builds.') },
+      { name: 'CHARACTER_CREATED',    description: t('A character was created OR imported (including card import). data.character is the new character record (carries its extensions blob). NOTE: LumiScript also uses this internally for card-embedded-script detection — your handler runs alongside that.') },
+      { name: 'CHARACTER_EDITED',     description: t('A character card was saved') },
+      { name: 'CHARACTER_DELETED',    description: t('A character was deleted') },
+      { name: 'CHARACTER_DUPLICATED', description: t('A character was duplicated') },
+      { name: 'PERSONA_CHANGED',      description: t('Active persona changed') },
     ],
   },
   {
-    label: 'Images',
+    label: t('Images'),
     events: [
-      { name: 'IMAGE_UPLOADED', description: 'An image was saved to the image library (manual upload or generated/saved). data.image is the full Image record (includes its id).' },
-      { name: 'IMAGE_DELETED',  description: 'An image was deleted from the library. data.id is the deleted image id.' },
+      { name: 'IMAGE_UPLOADED', description: t('An image was saved to the image library (manual upload or generated/saved). data.image is the full Image record (includes its id).') },
+      { name: 'IMAGE_DELETED',  description: t('An image was deleted from the library. data.id is the deleted image id.') },
     ],
   },
   {
-    label: 'World Info',
+    label: t('World Info'),
     events: [
-      { name: 'WORLD_INFO_ACTIVATED',     description: 'World Info entries were activated during prompt assembly. data.entries lists the activated entry IDs.' },
-      { name: 'WORLD_BOOK_CHANGED',       description: 'A world book was created, updated, had its semantic-activation toggled, or had any of its entries mutated. data.id + data.worldBook. Coarse-grained — also fires alongside WORLD_BOOK_ENTRY_CHANGED on per-entry mutations (handlers subscribed to both see two events per entry change). Bulk imports suppress per-entry events and fire this once at the end.' },
-      { name: 'WORLD_BOOK_DELETED',       description: 'A world book was deleted. data.id.' },
-      { name: 'WORLD_BOOK_ENTRY_CHANGED', description: 'A world book entry was created or updated. data.id + data.worldBookId + data.entry. Does NOT fire during bulk imports — those emit a single WORLD_BOOK_CHANGED for the parent book instead. Subscribe to WORLD_BOOK_CHANGED in addition if you need to catch imported entries.' },
-      { name: 'WORLD_BOOK_ENTRY_DELETED', description: 'A world book entry was deleted. data.id + data.worldBookId.' },
+      { name: 'WORLD_INFO_ACTIVATED',     description: t('World Info entries were activated during prompt assembly. data.entries lists the activated entry IDs.') },
+      { name: 'WORLD_BOOK_CHANGED',       description: t('A world book was created, updated, had its semantic-activation toggled, or had any of its entries mutated. data.id + data.worldBook. Coarse-grained — also fires alongside WORLD_BOOK_ENTRY_CHANGED on per-entry mutations (handlers subscribed to both see two events per entry change). Bulk imports suppress per-entry events and fire this once at the end.') },
+      { name: 'WORLD_BOOK_DELETED',       description: t('A world book was deleted. data.id.') },
+      { name: 'WORLD_BOOK_ENTRY_CHANGED', description: t('A world book entry was created or updated. data.id + data.worldBookId + data.entry. Does NOT fire during bulk imports — those emit a single WORLD_BOOK_CHANGED for the parent book instead. Subscribe to WORLD_BOOK_CHANGED in addition if you need to catch imported entries.') },
+      { name: 'WORLD_BOOK_ENTRY_DELETED', description: t('A world book entry was deleted. data.id + data.worldBookId.') },
     ],
   },
   {
-    label: 'Settings',
+    label: t('Settings'),
     events: [
-      { name: 'SETTINGS_UPDATED',          description: 'A setting was updated. data.key + data.value identify the change. (Chat navigation moved to its own CHAT_SWITCHED event in host 0.9.5+.)' },
-      { name: 'PRESET_CHANGED',            description: 'Active prompt preset changed' },
-      { name: 'CONNECTION_PROFILE_LOADED', description: 'A connection profile was activated' },
-      { name: 'REGEX_SCRIPT_CHANGED',      description: 'A regex find/replace script was created, updated, duplicated, reordered, or had its enabled state toggled. data.id + data.script (RegexScriptInfo). Requires regex_scripts permission. v0.27.0+.' },
-      { name: 'REGEX_SCRIPT_DELETED',      description: 'A regex find/replace script was deleted. data.id. Requires regex_scripts permission. v0.27.0+.' },
+      { name: 'SETTINGS_UPDATED',          description: t('A setting was updated. data.key + data.value identify the change. (Chat navigation moved to its own CHAT_SWITCHED event in host 0.9.5+.)') },
+      { name: 'PRESET_CHANGED',            description: t('Active prompt preset changed') },
+      { name: 'CONNECTION_PROFILE_LOADED', description: t('A connection profile was activated') },
+      { name: 'REGEX_SCRIPT_CHANGED',      description: t('A regex find/replace script was created, updated, duplicated, reordered, or had its enabled state toggled. data.id + data.script (RegexScriptInfo). Requires regex_scripts permission. v0.27.0+.') },
+      { name: 'REGEX_SCRIPT_DELETED',      description: t('A regex find/replace script was deleted. data.id. Requires regex_scripts permission. v0.27.0+.') },
     ],
   },
   {
-    label: 'System',
+    label: t('System'),
     events: [
-      { name: 'PERMISSION_CHANGED', description: 'A Lumiverse permission was granted to or revoked from LumiScript. data: { extensionId, permission, granted (new state), allGranted (full list) }. Use to (re)initialize a feature when its permission is granted, or degrade gracefully when revoked.' },
+      { name: 'PERMISSION_CHANGED', description: t('A Lumiverse permission was granted to or revoked from LumiScript. data: { extensionId, permission, granted (new state), allGranted (full list) }. Use to (re)initialize a feature when its permission is granted, or degrade gracefully when revoked.') },
     ],
   },
 ];
@@ -117,7 +118,7 @@ export const TriggersSection: FC<TriggersSectionProps> = ({
       {/* Header — click to toggle collapse */}
       <div className="ls-triggers-header" onClick={() => setCollapsed(c => !c)}>
         <Zap size={11} style={{ color: 'var(--lumiverse-text-muted)', flexShrink: 0 }} />
-        <span className="ls-triggers-title">Events</span>
+        <span className="ls-triggers-title">{t('Events')}</span>
         {selected.size > 0 && (
           <span className="ls-triggers-count">{selected.size}</span>
         )}

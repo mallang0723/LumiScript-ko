@@ -4,6 +4,8 @@ import type { Script } from '../../types/script.js';
 import type { FrontendToBackend } from '../../types/messages.js';
 import { ConfirmDialog } from '../common/ConfirmDialog.js';
 import { TypeBadge, HookPills, pillStyle, formatScriptSize } from '../cardscripts/script-pills.js';
+import { t } from '../../i18n/index.js';
+import { tx } from '../../i18n/react.js';
 
 export type ExecutionDot = 'idle' | 'running' | 'success' | 'error';
 
@@ -22,6 +24,14 @@ const DOT_CLASS: Record<ExecutionDot, string> = {
   running: 'ls-item-dot ls-dot-running',
   success: 'ls-item-dot ls-dot-success',
   error:   'ls-item-dot ls-dot-error',
+};
+
+/** Tooltip for the execution dot (English output = the raw dot value). */
+const DOT_TITLE: Record<ExecutionDot, string> = {
+  idle:    t('idle'),
+  running: t('running'),
+  success: t('success'),
+  error:   t('error'),
 };
 
 export const ScriptListItem: FC<ScriptListItemProps> = ({
@@ -77,14 +87,14 @@ export const ScriptListItem: FC<ScriptListItemProps> = ({
       onClick={onSelect}
     >
       {/* Execution status dot */}
-      <span className={DOT_CLASS[dot]} title={dot} />
+      <span className={DOT_CLASS[dot]} title={DOT_TITLE[dot]} />
 
       {/* Name + meta */}
       <div className="ls-item-body">
         <div className="ls-item-name" title={script.name}>{script.name}</div>
         <div className="ls-item-meta">
           {script.type !== 'library' && (
-            <span>{script.enabled ? 'Enabled' : 'Disabled'}</span>
+            <span>{script.enabled ? t('Enabled') : t('Disabled')}</span>
           )}
           {duration !== undefined && dot !== 'running' && (
             <span style={{ color: dot === 'error' ? '#ef4444' : 'var(--lumiverse-text-muted)' }}>
@@ -113,7 +123,7 @@ export const ScriptListItem: FC<ScriptListItemProps> = ({
       {/* Actions (shown on hover via CSS) */}
       <div className="ls-item-actions">
         {/* Edit button — always first, most prominent */}
-        <button className="ls-icon-btn" onClick={handleEdit} title="Edit script">
+        <button className="ls-icon-btn" onClick={handleEdit} title={t('Edit script')}>
           <Pencil size={13} />
         </button>
 
@@ -128,9 +138,9 @@ export const ScriptListItem: FC<ScriptListItemProps> = ({
             onClick={handleRun}
             disabled={!script.enabled || isRunning}
             title={
-              !script.enabled ? 'Enable to run'
-              : isRunning ? 'Running…'
-              : 'Run script'
+              !script.enabled ? t('Enable to run')
+              : isRunning ? t('Running…')
+              : t('Run script')
             }
           >
             {isRunning
@@ -141,16 +151,16 @@ export const ScriptListItem: FC<ScriptListItemProps> = ({
 
         {script.type !== 'library' && (
           <button className="ls-icon-btn" onClick={handleToggle}
-            title={script.enabled ? 'Disable' : 'Enable'}>
+            title={script.enabled ? t('Disable') : t('Enable')}>
             {script.enabled
               ? <ToggleRight size={14} style={{ color: 'var(--lumiverse-accent)' }} />
               : <ToggleLeft  size={14} />}
           </button>
         )}
-        <button className="ls-icon-btn" onClick={handleDuplicate} title="Duplicate">
+        <button className="ls-icon-btn" onClick={handleDuplicate} title={t('Duplicate')}>
           <Copy size={13} />
         </button>
-        <button className="ls-icon-btn ls-danger" onClick={handleDelete} title="Delete">
+        <button className="ls-icon-btn ls-danger" onClick={handleDelete} title={t('Delete')}>
           <Trash2 size={13} />
         </button>
       </div>
@@ -158,17 +168,18 @@ export const ScriptListItem: FC<ScriptListItemProps> = ({
 
     {confirmDelete && (
       <ConfirmDialog
-        title={`Delete ${script.type === 'library' ? 'library' : 'script'}?`}
+        title={script.type === 'library' ? t('Delete library?') : t('Delete script?')}
         icon={<Trash2 size={15} style={{ color: 'var(--lumiverse-danger, rgb(246, 130, 130))' }} />}
         variant="danger"
-        confirmLabel="Delete"
+        confirmLabel={t('Delete')}
         confirmIcon={<Trash2 size={12} />}
         onConfirm={confirmDeleteNow}
         onCancel={() => setConfirmDelete(false)}
       >
         <p className="ls-confirm-message">
-          This will permanently delete the {script.type === 'library' ? 'library' : 'script'}{' '}
-          <strong>{script.name}</strong>.
+          {script.type === 'library'
+            ? tx('This will permanently delete the library {name}.', { name: <strong>{script.name}</strong> })
+            : tx('This will permanently delete the script {name}.', { name: <strong>{script.name}</strong> })}
         </p>
         <div style={{ border: '1px solid rgba(255,255,255,0.10)', borderRadius: 6, background: 'rgba(255,255,255,0.03)', padding: '8px 10px', margin: '4px 0 2px' }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
@@ -178,13 +189,13 @@ export const ScriptListItem: FC<ScriptListItemProps> = ({
           </div>
           {script.bindings && script.bindings.length > 0 ? (
             <div style={{ marginTop: 8, fontSize: 11.5, color: 'rgba(222,223,230,0.7)' }}>
-              Bound to {script.bindings.map((b) => b.displayName).join(', ')}
+              {t('Bound to {names}', { names: script.bindings.map((b) => b.displayName).join(', ') })}
             </div>
           ) : null}
         </div>
         <div className="ls-confirm-warning">
           <AlertTriangle size={12} />
-          <span>This action cannot be undone.</span>
+          <span>{t('This action cannot be undone.')}</span>
         </div>
       </ConfirmDialog>
     )}
