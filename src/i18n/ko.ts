@@ -17,6 +17,7 @@ import { KO_ASSISTANT } from './ko/assistant.js';
 import { KO_PANEL } from './ko/panel.js';
 import { KO_CARDSCRIPTS } from './ko/cardscripts.js';
 import { KO_BACKEND } from './ko/backend.js';
+import { KO_REFERENCE } from './ko/reference.js';
 
 export const KO_AREAS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   common: KO_COMMON,
@@ -26,6 +27,7 @@ export const KO_AREAS: Readonly<Record<string, Readonly<Record<string, string>>>
   panel: KO_PANEL,
   cardscripts: KO_CARDSCRIPTS,
   backend: KO_BACKEND,
+  reference: KO_REFERENCE,
 };
 
 export const KO: Readonly<Record<string, string>> = {
@@ -36,4 +38,5 @@ export const KO: Readonly<Record<string, string>> = {
   ...KO_PANEL,
   ...KO_CARDSCRIPTS,
   ...KO_BACKEND,
+  ...KO_REFERENCE,
 };

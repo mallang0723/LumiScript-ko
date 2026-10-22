@@ -36,6 +36,7 @@ import {
   type TypeDoc,
   type FnRow,
 } from './ReferenceTab.js';
+import { t } from '../../i18n/index.js';
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
@@ -116,7 +117,7 @@ function macroAliasesLabel(row: LsMacroRow): string {
 
 function permsLabel(row: PermRow): string {
   const perms = row.perms.length === 0 && !row.note
-    ? '*none*'
+    ? `*${t('none')}*`
     : row.perms.map(p => `\`${p}\``).join(', ');
   return row.note ? `${perms}${row.perms.length ? ' ' : ''}${row.note}` : perms;
 }
@@ -124,36 +125,36 @@ function permsLabel(row: PermRow): string {
 // ─── Section renderers ───────────────────────────────────────────────────────
 
 function renderTriggerModel(): string {
-  return `## Trigger model\n\n${TRIGGER_MODEL_INTRO}`;
+  return `## ${t('Trigger model')}\n\n${TRIGGER_MODEL_INTRO}`;
 }
 
 function renderLumiverseEvents(): string {
   const body = table(
-    ['Event', 'Group', 'Payload shape'],
+    [t('Event'), t('Group'), t('Payload shape')],
     EVENTS.map(ev => [`\`${ev.name}\``, ev.group, `\`${ev.payload}\``]),
   );
-  return `## Lumiverse Events\n\n${body}`;
+  return `## ${t('Lumiverse Events')}\n\n${body}`;
 }
 
 function renderPermissionMatrix(): string {
   const sections = PERM_GROUPS.map(group => {
     const body = table(
-      ['Method', 'Required permissions'],
+      [t('Method'), t('Required permissions')],
       group.rows.map(row => [`\`${row.method}\``, permsLabel(row)]),
     );
     return `### ${group.group}\n\n${body}`;
   });
-  return `## Permission Matrix\n\n${sections.join('\n\n')}`;
+  return `## ${t('Permission Matrix')}\n\n${sections.join('\n\n')}`;
 }
 
 function renderSandboxHardening(): string {
   const rejectedTable = table(
-    ['Pattern', 'Why', 'Use instead'],
+    [t('Pattern'), t('Why'), t('Use instead')],
     SANDBOX_REJECTED_PATTERNS.map(row => [`\`${row.pattern}\``, row.why, row.replacement]),
   );
 
   const accessibleTable = table(
-    ['Category', 'Available globals'],
+    [t('Category'), t('Available globals')],
     SANDBOX_ACCESSIBLE_GROUPS.map(row => {
       const globalsCell = row.globals.map(g => `\`${g}\``).join(' ');
       const cell = row.note ? `${globalsCell}<br><br>*${row.note}*` : globalsCell;
@@ -162,47 +163,47 @@ function renderSandboxHardening(): string {
   );
 
   return [
-    '## Sandbox hardening',
+    `## ${t('Sandbox hardening')}`,
     '',
-    'The script-runner subprocess locks down host capabilities that user scripts have no business reaching. Two layers gate this — both are always on; there is no per-script opt-out. Cross-reference the `app_manipulation` and `cors_proxy` permissions in the **Permission Matrix** for how scripts opt in to specific surfaces that the sandbox otherwise denies.',
+    t('The script-runner subprocess locks down host capabilities that user scripts have no business reaching. Two layers gate this — both are always on; there is no per-script opt-out. Cross-reference the `app_manipulation` and `cors_proxy` permissions in the **Permission Matrix** for how scripts opt in to specific surfaces that the sandbox otherwise denies.'),
     '',
-    '### Layer 1 — dispatch-time source check',
+    `### ${t('Layer 1 — dispatch-time source check')}`,
     '',
-    'Scripts containing any of the patterns below are **rejected before they run**; the editor console shows a `[security]` entry naming the rejected pattern.',
+    t('Scripts containing any of the patterns below are **rejected before they run**; the editor console shows a `[security]` entry naming the rejected pattern.'),
     '',
     rejectedTable,
     '',
-    '### Layer 2 — runtime `globalThis` lockdown',
+    `### ${t('Layer 2 — runtime `globalThis` lockdown')}`,
     '',
-    'At subprocess startup, every `globalThis` property NOT on the allowlist below is replaced with `undefined`. Reading a locked global returns `undefined` (so `typeof X === \'undefined\'` evaluates naturally for feature-detect paths); reaching through to a method throws `TypeError: Cannot read properties of undefined`.',
+    t('At subprocess startup, every `globalThis` property NOT on the allowlist below is replaced with `undefined`. Reading a locked global returns `undefined` (so `typeof X === \'undefined\'` evaluates naturally for feature-detect paths); reaching through to a method throws `TypeError: Cannot read properties of undefined`.'),
     '',
     accessibleTable,
     '',
-    'Notable globals that are *not* on the allowlist (representative, not exhaustive): `fetch` (use `api.utils.http.*`), `Worker`, `WebSocket`, `EventSource`, `BroadcastChannel`, `XMLHttpRequest`, browser dialogs (`alert` / `prompt` / `confirm`), and Node-compat module globals reached via `globalThis` (`fs`, `http`, `net`, `tls`, `vm`, `worker_threads`, `child_process`, `sqlite`, etc.). The canonical list of accessible globals is `SAFE_GLOBALS` in `src/script-runner/child-entry.ts`.',
+    t('Notable globals that are *not* on the allowlist (representative, not exhaustive): `fetch` (use `api.utils.http.*`), `Worker`, `WebSocket`, `EventSource`, `BroadcastChannel`, `XMLHttpRequest`, browser dialogs (`alert` / `prompt` / `confirm`), and Node-compat module globals reached via `globalThis` (`fs`, `http`, `net`, `tls`, `vm`, `worker_threads`, `child_process`, `sqlite`, etc.). The canonical list of accessible globals is `SAFE_GLOBALS` in `src/script-runner/child-entry.ts`.'),
   ].join('\n');
 }
 
 function renderLumiScriptEvents(): string {
   const body = table(
-    ['Event', 'Payload fields', 'Emitted by'],
+    [t('Event'), t('Payload fields'), t('Emitted by')],
     BROADCAST_EVENTS.map(row => [`\`${row.name}\``, `\`${row.payload}\``, row.emittedBy]),
   );
-  const note = 'The `ls:` prefix is reserved for LumiScript engine events. Use any other name for custom events between scripts.';
-  return `## LumiScript Events\n\n${body}\n\n*${note}*`;
+  const note = t('The `ls:` prefix is reserved for LumiScript engine events. Use any other name for custom events between scripts.');
+  return `## ${t('LumiScript Events')}\n\n${body}\n\n*${note}*`;
 }
 
 function renderDirectives(): string {
   const body = table(
-    ['Directive', 'Applies to', 'What it does'],
+    [t('Directive'), t('Applies to'), t('What it does')],
     DIRECTIVES.map(d => [`\`// ${d.directive}\``, d.appliesTo, d.description]),
   );
-  return `## Directives\n\n${DIRECTIVES_INTRO}\n\n${body}`;
+  return `## ${t('Directives')}\n\n${DIRECTIVES_INTRO}\n\n${body}`;
 }
 
 function renderLumiScriptMacros(): string {
   const sections = LS_MACRO_GROUPS.map(group => {
     const body = table(
-      ['Macro', 'Aliases', 'Returns', 'Description'],
+      [t('Macro'), t('Aliases'), t('Returns'), t('Description')],
       group.rows.map(row => [
         `\`${row.macro}\``,
         macroAliasesLabel(row),
@@ -215,12 +216,12 @@ function renderLumiScriptMacros(): string {
     parts.push(body);
     return parts.join('\n\n');
   });
-  const footer = 'Character variable macros read from and write to the active character\'s store at `variables/characters/<id>.json` in user storage. They resolve to `""` when no character is active.';
-  return `## LumiScript Macros\n\n${sections.join('\n\n')}\n\n*${footer}*`;
+  const footer = t('Character variable macros read from and write to the active character\'s store at `variables/characters/<id>.json` in user storage. They resolve to `""` when no character is active.');
+  return `## ${t('LumiScript Macros')}\n\n${sections.join('\n\n')}\n\n*${footer}*`;
 }
 
 function renderKeyTypes(): string {
-  return `## Key Types\n\n${KEY_TYPES.map(t => renderTypeDoc(t)).join('\n\n')}`;
+  return `## ${t('Key Types')}\n\n${KEY_TYPES.map(tDoc => renderTypeDoc(tDoc)).join('\n\n')}`;
 }
 
 function renderTypeDoc(type: TypeDoc, headingLevel: '###' | '####' = '###'): string {
@@ -230,7 +231,7 @@ function renderTypeDoc(type: TypeDoc, headingLevel: '###' | '####' = '###'): str
   const safeName = escapeHtmlOutsideBackticks(type.name);
   const note = type.note ? `*${escapeHtmlOutsideBackticks(type.note)}*\n\n` : '';
   const body = table(
-    ['Field', 'Type', 'Description'],
+    [t('Field'), t('Type'), t('Description')],
     // Type column wrapped in backticks so generics like `Record<string, unknown>`
     // and `Promise<ModalResult>` render consistently across GFM parsers — inline
     // code content isn't HTML-parsed. Also harmonises enum-union types like
@@ -244,27 +245,27 @@ function renderTypeDoc(type: TypeDoc, headingLevel: '###' | '####' = '###'): str
 function renderApiFunctions(): string {
   const sections = API_GROUPS.map(group => {
     const body = table(
-      ['Method', 'Arguments', 'Description'],
+      [t('Method'), t('Arguments'), t('Description')],
       group.rows.map(row => [`\`${row.name}\``, row.args, row.desc]),
     );
     return `### ${group.group}\n\n${body}`;
   });
-  return `## API Functions\n\n${sections.join('\n\n')}`;
+  return `## ${t('API Functions')}\n\n${sections.join('\n\n')}`;
 }
 
 function renderBuiltinLibraries(): string {
-  const preamble = 'Built-in libraries are loaded via `script.require(\'ls:<name>\')`. Two are currently shipped: `ls:components` (DOM widget factories — all operations attributed to the calling script; injection components require `app_manipulation`, HTML builders are free) and `ls:council-prompt` (pure string helpers for replicating Lumiverse\'s built-in Council sidecar prompt in extension tools; no permissions required; only meaningful when the tool was invoked as part of a Council cycle).';
+  const preamble = t('Built-in libraries are loaded via `script.require(\'ls:<name>\')`. Two are currently shipped: `ls:components` (DOM widget factories — all operations attributed to the calling script; injection components require `app_manipulation`, HTML builders are free) and `ls:council-prompt` (pure string helpers for replicating Lumiverse\'s built-in Council sidecar prompt in extension tools; no permissions required; only meaningful when the tool was invoked as part of a Council cycle).');
   const componentsTable = table(
-    ['Method', 'Arguments', 'Description'],
+    [t('Method'), t('Arguments'), t('Description')],
     BUILTIN_COMPONENTS.map((row: FnRow) => [`\`${row.name}\``, row.args, row.desc]),
   );
   const councilPromptTable = table(
-    ['Method', 'Arguments', 'Description'],
+    [t('Method'), t('Arguments'), t('Description')],
     BUILTIN_COUNCIL_PROMPT.map((row: FnRow) => [`\`${row.name}\``, row.args, row.desc]),
   );
-  const typesBlock = BUILTIN_TYPES.map(t => renderTypeDoc(t, '####')).join('\n\n');
+  const typesBlock = BUILTIN_TYPES.map(tDoc => renderTypeDoc(tDoc, '####')).join('\n\n');
   return [
-    '## Built-in Libraries',
+    `## ${t('Built-in Libraries')}`,
     '',
     preamble,
     '',
@@ -276,7 +277,7 @@ function renderBuiltinLibraries(): string {
     '',
     councilPromptTable,
     '',
-    '### Built-in types',
+    `### ${t('Built-in types')}`,
     '',
     typesBlock,
   ].join('\n');
@@ -284,11 +285,11 @@ function renderBuiltinLibraries(): string {
 
 function renderScriptPacks(): string {
   return [
-    '## Script Packs',
+    `## ${t('Script Packs')}`,
     '',
-    '**Export** — click the `↓` button in the script list header to download the currently filtered scripts as a `.lumiscript.zip` file. The pack contains a `pack.json` with script names, code, triggers, bindings, folders, and metadata. IDs, timestamps, enabled state, and the allowDangerous flag are *not* included.',
+    t('**Export** — click the `↓` button in the script list header to download the currently filtered scripts as a `.lumiscript.zip` file. The pack contains a `pack.json` with script names, code, triggers, bindings, folders, and metadata. IDs, timestamps, enabled state, and the allowDangerous flag are *not* included.'),
     '',
-    '**Import** — click the `↑` button to pick a `.lumiscript.zip`. After validation (format version, schema, 1 MB decompressed size limit, max 100 scripts per pack), a confirmation dialog shows the script list. Imported scripts are always created with `enabled: false` and `allowDangerous: false` — review and enable them manually.',
+    t('**Import** — click the `↑` button to pick a `.lumiscript.zip`. After validation (format version, schema, 1 MB decompressed size limit, max 100 scripts per pack), a confirmation dialog shows the script list. Imported scripts are always created with `enabled: false` and `allowDangerous: false` — review and enable them manually.'),
   ].join('\n');
 }
 
@@ -300,7 +301,7 @@ function renderScriptPacks(): string {
  */
 export function renderReferenceMarkdown(): string {
   const today = new Date().toISOString().slice(0, 10);  // YYYY-MM-DD
-  const header = `# LumiScript Reference\n\n*Exported ${today}*`;
+  const header = `# ${t('LumiScript Reference')}\n\n*${t('Exported {date}', { date: today })}*`;
 
   const sections = [
     renderTriggerModel(),
