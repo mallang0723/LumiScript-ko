@@ -20,7 +20,7 @@
 | 파일 | 변경 |
 |---|---|
 | `src/i18n/index.ts`, `src/i18n/react.ts` | **신규.** `t`, `tx`, `APP_LOCALE`, `createTranslator` |
-| `src/i18n/ko.ts`, `src/i18n/ko/*.ts` | **신규.** 한국어 카탈로그(화면 영역별로 나눔: common, manage, storage, assistant, panel, cardscripts, backend) |
+| `src/i18n/ko.ts`, `src/i18n/ko/*.ts` | **신규.** 한국어 카탈로그(화면 영역별로 나눔: common, manage, storage, assistant, panel, cardscripts, backend, reference) |
 | `tests/i18n/ko-catalog.test.ts` | **신규.** 카탈로그 검사(아래) |
 | `src/**/*.tsx`, 일부 `src/**/*.ts` | 화면 문구를 `t(…)`/`tx(…)`로 감쌈, `import { t } …` 한 줄 추가. 영어 출력은 원작과 같음 |
 | `src/assistant/system-prompt.ts` | 한국어 빌드에서만 Lisa에게 한국어로 답하라는 지시 한 문단 추가(`REPLY_LANGUAGE_DIRECTIVE`) |
@@ -30,6 +30,8 @@
 | `package.json` | `build:backend`, `build:frontend`에 `--define 'LUMISCRIPT_LOCALE="ko"'` |
 | `spindle.json` | `identifier`, `version`, `name`, `author`, `github`, `homepage`, `description` |
 | `README.md` | 맨 위 한국어 안내 섹션 |
+| `src/components/reference/ReferenceTab.tsx`, `markdown-export.ts`, `src/i18n/ko/reference.ts` | 레퍼런스 탭의 API·절 설명 문장을 `t()`/`tx()`로 감쌈, 한국어는 `reference.ts`. 시그니처·타입·예시 코드·이벤트 이름·권한 ID는 감싸지 않음. 영어 출력은 원작과 같음. `PERMISSION_DESCRIPTIONS`는 화면에 그려지지 않고 Lisa 코퍼스 생성에만 쓰여 감싸지 않음 |
+| `docs/ko/**` | **신규.** `docs/` 전체의 한국어판(같은 경로). 시작은 [`docs/ko/index.md`](ko/index.md). 코드 블록은 원문과 같고 `//` 주석만 번역. 영어 원문 문서는 수정하지 않음. 영어 제목의 앵커(`#some-heading`)로 걸린 문서 간 링크가 한국어본에서도 열리도록 해당 제목 앞에 `<a id="…"></a>`를 둠 |
 | `docs/ko-fork.md`, `docs/ko-glossary.md` | **신규.** 이 문서와 용어집 |
 | `dist/backend.js`, `dist/frontend.js` | 빌드 산출물. 한국어로 다시 생성 (직접 고치지 않음). `dist/script-runner.js`는 번역 대상 코드가 없어 원작 파일 그대로 |
 
@@ -97,10 +99,10 @@
 
 ## 번역하지 않은 것
 
-- **결정 보류:** 레퍼런스 탭의 API 설명(트리거 모델·샌드박스·지시문·매크로·내장 라이브러리·스크립트 팩 설명 문단과 각 표의 설명 칸), `docs/`, Lisa 지식 자료(`src/assistant/corpus/`). 레퍼런스 탭은 절 제목·표 머리글·버튼만 번역했습니다. 그래서 영어 설명 문단이 가리키는 제목(예: "**Permission Matrix**")이 화면에서는 한국어(`권한 표`)로 보입니다.
+- **Lisa 지식 자료(`src/assistant/corpus/`)는 영어로 유지합니다.** 레퍼런스 탭에서 생성하는 코퍼스는 영어 빌드 기준이라 `scripts/gen-assistant-corpus.ts`가 만드는 파일은 원작과 같습니다. Lisa는 영어 자료를 읽고 한국어로 답합니다.
 - 코드 식별자, `api.*` 이름, 이벤트 이름, 권한 ID, 지시문 이름, 저장 키, 코드가 비교·파싱하는 문자열.
 - 개발자용 문구: `console.*`·`spindle.log.*`, 스크립트에 던져지는 API 오류(`api.db` 크기 초과 등), 스크립트 콘솔의 `[lumiscript] …`·`[security] …` 줄.
-- 내보내는 파일의 틀: 진단 보고서 마크다운(`serialize-markdown.ts`)의 머리글, 레퍼런스 마크다운 내보내기. 단 진단 **검사 이름·메시지**는 `engine/diagnostics.ts`에서 번역되므로 보고서 안에도 한국어로 들어갑니다(Lisa의 `read_diagnostics` 도구도 한국어를 봅니다). 원작 지원 채널에 보고서를 보낼 때는 이 점을 감안하세요.
+- 내보내는 파일의 틀: 진단 보고서 마크다운(`serialize-markdown.ts`)의 머리글. 단 진단 **검사 이름·메시지**는 `engine/diagnostics.ts`에서 번역되므로 보고서 안에도 한국어로 들어갑니다(Lisa의 `read_diagnostics` 도구도 한국어를 봅니다). 원작 지원 채널에 보고서를 보낼 때는 이 점을 감안하세요.
 - 호스트·프로바이더·라이브러리가 준 오류 원문(`String(err)`, Zod/jsonquery 오류)은 그대로 표시합니다. 우리 문장만 `{error}` 자리표시자로 감쌌습니다.
 
 ### 화면에 영어로 남는 문구 (의도함)
@@ -109,7 +111,7 @@
 
 | 위치 | 문구 | 이유 |
 |---|---|---|
-| 레퍼런스 탭 | API 설명, 예시 코드, `silent`·`string` 배지 | 결정 보류 / 타입 값 |
+| 레퍼런스 탭 | 메서드 시그니처, 타입 이름, 예시 코드, 이벤트 이름, 권한 ID, `silent`·`string` 배지 | 코드·타입 값(설명 문장은 번역됨) |
 | 설정, 진단, 편집기 | `LumiScript`, `AsyncFunction`, `IntelliSense`, `Top-P`, `Lisa` 버튼 | 제품·기술 이름 |
 | 상태 탭 | `council` 배지, `ms` 단위, 이벤트 이름 배지(`MESSAGE_SENT`) | 호스트 용어·단위·이벤트 이름 |
 | 저장소 | `ID`, `JSON` 버튼, `id`/`createdAt`/`updatedAt` 필드, `scriptStorage ·` 머리글, JSON 타입 칩(`string`, `number` …) | 필드·API·타입 이름 |

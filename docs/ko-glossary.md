@@ -18,7 +18,7 @@
 - 카드 묶음 키 `extensions.lumiscript`, 팩 형식 이름(`lumiscript-pack-v1`), 파일 확장자(`.lumiscript.zip`).
 - 백틱(`` ` ``)으로 감싼 코드 조각, 함수·필드 이름(`allowDangerous`, `lookup_api`, `globalThis`).
 - 제품·기술 이름: LumiScript, Lumiverse, Spindle, Monaco, IntelliSense, QuickJS, AsyncFunction, WASM, SSRF, Discord, Council(호스트도 영어 그대로).
-- 레퍼런스 탭의 API 설명과 Lisa 지식 코퍼스(보류 중인 결정 — `docs/ko-fork.md` 참고).
+- Lisa 지식 코퍼스(`src/assistant/corpus/`)는 영어로 유지합니다(`docs/ko-fork.md` 참고).
 
 ## 호스트(Lumiverse) 표기를 따르는 용어
 
