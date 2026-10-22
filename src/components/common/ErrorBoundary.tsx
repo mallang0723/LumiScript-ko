@@ -1,5 +1,6 @@
 import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
+import { t } from '../../i18n/index.js';
 
 interface Props {
   /** Human label for the faulting region — shown in the fallback + console log. */
@@ -40,10 +41,10 @@ export class ErrorBoundary extends Component<Props, State> {
     if (error !== null) {
       return (
         <div style={{ padding: 16, color: 'rgb(214, 158, 46)', fontSize: 13, lineHeight: 1.5 }}>
-          <strong>{this.props.label} hit an error.</strong>
+          <strong>{t('{label} hit an error.', { label: this.props.label })}</strong>
           <div style={{ marginTop: 6, opacity: 0.85, wordBreak: 'break-word' }}>{error.message}</div>
           <div style={{ marginTop: 8, opacity: 0.6, fontSize: 11 }}>
-            Reopen the panel or reload Lumiverse to retry.
+            {t('Reopen the panel or reload Lumiverse to retry.')}
           </div>
         </div>
       );

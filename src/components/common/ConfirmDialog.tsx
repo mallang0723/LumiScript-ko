@@ -28,6 +28,7 @@
 import { useEffect, useRef, type FC, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { t } from '../../i18n/index.js';
 
 export interface ConfirmDialogProps {
   /** Header title text. */
@@ -73,7 +74,7 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
   children,
   confirmLabel,
   confirmIcon,
-  cancelLabel = 'Cancel',
+  cancelLabel = t('Cancel'),
   variant = 'default',
   hideCancel = false,
   overlayZIndex,
@@ -155,7 +156,7 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
             {icon}
             {title}
           </span>
-          <button className="ls-modal-close" onClick={onCancel} title="Close (Esc)">
+          <button className="ls-modal-close" onClick={onCancel} title={t('Close (Esc)')}>
             <X size={16} />
           </button>
         </div>
@@ -181,7 +182,7 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
               autoFocus={hideCancel}
             >
               {confirmIcon}
-              {confirmLabel ?? (hideCancel ? 'OK' : 'Confirm')}
+              {confirmLabel ?? (hideCancel ? t('OK') : t('Confirm'))}
             </button>
           </div>
         </div>

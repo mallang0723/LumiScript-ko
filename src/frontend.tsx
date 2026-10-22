@@ -20,6 +20,7 @@ import { installFloatWidgetHandler } from './float-widget-handler.js';
 import { installAppMountHandler } from './app-mount-handler.js';
 import { installDrawerTabHandler } from './drawer-tab-handler.js';
 import { setHostComponents } from './host-ui.js';
+import { t } from './i18n/index.js';
 
 // ─── LumiScript Frontend ──────────────────────────────────────────────────
 // Runs in the browser via dynamic import.
@@ -207,7 +208,7 @@ export function setup(ctx: SpindleFrontendContext) {
   const dockRoot = createRoot(dockPanel.root);
   dockRoot.render(
     <StrictMode>
-      <ErrorBoundary label="LumiScript panel">
+      <ErrorBoundary label={t('LumiScript panel')}>
         <LumiScriptPanel
           onBackendMessage={virtualOnBackendMessage}
           sendToBackend={sendToBackend}
@@ -225,7 +226,7 @@ export function setup(ctx: SpindleFrontendContext) {
   const settingsRoot = createRoot(settingsMount);
   settingsRoot.render(
     <StrictMode>
-      <ErrorBoundary label="LumiScript settings">
+      <ErrorBoundary label={t('LumiScript settings')}>
         <SettingsPanel
           onBackendMessage={virtualOnBackendMessage}
           sendToBackend={sendToBackend}
@@ -245,7 +246,7 @@ export function setup(ctx: SpindleFrontendContext) {
   const cardScriptsRoot = createRoot(cardScriptsContainer);
   cardScriptsRoot.render(
     <StrictMode>
-      <ErrorBoundary label="Card-scripts consent">
+      <ErrorBoundary label={t('Card-scripts consent')}>
         <CardScriptsConsentHost
           onBackendMessage={virtualOnBackendMessage}
           sendToBackend={sendToBackend}
@@ -267,7 +268,7 @@ export function setup(ctx: SpindleFrontendContext) {
   const bundleCardRoot = createRoot(bundleCardContainer);
   bundleCardRoot.render(
     <StrictMode>
-      <ErrorBoundary label="Card-scripts authoring">
+      <ErrorBoundary label={t('Card-scripts authoring')}>
         <BundleIntoCardModal
           onBackendMessage={virtualOnBackendMessage}
           sendToBackend={sendToBackend}
@@ -289,7 +290,7 @@ export function setup(ctx: SpindleFrontendContext) {
   const deletedOfferRoot = createRoot(deletedOfferContainer);
   deletedOfferRoot.render(
     <StrictMode>
-      <ErrorBoundary label="Card-scripts delete offer">
+      <ErrorBoundary label={t('Card-scripts delete offer')}>
         <CardScriptsDeletedOfferHost
           onBackendMessage={virtualOnBackendMessage}
           sendToBackend={sendToBackend}
@@ -315,7 +316,7 @@ export function setup(ctx: SpindleFrontendContext) {
       const editorTabRoot = createRoot(editorTab.root);
       editorTabRoot.render(
         <StrictMode>
-          <ErrorBoundary label="Card-editor scripts tab">
+          <ErrorBoundary label={t('Card-editor scripts tab')}>
             <CardEditorScriptsTab
               editor={editorHelper}
               sendToBackend={sendToBackend}
