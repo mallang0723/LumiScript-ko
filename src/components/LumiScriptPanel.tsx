@@ -11,6 +11,7 @@ import { ManagePanel } from './manage/ManagePanel.js';
 import { StorageTab } from './storage/StorageTab.js';
 import { ErrorBoundary } from './common/ErrorBoundary.js';
 import { CardScriptsBanner } from './cardscripts/CardScriptsBanner.js';
+import { t } from '../i18n/index.js';
 
 interface ScriptExecInfo {
   dot: ExecutionDot;
@@ -43,6 +44,13 @@ interface LumiScriptPanelProps {
 }
 
 type TabId = 'manage' | 'status' | 'storage';
+
+/** ErrorBoundary labels per tab (English: "<id> tab"). */
+const TAB_ERROR_LABEL: Record<TabId, string> = {
+  manage:  t('manage tab'),
+  status:  t('status tab'),
+  storage: t('storage tab'),
+};
 
 export const LumiScriptPanel: FC<LumiScriptPanelProps> = ({
   onBackendMessage,
@@ -250,7 +258,7 @@ export const LumiScriptPanel: FC<LumiScriptPanelProps> = ({
           sendToBackend({ type: 'list_collections' });
           // Bump the refresh token so an open inspect modal re-fetches
           // with its current filter/offset.
-          setCollectionsRefreshToken(t => t + 1);
+          setCollectionsRefreshToken(n => n + 1);
           break;
 
         // ── Storage tab: Script Storage section (v1.0.0-rc.6+) ─────────
@@ -274,7 +282,7 @@ export const LumiScriptPanel: FC<LumiScriptPanelProps> = ({
           // tab-not-active case for free), bump the token so an open
           // modal re-fetches.
           sendToBackend({ type: 'list_script_storage' });
-          setScriptStorageRefreshToken(t => t + 1);
+          setScriptStorageRefreshToken(n => n + 1);
           break;
 
         case 'injections_updated':
@@ -334,7 +342,7 @@ export const LumiScriptPanel: FC<LumiScriptPanelProps> = ({
               ? {
                   timestamp: new Date().toLocaleTimeString('en-US', { hour12: false }),
                   type: 'warn' as const,
-                  message: `[Console output truncated at ${MAX_CONSOLE_ENTRIES} entries. Clear the console to resume capture.]`,
+                  message: t('[Console output truncated at {n} entries. Clear the console to resume capture.]', { n: MAX_CONSOLE_ENTRIES }),
                 }
               : msg.entry;
             return {
@@ -488,7 +496,7 @@ export const LumiScriptPanel: FC<LumiScriptPanelProps> = ({
           ? {
               timestamp: new Date().toLocaleTimeString('en-US', { hour12: false }),
               type: 'warn' as const,
-              message: `[Console output truncated at ${MAX_CONSOLE_ENTRIES} entries. Clear the console to resume capture.]`,
+              message: t('[Console output truncated at {n} entries. Clear the console to resume capture.]', { n: MAX_CONSOLE_ENTRIES }),
             }
           : {
               timestamp: new Date().toLocaleTimeString('en-US', { hour12: false }),
@@ -550,21 +558,21 @@ export const LumiScriptPanel: FC<LumiScriptPanelProps> = ({
           onClick={() => setActiveTab('manage')}
         >
           <Code2 size={11} style={{ display: 'inline', marginRight: 4 }} />
-          Manage
+          {t('Manage')}
         </button>
         <button
           className={`ls-tab-pill${activeTab === 'status' ? ' ls-active' : ''}`}
           onClick={() => setActiveTab('status')}
         >
           <Activity size={11} style={{ display: 'inline', marginRight: 4 }} />
-          Status
+          {t('Status')}
         </button>
         <button
           className={`ls-tab-pill${activeTab === 'storage' ? ' ls-active' : ''}`}
           onClick={() => setActiveTab('storage')}
         >
           <Database size={11} style={{ display: 'inline', marginRight: 4 }} />
-          Storage
+          {t('Storage')}
         </button>
       </div>
 
@@ -591,7 +599,7 @@ export const LumiScriptPanel: FC<LumiScriptPanelProps> = ({
           that clears the error) instead of blanking the whole panel. (audit
           tail: per-major-tab error boundaries) */}
       <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        <ErrorBoundary key={activeTab} label={`${activeTab} tab`}>
+        <ErrorBoundary key={activeTab} label={TAB_ERROR_LABEL[activeTab]}>
         {activeTab === 'manage' && (
           <ManagePanel
             scripts={scripts}
@@ -696,10 +704,10 @@ export const LumiScriptPanel: FC<LumiScriptPanelProps> = ({
 // ─── Status tab ───────────────────────────────────────────────────────────────
 
 const DOT_TITLE: Record<ExecutionDot, string> = {
-  idle:    'Not yet run this session',
-  running: 'Running…',
-  success: 'Last run succeeded',
-  error:   'Last run failed',
+  idle:    t('Not yet run this session'),
+  running: t('Running…'),
+  success: t('Last run succeeded'),
+  error:   t('Last run failed'),
 };
 
 interface StatusTabProps {
@@ -735,12 +743,12 @@ const StatusTab: FC<StatusTabProps> = ({ scripts, execInfo, invocationCounts, in
       <div className="ls-status-section">
         <div className="ls-inject-header">
           <Code2 size={10} />
-          Scripts
+          {t('Scripts')}
           {enabled.length > 0 && <span className="ls-inject-count">{enabled.length}</span>}
         </div>
         <div className="ls-status-section-body">
           {enabled.length === 0 ? (
-            <div className="ls-section-empty">No enabled trigger scripts</div>
+            <div className="ls-section-empty">{t('No enabled trigger scripts')}</div>
           ) : enabled.map(script => {
         const info = execInfo[script.id];
         const dot = info?.dot ?? 'idle';
@@ -763,7 +771,9 @@ const StatusTab: FC<StatusTabProps> = ({ scripts, execInfo, invocationCounts, in
               <span className="ls-status-name">{script.name}</span>
               <span className="ls-status-right">
                 {invokeCount !== undefined && invokeCount > 0 && (
-                  <span className="ls-invoke-count" title={`Fired ${invokeCount} time${invokeCount !== 1 ? 's' : ''} this session`}>
+                  <span className="ls-invoke-count" title={invokeCount !== 1
+                    ? t('Fired {n} times this session', { n: invokeCount })
+                    : t('Fired {n} time this session', { n: invokeCount })}>
                     ×{invokeCount}
                   </span>
                 )}
@@ -790,7 +800,7 @@ const StatusTab: FC<StatusTabProps> = ({ scripts, execInfo, invocationCounts, in
               </div>
             ) : (
               <div className="ls-no-handlers">
-                no events selected — choose events in the editor
+                {t('no events selected — choose events in the editor')}
               </div>
             )}
 
@@ -810,19 +820,19 @@ const StatusTab: FC<StatusTabProps> = ({ scripts, execInfo, invocationCounts, in
       <div className="ls-status-section">
         <div className="ls-inject-header">
           <Wrench size={10} />
-          Active Tools
+          {t('Active Tools')}
           {tools.length > 0 && <span className="ls-inject-count">{tools.length}</span>}
         </div>
         <div className="ls-status-section-body">
           {tools.length === 0 ? (
-            <div className="ls-section-empty">No tools registered</div>
+            <div className="ls-section-empty">{t('No tools registered')}</div>
           ) : (
             tools.map(tool => (
               <div key={tool.name} className="ls-tool-row">
                 <div className="ls-tool-name" title={tool.description}>{tool.name}</div>
                 <div className="ls-tool-meta">
                   {tool.council_eligible && (
-                    <span className="ls-tool-badge ls-tool-council" title="Available in Council">
+                    <span className="ls-tool-badge ls-tool-council" title={t('Available in Council')}>
                       council
                     </span>
                   )}
@@ -832,12 +842,11 @@ const StatusTab: FC<StatusTabProps> = ({ scripts, execInfo, invocationCounts, in
                   <button
                     type="button"
                     className="ls-tool-remove"
-                    aria-label={`Unregister tool ${tool.name}`}
-                    title={
-                      `Unregister "${tool.name}" from Lumiverse.\n` +
-                      `The owning script is not disabled — the next script edit/enable ` +
-                      `will re-register declaratively-defined tools.`
-                    }
+                    aria-label={t('Unregister tool {name}', { name: tool.name })}
+                    title={t(
+                      `Unregister "{name}" from Lumiverse.\nThe owning script is not disabled — the next script edit/enable will re-register declaratively-defined tools.`,
+                      { name: tool.name },
+                    )}
                     onClick={() => sendToBackend({ type: 'unregister_tool', name: tool.name })}
                   >
                     <Trash2 size={11} />
@@ -855,12 +864,12 @@ const StatusTab: FC<StatusTabProps> = ({ scripts, execInfo, invocationCounts, in
       <div className="ls-status-section">
         <div className="ls-inject-header">
           <Syringe size={10} />
-          Active Injections
+          {t('Active Injections')}
           {injections.length > 0 && <span className="ls-inject-count">{injections.length}</span>}
         </div>
         <div className="ls-status-section-body">
           {injections.length === 0 ? (
-            <div className="ls-section-empty">No injections active</div>
+            <div className="ls-section-empty">{t('No injections active')}</div>
           ) : injections.map(inj => {
             const isExpanded = expandedInjections.has(inj.id);
             return (
@@ -868,7 +877,7 @@ const StatusTab: FC<StatusTabProps> = ({ scripts, execInfo, invocationCounts, in
                 {/* Mode icon: ⇣ blue for intercept, ⇡ purple for context */}
                 <span
                   className={`ls-inject-mode-icon ls-inject-${inj.mode}`}
-                  title={inj.mode === 'intercept' ? 'Post-assembly intercept' : 'Pre-assembly context'}
+                  title={inj.mode === 'intercept' ? t('Post-assembly intercept') : t('Pre-assembly context')}
                 >
                   {inj.mode === 'intercept'
                     ? <ArrowDownToLine size={11} />
@@ -883,12 +892,14 @@ const StatusTab: FC<StatusTabProps> = ({ scripts, execInfo, invocationCounts, in
                     <div className="ls-inject-meta">
                       <span className="ls-inject-role">{inj.role}</span>
                       {inj.mode === 'intercept' && inj.depth > 0 && (
-                        <span className="ls-inject-depth" title={`Insert before last ${inj.depth} message${inj.depth !== 1 ? 's' : ''}`}>
+                        <span className="ls-inject-depth" title={inj.depth !== 1
+                          ? t('Insert before last {n} messages', { n: inj.depth })
+                          : t('Insert before last {n} message', { n: inj.depth })}>
                           d:{inj.depth}
                         </span>
                       )}
                       {inj.ephemeral && (
-                        <span className="ls-inject-ephemeral" title="Ephemeral — clears after next generation">
+                        <span className="ls-inject-ephemeral" title={t('Ephemeral — clears after next generation')}>
                           <Timer size={9} />
                         </span>
                       )}

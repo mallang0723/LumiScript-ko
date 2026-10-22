@@ -17,6 +17,7 @@
 import { useEffect, useRef, useState, type FC } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { t } from '../../i18n/index.js';
 
 export interface PromptDialogProps {
   /** Header title (e.g. "New script", "Rename folder"). */
@@ -47,8 +48,8 @@ export const PromptDialog: FC<PromptDialogProps> = ({
   label,
   initialValue = '',
   placeholder,
-  confirmLabel = 'OK',
-  cancelLabel = 'Cancel',
+  confirmLabel = t('OK'),
+  cancelLabel = t('Cancel'),
   validate,
   onConfirm,
   onCancel,
@@ -130,7 +131,7 @@ export const PromptDialog: FC<PromptDialogProps> = ({
         {/* Header */}
         <div className="ls-modal-header">
           <span className="ls-modal-title">{title}</span>
-          <button className="ls-modal-close" onClick={onCancel} title="Cancel (Esc)">
+          <button className="ls-modal-close" onClick={onCancel} title={t('Cancel (Esc)')}>
             <X size={16} />
           </button>
         </div>

@@ -9,6 +9,7 @@ import { AssistantModal } from '../assistant/AssistantModal.js';
 import { LS_OPEN_ASSISTANT_EVENT } from '../assistant/openAssistant.js';
 import { HostSelect } from '../common/HostSelect.js';
 import { ConfirmDialog } from '../common/ConfirmDialog.js';
+import { t } from '../../i18n/index.js';
 
 // Connection rows as pushed by the backend's `assistant_connections` reply —
 // derived from the message contract so the shape can't drift.
@@ -127,11 +128,13 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
   // array identity into HostSelect.
   const assistantConnectionOptions = useMemo(
     () => [
-      { value: '', label: 'Lumiverse default', sublabel: 'Follow the app’s own default connection' },
+      { value: '', label: t('Lumiverse default'), sublabel: t('Follow the app’s own default connection') },
       ...(assistantConnections ?? []).map((c) => ({
         value: c.id,
         label: c.name,
-        sublabel: `${c.provider} · ${c.model}${c.isDefault ? ' · app default' : ''}`,
+        sublabel: c.isDefault
+          ? t('{provider} · {model} · app default', { provider: c.provider, model: c.model })
+          : `${c.provider} · ${c.model}`,
       })),
     ],
     [assistantConnections],
@@ -152,8 +155,8 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
   // #11 engine-toggle — the two sandbox engines. Stable identity for HostSelect.
   const engineModeOptions = useMemo(
     () => [
-      { value: 'asyncfn', label: 'AsyncFunction',                 sublabel: 'Default engine' },
-      { value: 'quickjs', label: 'QuickJS (experimental isolate)', sublabel: 'Stronger WASM sandbox isolation' },
+      { value: 'asyncfn', label: 'AsyncFunction',                    sublabel: t('Default engine') },
+      { value: 'quickjs', label: t('QuickJS (experimental isolate)'), sublabel: t('Stronger WASM sandbox isolation') },
     ],
     [],
   );
@@ -161,8 +164,8 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
   // #11 P7 context-model toggle — the QuickJS context-isolation model. Stable identity for HostSelect.
   const contextModelOptions = useMemo(
     () => [
-      { value: 'shared',     label: 'Shared context',      sublabel: 'One sandbox for all scripts (default)' },
-      { value: 'per-script', label: 'Per-script isolation', sublabel: 'Each script in its own sandbox' },
+      { value: 'shared',     label: t('Shared context'),       sublabel: t('One sandbox for all scripts (default)') },
+      { value: 'per-script', label: t('Per-script isolation'), sublabel: t('Each script in its own sandbox') },
     ],
     [],
   );
@@ -180,7 +183,7 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
   const addAllowedHost = () => {
     const parsed = parseAllowlistEntry(newHost);
     if (!parsed || !isDirectEligibleHost(parsed.host)) {
-      setHostError('Enter an IP address or localhost, optionally with a port — e.g. localhost:11434, 192.168.1.50, or [::1]:8080.');
+      setHostError(t('Enter an IP address or localhost, optionally with a port — e.g. localhost:11434, 192.168.1.50, or [::1]:8080.'));
       return;
     }
     // Normalize to a stable display form (the parser already lowercased the host; re-bracket IPv6).
@@ -216,7 +219,7 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
           />
           <span className="ls-toggle-slider" />
         </label>
-        <span style={{ fontSize: 12 }}>Master Enable</span>
+        <span style={{ fontSize: 12 }}>{t('Master Enable')}</span>
       </div>
 
       {/* Script / library count cards — informational only */}
@@ -224,12 +227,12 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
         <div className="ls-count-card">
           <Code2 size={14} style={{ color: 'var(--lumiverse-accent)', margin: '0 auto 4px' }} />
           <div className="ls-count-num">{triggerCount}</div>
-          <div className="ls-count-label">Scripts</div>
+          <div className="ls-count-label">{t('Scripts')}</div>
         </div>
         <div className="ls-count-card">
           <BookMarked size={14} style={{ color: 'var(--lumiverse-accent)', margin: '0 auto 4px' }} />
           <div className="ls-count-num">{libraryCount}</div>
-          <div className="ls-count-label">Libraries</div>
+          <div className="ls-count-label">{t('Libraries')}</div>
         </div>
       </div>
 
@@ -237,14 +240,14 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
       <div className="ls-settings-section">
         <div className="ls-settings-section-label">
           <Timer size={11} />
-          Script Execution
+          {t('Script Execution')}
         </div>
 
         {/* #11 engine-toggle — sandbox engine. QuickJS is the experimental WASM isolate.
             Changing it confirms first (switching reloads all active scripts). */}
         <div className="ls-settings-field">
-          <label className="ls-settings-field-label" title="Which sandbox engine runs script bodies + handler fires. AsyncFunction is the default. QuickJS is an experimental WASM isolate with stronger sandboxing — behaviourally faithful to AsyncFunction bar one documented divergence (a script invoking its OWN tool). Switching engines reloads all active scripts so their handlers re-register under the new engine.">
-            Engine
+          <label className="ls-settings-field-label" title={t('Which sandbox engine runs script bodies + handler fires. AsyncFunction is the default. QuickJS is an experimental WASM isolate with stronger sandboxing — behaviourally faithful to AsyncFunction bar one documented divergence (a script invoking its OWN tool). Switching engines reloads all active scripts so their handlers re-register under the new engine.')}>
+            {t('Engine')}
           </label>
           <HostSelect
             key={engineSelectResetKey}
@@ -254,7 +257,7 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
               const next = v === 'quickjs' ? 'quickjs' : 'asyncfn';
               if (next !== (settings.engineMode ?? 'asyncfn')) setPendingEngineMode(next);
             }}
-            ariaLabel="Script engine"
+            ariaLabel={t('Script engine')}
           />
         </div>
 
@@ -266,8 +269,8 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
             QuickJS. Under QuickJS, switching respawns the worker(s) and reloads active scripts, so it
             confirms first (same reload impact as an engine switch). */}
         <div className="ls-settings-field">
-          <label className="ls-settings-field-label" title="QuickJS engine only — disabled while AsyncFunction is selected, which runs every script in one shared sandbox (shown here as 'Shared context'). 'Shared context' runs every script in one QuickJS context (default). 'Per-script isolation' gives each script its own context — its own globalThis and library instances — so one script cannot observe or poison another's sandbox. Switching respawns the QuickJS worker(s) and reloads all active scripts.">
-            Isolation
+          <label className="ls-settings-field-label" title={t("QuickJS engine only — disabled while AsyncFunction is selected, which runs every script in one shared sandbox (shown here as 'Shared context'). 'Shared context' runs every script in one QuickJS context (default). 'Per-script isolation' gives each script its own context — its own globalThis and library instances — so one script cannot observe or poison another's sandbox. Switching respawns the QuickJS worker(s) and reloads all active scripts.")}>
+            {t('Isolation')}
           </label>
           <HostSelect
             key={contextModelSelectResetKey}
@@ -278,14 +281,14 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
               const next = v === 'per-script' ? 'per-script' : 'shared';
               if (next !== (settings.contextModel ?? 'shared')) setPendingContextModel(next);
             }}
-            ariaLabel="Script context isolation"
+            ariaLabel={t('Script context isolation')}
           />
         </div>
 
         {/* Execution timeout */}
         <div className="ls-settings-field">
-          <label className="ls-settings-field-label" title="Async execution timeout. If a script does not complete within this period it is aborted with a timeout error.">
-            Timeout (s)
+          <label className="ls-settings-field-label" title={t('Async execution timeout. If a script does not complete within this period it is aborted with a timeout error.')}>
+            {t('Timeout (s)')}
           </label>
           <input
             type="number"
@@ -302,8 +305,8 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
 
         {/* Console history limit */}
         <div className="ls-settings-field">
-          <label className="ls-settings-field-label" title="Maximum console log entries kept per script. Older entries are dropped once this cap is reached.">
-            Console history
+          <label className="ls-settings-field-label" title={t('Maximum console log entries kept per script. Older entries are dropped once this cap is reached.')}>
+            {t('Console history')}
           </label>
           <input
             type="number"
@@ -320,8 +323,8 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
 
         {/* Stream buffer cap (QuickJS engine) — max undrained generateStream chunks before the stream is cancelled */}
         <div className="ls-settings-field">
-          <label className="ls-settings-field-label" title="QuickJS engine only. Max chunks buffered for a single api.llm.generateStream that is not being consumed fast enough (or at all) — once this many chunks are queued undrained, the stream is cancelled with an error so it can't grow without limit.">
-            Stream buffer
+          <label className="ls-settings-field-label" title={t("QuickJS engine only. Max chunks buffered for a single api.llm.generateStream that is not being consumed fast enough (or at all) — once this many chunks are queued undrained, the stream is cancelled with an error so it can't grow without limit.")}>
+            {t('Stream buffer')}
           </label>
           <input
             type="number"
@@ -345,19 +348,19 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
       <div className="ls-settings-section">
         <div className="ls-settings-section-label">
           <Globe size={11} />
-          Network
+          {t('Network')}
         </div>
 
         <div
           className="ls-settings-template-label"
-          title="Hosts that outbound HTTP may reach directly, bypassing the private-address block. By default every request goes through an SSRF-safe proxy that blocks loopback / LAN / link-local addresses. Only fixed addresses are accepted: an IP literal or localhost, optionally with a port. Omit the port to allow any port on that host, or include one to scope to a single port. This list lives in your settings and is never writable by a script."
+          title={t('Hosts that outbound HTTP may reach directly, bypassing the private-address block. By default every request goes through an SSRF-safe proxy that blocks loopback / LAN / link-local addresses. Only fixed addresses are accepted: an IP literal or localhost, optionally with a port. Omit the port to allow any port on that host, or include one to scope to a single port. This list lives in your settings and is never writable by a script.')}
         >
-          Allowed private hosts
+          {t('Allowed private hosts')}
         </div>
 
         <div className="ls-allowlist">
           {allowedHosts.length === 0 ? (
-            <div className="ls-allowlist-empty">None — every request uses the SSRF-safe path.</div>
+            <div className="ls-allowlist-empty">{t('None — every request uses the SSRF-safe path.')}</div>
           ) : (
             <div className="ls-allowlist-list">
               {allowedHosts.map((h) => (
@@ -366,8 +369,8 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
                   <button
                     type="button"
                     className="ls-allowlist-remove"
-                    title={`Remove ${h}`}
-                    aria-label={`Remove ${h}`}
+                    title={t('Remove {host}', { host: h })}
+                    aria-label={t('Remove {host}', { host: h })}
                     onClick={() => removeAllowedHost(h)}
                   >
                     <Trash2 size={12} />
@@ -395,14 +398,14 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
               disabled={!newHost.trim()}
               onClick={addAllowedHost}
             >
-              Add
+              {t('Add')}
             </button>
           </div>
 
           {hostError ? (
             <div className="ls-allowlist-error">{hostError}</div>
           ) : (
-            <div className="ls-allowlist-hint">Examples: localhost, localhost:11434, 192.168.1.50, [::1]:8080</div>
+            <div className="ls-allowlist-hint">{t('Examples: localhost, localhost:11434, 192.168.1.50, [::1]:8080')}</div>
           )}
         </div>
       </div>
@@ -415,13 +418,13 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
       <div className="ls-settings-section">
         <div className="ls-settings-section-label">
           <Cpu size={11} />
-          Workers
+          {t('Workers')}
         </div>
 
         {/* Pool size — count of concurrent script-runner subprocesses */}
         <div className="ls-settings-field">
-          <label className="ls-settings-field-label" title="Number of concurrent script-runner worker subprocesses. Larger values distribute scripts across more processes for better fault isolation, at the cost of more memory (~50-100 MB per worker at idle). Capped at 16 by the host (Spindle's MAX_BACKEND_PROCESSES).">
-            Worker count
+          <label className="ls-settings-field-label" title={t("Number of concurrent script-runner worker subprocesses. Larger values distribute scripts across more processes for better fault isolation, at the cost of more memory (~50-100 MB per worker at idle). Capped at 16 by the host (Spindle's MAX_BACKEND_PROCESSES).")}>
+            {t('Worker count')}
           </label>
           <input
             type="number"
@@ -438,8 +441,8 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
 
         {/* Idle timeout — displayed in minutes, stored as ms */}
         <div className="ls-settings-field">
-          <label className="ls-settings-field-label" title="How long a worker may remain idle (no script fires, no handler invocations) before it's torn down to reclaim memory. On next event for any of its assigned scripts, the worker respawns (~150-300 ms cold-start hitch).">
-            Idle timeout (min)
+          <label className="ls-settings-field-label" title={t("How long a worker may remain idle (no script fires, no handler invocations) before it's torn down to reclaim memory. On next event for any of its assigned scripts, the worker respawns (~150-300 ms cold-start hitch).")}>
+            {t('Idle timeout (min)')}
           </label>
           <input
             type="number"
@@ -456,8 +459,8 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
 
         {/* Memory ceiling — displayed in MB, stored as MB */}
         <div className="ls-settings-field">
-          <label className="ls-settings-field-label" title="Total memory ceiling (sum across all worker subprocesses). When exceeded, the eviction sweep LRU-evicts idle workers until total memory drops back under the ceiling. Workers with active runs are exempt; the sweep always keeps at least one worker warm.">
-            Memory ceiling (MB)
+          <label className="ls-settings-field-label" title={t('Total memory ceiling (sum across all worker subprocesses). When exceeded, the eviction sweep LRU-evicts idle workers until total memory drops back under the ceiling. Workers with active runs are exempt; the sweep always keeps at least one worker warm.')}>
+            {t('Memory ceiling (MB)')}
           </label>
           <input
             type="number"
@@ -477,10 +480,10 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
           type="button"
           className="ls-btn"
           onClick={() => sendToBackend({ type: 'rebalance_pool' })}
-          title="Releases all script→worker assignments. Each script's next fire reassigns via least-loaded over the current pool. Useful after increasing Worker count to redistribute existing scripts onto the new workers (assignments are sticky by default)."
+          title={t("Releases all script→worker assignments. Each script's next fire reassigns via least-loaded over the current pool. Useful after increasing Worker count to redistribute existing scripts onto the new workers (assignments are sticky by default).")}
         >
           <Shuffle size={11} style={{ marginRight: 4 }} />
-          Rebalance pool
+          {t('Rebalance pool')}
         </button>
       </div>
 
@@ -488,13 +491,13 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
       <div className="ls-settings-section">
         <div className="ls-settings-section-label">
           <Type size={11} />
-          Editor
+          {t('Editor')}
         </div>
 
         {/* Monaco font size */}
         <div className="ls-settings-field">
-          <label className="ls-settings-field-label" title="Font size (in pixels) used by the Monaco code editor. Affects the code editor only; reference docs and console output are unchanged.">
-            Font size
+          <label className="ls-settings-field-label" title={t('Font size (in pixels) used by the Monaco code editor. Affects the code editor only; reference docs and console output are unchanged.')}>
+            {t('Font size')}
           </label>
           <input
             type="number"
@@ -511,8 +514,8 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
 
         {/* Autosave debounce */}
         <div className="ls-settings-field">
-          <label className="ls-settings-field-label" title="Delay (in milliseconds) between the last keystroke and autosave. Larger values reduce backend round-trips while typing.">
-            Autosave (ms)
+          <label className="ls-settings-field-label" title={t('Delay (in milliseconds) between the last keystroke and autosave. Larger values reduce backend round-trips while typing.')}>
+            {t('Autosave (ms)')}
           </label>
           <input
             type="number"
@@ -529,7 +532,7 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
         </div>
 
         {/* IntelliSense toggle */}
-        <div className="ls-toggle-row" title="Show the editor's IntelliSense — autocomplete suggestions, api.* signature help, and hover docs. Turn off to suppress the popups (syntax-error squiggles stay). Takes effect immediately.">
+        <div className="ls-toggle-row" title={t("Show the editor's IntelliSense — autocomplete suggestions, api.* signature help, and hover docs. Turn off to suppress the popups (syntax-error squiggles stay). Takes effect immediately.")}>
           <label className="ls-toggle">
             <input
               type="checkbox"
@@ -546,12 +549,12 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
       <div className="ls-settings-section">
         <div className="ls-settings-section-label">
           <FileCode2 size={11} />
-          New-Script Templates
+          {t('New-Script Templates')}
         </div>
 
         <div className="ls-settings-template-field">
-          <label className="ls-settings-template-label" title="Starter code inserted into newly created trigger scripts.">
-            Trigger
+          <label className="ls-settings-template-label" title={t('Starter code inserted into newly created trigger scripts.')}>
+            {t('Trigger')}
           </label>
           <textarea
             className="ls-textarea"
@@ -566,8 +569,8 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
         </div>
 
         <div className="ls-settings-template-field">
-          <label className="ls-settings-template-label" title="Starter code inserted into newly created library scripts.">
-            Library
+          <label className="ls-settings-template-label" title={t('Starter code inserted into newly created library scripts.')}>
+            {t('Library')}
           </label>
           <textarea
             className="ls-textarea"
@@ -592,16 +595,16 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
       <div className="ls-settings-section">
         <div className="ls-settings-section-label">
           <Activity size={11} />
-          Support
+          {t('Support')}
         </div>
         <button
           type="button"
           className="ls-btn"
           onClick={() => setDiagnosticsOpen(true)}
-          title="Open the diagnostics modal — runtime state snapshot + copy-as-markdown for Discord support reports"
+          title={t('Open the diagnostics modal — runtime state snapshot + copy-as-markdown for Discord support reports')}
         >
           <Activity size={11} style={{ marginRight: 4 }} />
-          View Diagnostics
+          {t('View Diagnostics')}
         </button>
       </div>
 
@@ -612,27 +615,27 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
       <div className="ls-settings-section">
         <div className="ls-settings-section-label">
           <MessageCircle size={11} />
-          Assistant
+          {t('Assistant')}
         </div>
 
         <div className="ls-settings-field">
-          <label className="ls-settings-field-label" title="The LLM connection Lisa's chat starts on. Leave as “Lumiverse default” to follow the app's own default connection, or point Lisa at a model that's a stronger coding brain than your main-chat pick (e.g. GLM-5.1). You can still switch connections per-session inside the chat — this only sets the starting point.">
-            Connection
+          <label className="ls-settings-field-label" title={t("The LLM connection Lisa's chat starts on. Leave as “Lumiverse default” to follow the app's own default connection, or point Lisa at a model that's a stronger coding brain than your main-chat pick (e.g. GLM-5.1). You can still switch connections per-session inside the chat — this only sets the starting point.")}>
+            {t('Connection')}
           </label>
           <HostSelect
             options={assistantConnectionOptions}
             value={settings.assistantConnectionId ?? ''}
             onChange={(v) => sendToBackend({ type: 'update_settings', patch: { assistantConnectionId: v } })}
-            placeholder={assistantConnections === null ? 'Loading…' : 'Lumiverse default'}
+            placeholder={assistantConnections === null ? t('Loading…') : t('Lumiverse default')}
             disabled={assistantConnections === null}
-            ariaLabel="Default Lisa connection"
+            ariaLabel={t('Default Lisa connection')}
             searchThreshold={8}
           />
         </div>
 
         <div className="ls-settings-field">
-          <label className="ls-settings-field-label" title="Maximum tool-call iterations Lisa is allowed per turn. Each lookup_api call counts as one. Lower this if your model thrashes on hard questions; raise it if Lisa hits the ceiling on genuinely complex Q&A.">
-            Tool iterations
+          <label className="ls-settings-field-label" title={t('Maximum tool-call iterations Lisa is allowed per turn. Each lookup_api call counts as one. Lower this if your model thrashes on hard questions; raise it if Lisa hits the ceiling on genuinely complex Q&A.')}>
+            {t('Tool iterations')}
           </label>
           <input
             type="number"
@@ -648,8 +651,8 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
         </div>
 
         <div className="ls-settings-field">
-          <label className="ls-settings-field-label" title="Token budget for Lisa's context window. Her per-turn prompt is trimmed to fit this, and the fullness gauge in chat reads against it. The app can't detect a model's real context length, so set this to match your model: 200K suits most modern models; lower it for small/local models, raise it for 1M-context ones.">
-            Context budget (tokens)
+          <label className="ls-settings-field-label" title={t("Token budget for Lisa's context window. Her per-turn prompt is trimmed to fit this, and the fullness gauge in chat reads against it. The app can't detect a model's real context length, so set this to match your model: 200K suits most modern models; lower it for small/local models, raise it for 1M-context ones.")}>
+            {t('Context budget (tokens)')}
           </label>
           <input
             type="number"
@@ -670,21 +673,21 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
             semantic. Empty input value → undefined in settings → field
             omitted in the IPC. */}
         <div className="ls-settings-subheading-row">
-          <span className="ls-settings-subheading">Generation defaults</span>
+          <span className="ls-settings-subheading">{t('Generation defaults')}</span>
           <button
             type="button"
             className="ls-settings-subheading-action"
             onClick={() => sendToBackend({ type: 'assistant_reset_generation_defaults' })}
-            title="Clear all four overrides — temperature, top-p, and max tokens go blank; parallel tool calls returns to the default (on)."
+            title={t('Clear all four overrides — temperature, top-p, and max tokens go blank; parallel tool calls returns to the default (on).')}
           >
             <RotateCcw size={10} />
-            <span>Reset</span>
+            <span>{t('Reset')}</span>
           </button>
         </div>
 
         <div className="ls-settings-field">
-          <label className="ls-settings-field-label" title="Sampling temperature (0-2). Higher = more creative / random; lower = more deterministic. Leave blank to use the connection's preset.">
-            Temperature
+          <label className="ls-settings-field-label" title={t("Sampling temperature (0-2). Higher = more creative / random; lower = more deterministic. Leave blank to use the connection's preset.")}>
+            {t('Temperature')}
           </label>
           <input
             type="number"
@@ -693,7 +696,7 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
             max={2}
             step={0.1}
             value={settings.assistantTemperature ?? ''}
-            placeholder="default"
+            placeholder={t('default')}
             onChange={e => {
               const raw = e.target.value;
               const parsed = raw === '' ? undefined : Math.max(0, Math.min(2, Number(raw)));
@@ -704,7 +707,7 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
         </div>
 
         <div className="ls-settings-field">
-          <label className="ls-settings-field-label" title="Top-P nucleus sampling (0-1). Independent of temperature; most users tune one or the other, not both. Leave blank to use the connection's preset.">
+          <label className="ls-settings-field-label" title={t("Top-P nucleus sampling (0-1). Independent of temperature; most users tune one or the other, not both. Leave blank to use the connection's preset.")}>
             Top-P
           </label>
           <input
@@ -714,7 +717,7 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
             max={1}
             step={0.05}
             value={settings.assistantTopP ?? ''}
-            placeholder="default"
+            placeholder={t('default')}
             onChange={e => {
               const raw = e.target.value;
               const parsed = raw === '' ? undefined : Math.max(0, Math.min(1, Number(raw)));
@@ -725,8 +728,8 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
         </div>
 
         <div className="ls-settings-field">
-          <label className="ls-settings-field-label" title="Output token cap per turn. Lower bounds the response length; raise for long-form answers. Leave blank to use the connection's preset.">
-            Max tokens
+          <label className="ls-settings-field-label" title={t("Output token cap per turn. Lower bounds the response length; raise for long-form answers. Leave blank to use the connection's preset.")}>
+            {t('Max tokens')}
           </label>
           <input
             type="number"
@@ -735,7 +738,7 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
             max={32768}
             step={256}
             value={settings.assistantMaxTokens ?? ''}
-            placeholder="default"
+            placeholder={t('default')}
             onChange={e => {
               const raw = e.target.value;
               const parsed = raw === '' ? undefined : Math.max(1, Math.min(32768, Number(raw)));
@@ -745,7 +748,7 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
           />
         </div>
 
-        <div className="ls-toggle-row" title="When unchecked, Lisa requests serialised (one-at-a-time) tool calls. Most providers handle parallel calls fine; uncheck only for Mistral and other providers that choke on parallelism.">
+        <div className="ls-toggle-row" title={t('When unchecked, Lisa requests serialised (one-at-a-time) tool calls. Most providers handle parallel calls fine; uncheck only for Mistral and other providers that choke on parallelism.')}>
           <label className="ls-toggle">
             <input
               type="checkbox"
@@ -754,10 +757,10 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
             />
             <span className="ls-toggle-slider" />
           </label>
-          <span style={{ fontSize: 12 }}>Parallel tool calls</span>
+          <span style={{ fontSize: 12 }}>{t('Parallel tool calls')}</span>
         </div>
 
-        <div className="ls-toggle-row" title="When on, Lisa automatically summarizes the older part of a long conversation once its context fills past ~85%, so the chat can keep going without overflowing. The summary runs as a background LLM call on the turn that crosses the line. Turn off to compact only manually (the “Compact now” button in chat still works).">
+        <div className="ls-toggle-row" title={t('When on, Lisa automatically summarizes the older part of a long conversation once its context fills past ~85%, so the chat can keep going without overflowing. The summary runs as a background LLM call on the turn that crosses the line. Turn off to compact only manually (the “Compact now” button in chat still works).')}>
           <label className="ls-toggle">
             <input
               type="checkbox"
@@ -766,10 +769,10 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
             />
             <span className="ls-toggle-slider" />
           </label>
-          <span style={{ fontSize: 12 }}>Auto-compact context</span>
+          <span style={{ fontSize: 12 }}>{t('Auto-compact context')}</span>
         </div>
 
-        <div className="ls-toggle-row" title="When on, Lisa marks the stable part of her system prompt (her persona + the API cheat-sheet) for prompt caching, so caching providers (Anthropic and others) read it from cache instead of re-billing ~44K tokens every turn — a large cost/latency saving. Harmless on providers that don't cache. Turn off only if a provider misbehaves with cache markers.">
+        <div className="ls-toggle-row" title={t("When on, Lisa marks the stable part of her system prompt (her persona + the API cheat-sheet) for prompt caching, so caching providers (Anthropic and others) read it from cache instead of re-billing ~44K tokens every turn — a large cost/latency saving. Harmless on providers that don't cache. Turn off only if a provider misbehaves with cache markers.")}>
           <label className="ls-toggle">
             <input
               type="checkbox"
@@ -778,19 +781,19 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
             />
             <span className="ls-toggle-slider" />
           </label>
-          <span style={{ fontSize: 12 }}>Cache system prompt</span>
+          <span style={{ fontSize: 12 }}>{t('Cache system prompt')}</span>
         </div>
 
-        <div className="ls-settings-subheading">Conversation management</div>
+        <div className="ls-settings-subheading">{t('Conversation management')}</div>
 
         <button
           type="button"
           className="ls-btn ls-btn-danger"
           onClick={() => sendToBackend({ type: 'assistant_clear_all_threads' })}
-          title="Permanently delete every Lisa thread and its conversation history. Confirms before acting."
+          title={t('Permanently delete every Lisa thread and its conversation history. Confirms before acting.')}
         >
           <Trash2 size={11} style={{ marginRight: 4 }} />
-          Clear all threads
+          {t('Clear all threads')}
         </button>
       </div>
 
@@ -814,8 +817,8 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
       {/* #11 engine-toggle — confirm before switching engines (reloads startup scripts, wipes the rest). */}
       {pendingEngineMode && (
         <ConfirmDialog
-          title="Switch script engine?"
-          confirmLabel="Switch & reload"
+          title={t('Switch script engine?')}
+          confirmLabel={t('Switch & reload')}
           variant="danger"
           onConfirm={() => {
             sendToBackend({ type: 'update_settings', patch: { engineMode: pendingEngineMode } });
@@ -824,27 +827,24 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
           onCancel={() => { setPendingEngineMode(null); setEngineSelectResetKey((k) => k + 1); }}
         >
           <p style={esNote}>
-            Switching to {pendingEngineMode === 'quickjs' ? 'the QuickJS isolate' : 'AsyncFunction'} changes
-            which sandbox runs your scripts. Each script's live state — handlers, panels, timers — belongs to
-            one engine and can't be moved, so it is rebuilt under the new engine.
+            {pendingEngineMode === 'quickjs'
+              ? t("Switching to the QuickJS isolate changes which sandbox runs your scripts. Each script's live state — handlers, panels, timers — belongs to one engine and can't be moved, so it is rebuilt under the new engine.")
+              : t("Switching to AsyncFunction changes which sandbox runs your scripts. Each script's live state — handlers, panels, timers — belongs to one engine and can't be moved, so it is rebuilt under the new engine.")}
           </p>
 
           {/* #11 P7 — per-script isolation is a QuickJS-only capability; note that it goes dormant when
               leaving QuickJS, and reassure the user their choice is kept (restored on switching back). */}
           {pendingEngineMode === 'asyncfn' && (settings.contextModel ?? 'shared') === 'per-script' && (
             <p style={esNote}>
-              Per-script isolation applies only to the QuickJS engine, so it will be inactive while
-              AsyncFunction runs your scripts. Your choice is kept and takes effect again if you switch back
-              to QuickJS.
+              {t('Per-script isolation applies only to the QuickJS engine, so it will be inactive while AsyncFunction runs your scripts. Your choice is kept and takes effect again if you switch back to QuickJS.')}
             </p>
           )}
 
           {engineSwitchImpact.startup.length > 0 && (
             <>
-              <div style={esSectionLabel}>Re-run now ({engineSwitchImpact.startup.length})</div>
+              <div style={esSectionLabel}>{t('Re-run now ({n})', { n: engineSwitchImpact.startup.length })}</div>
               <p style={esSubNote}>
-                Startup scripts re-run immediately (spaced out) — panels, toasts, and any LLM calls they
-                make on startup happen again.
+                {t('Startup scripts re-run immediately (spaced out) — panels, toasts, and any LLM calls they make on startup happen again.')}
               </p>
               {renderEngineSwitchScriptList(engineSwitchImpact.startup, RotateCcw)}
             </>
@@ -852,26 +852,24 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
 
           {engineSwitchImpact.event.length > 0 && (
             <>
-              <div style={esSectionLabel}>State cleared ({engineSwitchImpact.event.length})</div>
+              <div style={esSectionLabel}>{t('State cleared ({n})', { n: engineSwitchImpact.event.length })}</div>
               <p style={esSubNote}>
-                Event-driven scripts have their live state cleared now and re-arm on their next trigger —
-                no automatic re-run.
+                {t('Event-driven scripts have their live state cleared now and re-arm on their next trigger — no automatic re-run.')}
               </p>
               {renderEngineSwitchScriptList(engineSwitchImpact.event, Timer)}
             </>
           )}
 
           <p style={esFoot}>
-            In-flight runs finish on the current engine first, and any in-memory (non-persisted) state is
-            reset. Consider disabling expensive startup scripts before switching.
+            {t('In-flight runs finish on the current engine first, and any in-memory (non-persisted) state is reset. Consider disabling expensive startup scripts before switching.')}
           </p>
         </ConfirmDialog>
       )}
       {/* #11 P7 context-model — confirm before switching isolation (respawns the QuickJS worker(s), reloads). */}
       {pendingContextModel && (
         <ConfirmDialog
-          title="Switch script isolation?"
-          confirmLabel="Switch & reload"
+          title={t('Switch script isolation?')}
+          confirmLabel={t('Switch & reload')}
           variant="danger"
           onConfirm={() => {
             sendToBackend({ type: 'update_settings', patch: { contextModel: pendingContextModel } });
@@ -880,18 +878,16 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
           onCancel={() => { setPendingContextModel(null); setContextModelSelectResetKey((k) => k + 1); }}
         >
           <p style={esNote}>
-            Switching to {pendingContextModel === 'per-script' ? 'per-script isolation' : 'a shared context'} changes
-            how the QuickJS engine sandboxes your scripts. The QuickJS worker is respawned so every context is
-            rebuilt under the new model, and each script's live state — handlers, panels, timers — is rebuilt
-            with it.
+            {pendingContextModel === 'per-script'
+              ? t("Switching to per-script isolation changes how the QuickJS engine sandboxes your scripts. The QuickJS worker is respawned so every context is rebuilt under the new model, and each script's live state — handlers, panels, timers — is rebuilt with it.")
+              : t("Switching to a shared context changes how the QuickJS engine sandboxes your scripts. The QuickJS worker is respawned so every context is rebuilt under the new model, and each script's live state — handlers, panels, timers — is rebuilt with it.")}
           </p>
 
           {engineSwitchImpact.startup.length > 0 && (
             <>
-              <div style={esSectionLabel}>Re-run now ({engineSwitchImpact.startup.length})</div>
+              <div style={esSectionLabel}>{t('Re-run now ({n})', { n: engineSwitchImpact.startup.length })}</div>
               <p style={esSubNote}>
-                Startup scripts re-run immediately (spaced out) — panels, toasts, and any LLM calls they
-                make on startup happen again.
+                {t('Startup scripts re-run immediately (spaced out) — panels, toasts, and any LLM calls they make on startup happen again.')}
               </p>
               {renderEngineSwitchScriptList(engineSwitchImpact.startup, RotateCcw)}
             </>
@@ -899,18 +895,16 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
 
           {engineSwitchImpact.event.length > 0 && (
             <>
-              <div style={esSectionLabel}>State cleared ({engineSwitchImpact.event.length})</div>
+              <div style={esSectionLabel}>{t('State cleared ({n})', { n: engineSwitchImpact.event.length })}</div>
               <p style={esSubNote}>
-                Event-driven scripts have their live state cleared now and re-arm on their next trigger —
-                no automatic re-run.
+                {t('Event-driven scripts have their live state cleared now and re-arm on their next trigger — no automatic re-run.')}
               </p>
               {renderEngineSwitchScriptList(engineSwitchImpact.event, Timer)}
             </>
           )}
 
           <p style={esFoot}>
-            This setting only affects the QuickJS engine. In-flight runs finish first, and any in-memory
-            (non-persisted) state is reset.
+            {t('This setting only affects the QuickJS engine. In-flight runs finish first, and any in-memory (non-persisted) state is reset.')}
           </p>
         </ConfirmDialog>
       )}
