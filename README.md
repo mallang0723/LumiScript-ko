@@ -22,7 +22,7 @@ https://github.com/mallang0723/LumiScript-ko
 
 - 레퍼런스 탭의 API 설명, `docs/` 문서, Lisa가 참고하는 API 지식 자료
 - 코드 식별자, `api.*` 이름, 이벤트 이름(`MESSAGE_SENT` …), 권한 ID, 지시문 이름, 스크립트에 던져지는 API 오류 메시지와 스크립트 콘솔의 `[lumiscript]` 로그
-- 진단 창의 「보고서 복사」로 만드는 마크다운 보고서
+- 진단 보고서(마크다운) 파일의 틀 — 안의 검사 항목은 한국어로 나와요
 
 **원작과 함께 쓸 때:** 확장 ID가 달라서(`lumiscript` / `lumiscript_ko`) 둘 다 설치할 수 있지만, **동시에 켜지는 마세요.** 스크립트·설정·변수·저장소는 확장마다 따로 저장되므로 원작의 스크립트는 자동으로 넘어오지 않아요. 원작에서 스크립트를 팩(`.lumiscript.zip`)으로 내보낸 뒤 한국어판에서 가져오세요. 캐릭터 카드에 묶인 스크립트(`extensions.lumiscript`)는 원작과 호환돼요. 자세한 내용은 [`docs/ko-fork.md`](docs/ko-fork.md)를 보세요.
 
