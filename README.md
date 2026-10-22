@@ -1,3 +1,33 @@
+## 한국어판 안내
+
+**LumiScript (한국어)** 는 [mindbound/lumiscript](https://github.com/mindbound/lumiscript)의 화면 문구를 한국어로 옮긴 **비공식** 번역판이에요. 원작자(mindbound)가 관리하거나 지원하는 판이 아니므로, 이 판에서 생긴 문제는 원작 저장소가 아니라 [이 저장소](https://github.com/mallang0723/LumiScript-ko)에 알려 주세요.
+
+- 원작: [LumiScript](https://github.com/mindbound/lumiscript) by **mindbound**
+- 한국어 번역: **mallang0723**
+- 라이선스: 원작과 같은 [MIT](LICENSE)예요. 저작권 표시는 원작 그대로 두었어요.
+
+**설치:** Lumiverse의 **설정 → 확장 기능**에서 아래 주소로 설치하고, 요청하는 권한을 허용하세요.
+
+```txt
+https://github.com/mallang0723/LumiScript-ko
+```
+
+**한국어로 바뀐 것**
+
+- 스크립트 목록·편집기·트리거·바인딩·콘솔, 설정, 저장소 살펴보기, 팩 가져오기/내보내기, 카드 스크립트 동의·묶기 창, 진단 창, 알림(토스트)과 오류 안내 등 화면 문구
+- Lisa(앱 안 코드 도우미)의 채팅 화면, 그리고 Lisa의 답변(기본으로 한국어로 답해요. 코드와 `api.*` 이름은 영어 그대로예요)
+- 레퍼런스 탭의 제목·버튼 같은 화면 틀
+
+**영어 그대로인 것**
+
+- 레퍼런스 탭의 API 설명, `docs/` 문서, Lisa가 참고하는 API 지식 자료
+- 코드 식별자, `api.*` 이름, 이벤트 이름(`MESSAGE_SENT` …), 권한 ID, 지시문 이름, 스크립트에 던져지는 API 오류 메시지와 스크립트 콘솔의 `[lumiscript]` 로그
+- 진단 창의 「보고서 복사」로 만드는 마크다운 보고서
+
+**원작과 함께 쓸 때:** 확장 ID가 달라서(`lumiscript` / `lumiscript_ko`) 둘 다 설치할 수 있지만, **동시에 켜지는 마세요.** 스크립트·설정·변수·저장소는 확장마다 따로 저장되므로 원작의 스크립트는 자동으로 넘어오지 않아요. 원작에서 스크립트를 팩(`.lumiscript.zip`)으로 내보낸 뒤 한국어판에서 가져오세요. 캐릭터 카드에 묶인 스크립트(`extensions.lumiscript`)는 원작과 호환돼요. 자세한 내용은 [`docs/ko-fork.md`](docs/ko-fork.md)를 보세요.
+
+---
+
 ![LumiScript](https://raw.githubusercontent.com/mindbound/mindbound.github.io/refs/heads/master/ls/lumiscript.png)
 
 # LumiScript
