@@ -20,6 +20,8 @@
 
 declare const spindle: import('lumiverse-spindle-types').SpindleAPI;
 
+import { t } from '../i18n/index.js';
+
 // ─── Version comparison ─────────────────────────────────────────────────────
 
 /**
@@ -85,6 +87,7 @@ export async function checkMinimumHostVersion(): Promise<void> {
 
   if (compareVersions(hostVersion, minimum) >= 0) return;
 
+  // The server log keeps the English sentence; the toast shows the localised one.
   const msg =
     `LumiScript v${spindle.manifest.version} requires Lumiverse ${minimum} or newer. ` +
     `Current host is ${hostVersion}. Recent features (CHAT_SWITCHED event for ` +
@@ -92,8 +95,12 @@ export async function checkMinimumHostVersion(): Promise<void> {
     `chat-context delivery for tools, swipe-edit triggers, rich message patches) ` +
     `may be missing or broken on this version. Update Lumiverse to resolve.`;
   spindle.log.warn(`[LumiScript] ${msg}`);
-  spindle.toast.warning(msg, {
-    title: 'LumiScript — Update Lumiverse',
+  spindle.toast.warning(t('LumiScript v{version} requires Lumiverse {minimum} or newer. Current host is {host}. Recent features (CHAT_SWITCHED event for chat-open / chat-close handling, Council member context, structured chat-context delivery for tools, swipe-edit triggers, rich message patches) may be missing or broken on this version. Update Lumiverse to resolve.', {
+    version: spindle.manifest.version,
+    minimum,
+    host: hostVersion,
+  }), {
+    title: t('LumiScript — Update Lumiverse'),
     duration: 12_000,
   });
 }

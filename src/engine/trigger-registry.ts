@@ -55,6 +55,7 @@ import {
   diffAndCleanStaleEndpoints,
 } from './rpc-store.js';
 import { logCleanup } from './cleanup-log.js';
+import { t } from '../i18n/index.js';
 
 // ─── Dependency factory ───────────────────────────────────────────────────────
 
@@ -592,7 +593,7 @@ export class TriggerRegistry {
         this.batchMaxDuration.set(currentScript.id, Math.max(prevMax, result.duration));
         if (!result.success && !this.batchFirstError.has(currentScript.id)) {
           this.batchFirstError.set(currentScript.id, {
-            message: result.error?.message ?? 'Unknown error',
+            message: result.error?.message ?? t('Unknown error'),
             // Use the trigger-registry-side `runId` (used for execution_started /
             // console_entry messages) — the dispatcher's wire-side runId is an
             // internal IPC correlation key and isn't exposed to the frontend.
@@ -974,7 +975,7 @@ export class TriggerRegistry {
     });
 
     if (!result.success) {
-      spindle.toast.error(result.error?.message ?? 'Unknown error', {
+      spindle.toast.error(result.error?.message ?? t('Unknown error'), {
         title: `LumiScript — ${script.name}`,
         duration: 10_000,
       });
@@ -1290,8 +1291,8 @@ export class TriggerRegistry {
     });
 
     if (!result.success) {
-      spindle.toast.error(result.error?.message ?? 'Unknown error', {
-        title:    `LumiScript — ${script.name} (reload)`,
+      spindle.toast.error(result.error?.message ?? t('Unknown error'), {
+        title:    t('LumiScript — {name} (reload)', { name: script.name }),
         duration: 10_000,
       });
     }

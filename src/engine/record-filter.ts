@@ -17,6 +17,7 @@
 
 import { jsonquery } from '@jsonquerylang/jsonquery';
 import type { DbRecord } from '../types/script.js';
+import { t } from '../i18n/index.js';
 
 export interface RecordFilterOptions {
   /** Substring needle for shallow/deep text modes. Ignored when `jsonqueryFilter` is set. */
@@ -84,12 +85,12 @@ export function filterRecords(records: DbRecord[], opts: RecordFilterOptions): R
       queried = jsonquery(records, queryRaw);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      return { records: [], error: `jsonquery error: ${msg}` };
+      return { records: [], error: t('jsonquery error: {error}', { error: msg }) };
     }
     if (!Array.isArray(queried)) {
       return {
         records: [],
-        error: `jsonquery error: expression must return an array of records (got ${queried === null ? 'null' : typeof queried})`,
+        error: t('jsonquery error: expression must return an array of records (got {type})', { type: queried === null ? 'null' : typeof queried }),
       };
     }
     return { records: queried as DbRecord[], error: null };

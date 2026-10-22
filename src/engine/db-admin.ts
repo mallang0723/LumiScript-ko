@@ -27,6 +27,7 @@
 declare const spindle: import('lumiverse-spindle-types').SpindleAPI;
 
 import { filterRecords } from './record-filter.js';
+import { t } from '../i18n/index.js';
 import { dbCacheKey, invalidateDbCache } from './db-cache.js';
 import type { DbScope, DbRecord } from '../types/script.js';
 import { runExclusive } from './db-queue.js';
@@ -606,7 +607,7 @@ export async function updateRecord(
   userId?: string,
 ): Promise<RecordMutationResult> {
   if (!isValidCollectionPath(path)) {
-    return { success: false, error: `invalid collection path "${path}"` };
+    return { success: false, error: t('invalid collection path "{path}"', { path }) };
   }
   // Strip reserved fields — same defensive filter `DbStore.update()`
   // does. We don't reject patches that contain them; just silently
@@ -623,7 +624,7 @@ export async function updateRecord(
     const records = Array.isArray(loaded) ? loaded : [];
     const idx = records.findIndex((r) => r.id === recordId);
     if (idx < 0) {
-      return { success: false, error: `record "${recordId}" not found in collection` };
+      return { success: false, error: t('record "{id}" not found in collection', { id: recordId }) };
     }
     const original = records[idx]!;
     const merged: DbRecord = {
@@ -696,7 +697,7 @@ export async function deleteRecord(
   userId?: string,
 ): Promise<RecordMutationResult> {
   if (!isValidCollectionPath(path)) {
-    return { success: false, error: `invalid collection path "${path}"` };
+    return { success: false, error: t('invalid collection path "{path}"', { path }) };
   }
   return runExclusive(path, async (): Promise<RecordMutationResult> => {
     const loaded = await spindle.userStorage.getJson<DbRecord[]>(path, {
@@ -707,7 +708,7 @@ export async function deleteRecord(
     const before = records.length;
     const kept = records.filter((r) => r.id !== recordId);
     if (kept.length === before) {
-      return { success: false, error: `record "${recordId}" not found in collection` };
+      return { success: false, error: t('record "{id}" not found in collection', { id: recordId }) };
     }
     try {
       await spindle.userStorage.setJson(path, kept, { indent: 2, userId });

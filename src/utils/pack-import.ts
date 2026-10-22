@@ -25,6 +25,7 @@
 import { unzipSync, strFromU8 } from 'fflate';
 import { ScriptPackSchema } from './pack-schema.js';
 import type { ScriptPackEntry } from '../types/script.js';
+import { t } from '../i18n/index.js';
 
 /** Hard limit on decompressed pack.json size (1 MB). */
 const MAX_DECOMPRESSED_BYTES = 1_048_576;
@@ -49,16 +50,16 @@ export async function parseScriptPack(file: File): Promise<ScriptPackEntry[]> {
       filter: (file) => file.name === 'pack.json',
     });
   } catch {
-    throw new Error('Could not read ZIP file. Is this a valid .zip archive?');
+    throw new Error(t('Could not read ZIP file. Is this a valid .zip archive?'));
   }
 
   const packBytes = files['pack.json'];
   if (!packBytes) {
-    throw new Error('Invalid script pack: missing pack.json');
+    throw new Error(t('Invalid script pack: missing pack.json'));
   }
 
   if (packBytes.byteLength > MAX_DECOMPRESSED_BYTES) {
-    throw new Error(`Pack exceeds the ${MAX_DECOMPRESSED_BYTES / 1024 / 1024} MB decompressed size limit`);
+    throw new Error(t('Pack exceeds the {mb} MB decompressed size limit', { mb: MAX_DECOMPRESSED_BYTES / 1024 / 1024 }));
   }
 
   const raw = strFromU8(packBytes);
@@ -67,7 +68,7 @@ export async function parseScriptPack(file: File): Promise<ScriptPackEntry[]> {
   try {
     parsed = JSON.parse(raw);
   } catch {
-    throw new Error('Invalid script pack: pack.json is not valid JSON');
+    throw new Error(t('Invalid script pack: pack.json is not valid JSON'));
   }
 
   const result = ScriptPackSchema.parse(parsed);

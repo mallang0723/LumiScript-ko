@@ -119,6 +119,7 @@ import {
 import { resolveDomRead } from './engine/api/dom.js';
 import { resolveComponentValue } from './engine/api/components.js';
 import { checkMinimumHostVersion } from './utils/host-version.js';
+import { t } from './i18n/index.js';
 import {
   enumerateAllCollections,
   inspectCollection,
@@ -1664,8 +1665,10 @@ async function runDiagnostics(userId: string | undefined): Promise<DiagnosticsRe
         const reasonMsg = firstFailure.reason instanceof Error
           ? firstFailure.reason.message
           : String(firstFailure.reason);
-        storageError =
-          `${threadsIndexed - threadsReadable} thread file(s) unreadable; first error: ${reasonMsg}`;
+        storageError = t('{count} thread file(s) unreadable; first error: {error}', {
+          count: threadsIndexed - threadsReadable,
+          error: reasonMsg,
+        });
       }
     } catch (err) {
       storageError = err instanceof Error ? err.message : String(err);
@@ -1915,7 +1918,7 @@ spindle.onFrontendMessage(async (raw, userId) => {
         if (assistantAbortController) {
           sendAssistant({
             type: 'assistant_error',
-            error: 'Busy generating — wait for the current reply to finish.',
+            error: t('Busy generating — wait for the current reply to finish.'),
           });
           break;
         }
@@ -1928,7 +1931,7 @@ spindle.onFrontendMessage(async (raw, userId) => {
         if (!activeUserId) {
           sendAssistant({
             type: 'assistant_error',
-            error: 'Assistant unavailable: no active user. Make sure Lumiverse has finished loading before opening Lisa.',
+            error: t('Assistant unavailable: no active user. Make sure Lumiverse has finished loading before opening Lisa.'),
           });
           break;
         }
@@ -1945,14 +1948,14 @@ spindle.onFrontendMessage(async (raw, userId) => {
         if (assistantAbortController) {
           sendAssistant({
             type: 'assistant_error',
-            error: 'Busy generating — wait for the current reply to finish.',
+            error: t('Busy generating — wait for the current reply to finish.'),
           });
           break;
         }
         if (!activeAssistantThread) {
           sendAssistant({
             type: 'assistant_error',
-            error: 'Assistant unavailable: failed to initialise thread state.',
+            error: t('Assistant unavailable: failed to initialise thread state.'),
           });
           break;
         }
@@ -2268,13 +2271,13 @@ spindle.onFrontendMessage(async (raw, userId) => {
         if (!activeUserId || !activeAssistantThread) {
           // No active thread (e.g. not-yet / failed bootstrap after a reconnect).
           // Reply anyway so the FE clears its "compacting" spinner.
-          sendAssistant({ type: 'assistant_compacted', ok: false, error: 'Assistant not ready yet — try again in a moment.' });
+          sendAssistant({ type: 'assistant_compacted', ok: false, error: t('Assistant not ready yet — try again in a moment.') });
           break;
         }
         // Refuse mid-generation — a concurrent turn would race the thread state.
         // (The FE also disables the button while a turn is streaming.)
         if (assistantAbortController) {
-          sendAssistant({ type: 'assistant_compacted', ok: false, error: 'Busy generating — try again in a moment.' });
+          sendAssistant({ type: 'assistant_compacted', ok: false, error: t('Busy generating — try again in a moment.') });
           break;
         }
         const cs = settingsStore.get();
@@ -2299,7 +2302,7 @@ spindle.onFrontendMessage(async (raw, userId) => {
             ...(msg.connectionId ? { connectionId: msg.connectionId } : {}),
           });
           if (activeAssistantThread !== target) {
-            sendAssistant({ type: 'assistant_compacted', ok: false, error: 'Conversation changed — compaction cancelled.' });
+            sendAssistant({ type: 'assistant_compacted', ok: false, error: t('Conversation changed — compaction cancelled.') });
             break;
           }
           if (compacted) {
@@ -2316,7 +2319,7 @@ spindle.onFrontendMessage(async (raw, userId) => {
               compactedThrough: compacted.compactedThrough,
             });
           } else {
-            sendAssistant({ type: 'assistant_compacted', ok: false, error: 'Nothing old enough to compact yet — Lisa folds older messages to free space once a conversation grows (and auto-runs near full). Keep chatting and it\'ll become available.' });
+            sendAssistant({ type: 'assistant_compacted', ok: false, error: t('Nothing old enough to compact yet — Lisa folds older messages to free space once a conversation grows (and auto-runs near full). Keep chatting and it\'ll become available.') });
           }
         } finally {
           assistantAbortController = null;
@@ -2371,14 +2374,14 @@ spindle.onFrontendMessage(async (raw, userId) => {
         if (activeUserId) {
           const path = toUserFilePath(msg.name);
           const errs: string[] = [];
-          if (!msg.name.trim()) errs.push('Enter a file name.');
-          else if (!isEligibleUserFile(path)) errs.push('Use an allowed text extension (e.g. .md, .txt, .json, .csv).');
-          if (new TextEncoder().encode(msg.content).length > MAX_USER_FILE_BYTES) errs.push('File is too large (256 KB max).');
+          if (!msg.name.trim()) errs.push(t('Enter a file name.'));
+          else if (!isEligibleUserFile(path)) errs.push(t('Use an allowed text extension (e.g. .md, .txt, .json, .csv).'));
+          if (new TextEncoder().encode(msg.content).length > MAX_USER_FILE_BYTES) errs.push(t('File is too large (256 KB max).'));
           if (errs.length === 0) {
             try {
               await spindle.userStorage.write(path, msg.content, activeUserId);
             } catch (err) {
-              errs.push('Could not save the file.');
+              errs.push(t('Could not save the file.'));
               spindle.log.warn(`[LumiScript] add_user_file failed: ${err instanceof Error ? err.message : String(err)}`);
             }
           }
@@ -2539,13 +2542,14 @@ spindle.onFrontendMessage(async (raw, userId) => {
         // Confirm via the Spindle-native modal — host-themed, accessible,
         // can't accidentally lose a long thread.
         const target = assistantThreadIndex.find((e) => e.id === msg.threadId);
-        const titlePreview = target?.title ?? 'this thread';
         const confirmRes = await spindle.modal.confirm({
-          title:        'Delete thread?',
-          message:      `Deleting "${titlePreview}" will permanently remove its conversation history. This can't be undone.`,
+          title:        t('Delete thread?'),
+          message:      target?.title != null
+            ? t('Deleting "{title}" will permanently remove its conversation history. This can\'t be undone.', { title: target.title })
+            : t('Deleting "this thread" will permanently remove its conversation history. This can\'t be undone.'),
           variant:      'danger',
-          confirmLabel: 'Delete',
-          cancelLabel:  'Keep',
+          confirmLabel: t('Delete'),
+          cancelLabel:  t('Keep'),
           userId:       activeUserId,
         }).catch(() => ({ confirmed: false }));
         if (!confirmRes.confirmed) break;
@@ -2594,7 +2598,7 @@ spindle.onFrontendMessage(async (raw, userId) => {
             if (!target) {
               sendAssistant({
                 type:  'assistant_apply_error',
-                error: 'That script no longer exists — it may have been deleted since you attached it.',
+                error: t('That script no longer exists — it may have been deleted since you attached it.'),
               });
               break;
             }
@@ -2673,11 +2677,11 @@ spindle.onFrontendMessage(async (raw, userId) => {
 
         // Spindle-native confirm before anything destructive.
         const confirmRes = await spindle.modal.confirm({
-          title:        'Clear all threads?',
-          message:      `This will permanently delete every Lisa thread (${assistantThreadIndex.length} total) and all their conversation history. This can't be undone.`,
+          title:        t('Clear all threads?'),
+          message:      t('This will permanently delete every Lisa thread ({count} total) and all their conversation history. This can\'t be undone.', { count: assistantThreadIndex.length }),
           variant:      'danger',
-          confirmLabel: 'Delete all',
-          cancelLabel:  'Keep',
+          confirmLabel: t('Delete all'),
+          cancelLabel:  t('Keep'),
           userId:       activeUserId,
         }).catch(() => ({ confirmed: false }));
         if (!confirmRes.confirmed) break;
@@ -2975,8 +2979,8 @@ spindle.onFrontendMessage(async (raw, userId) => {
           spindle.log.warn(
             `[LumiScript] update_record failed for "${msg.path}" id=${msg.recordId}: ${result.error}`,
           );
-          spindle.toast.error(result.error ?? 'Failed to update record', {
-            title: 'Storage — edit record',
+          spindle.toast.error(result.error ?? t('Failed to update record'), {
+            title: t('Storage — edit record'),
           });
         }
         break;
@@ -3003,8 +3007,8 @@ spindle.onFrontendMessage(async (raw, userId) => {
           spindle.log.warn(
             `[LumiScript] delete_record failed for "${msg.path}" id=${msg.recordId}: ${result.error}`,
           );
-          spindle.toast.error(result.error ?? 'Failed to delete record', {
-            title: 'Storage — delete record',
+          spindle.toast.error(result.error ?? t('Failed to delete record'), {
+            title: t('Storage — delete record'),
           });
         }
         break;
@@ -3056,10 +3060,10 @@ spindle.onFrontendMessage(async (raw, userId) => {
           // leave the user thinking the install succeeded.
           spindle.log.warn(`[LumiScript] card-scripts install: stale/unknown requestId ${msg.requestId} — ignoring`);
           spindle.toast.warning(
-            'This card-scripts install expired before it could be applied. Re-import the character to try again.',
+            t('This card-scripts install expired before it could be applied. Re-import the character to try again.'),
             // Scope to the replying user — this carries that user's import
             // activity and must not fan out to other sessions on a shared worker.
-            { title: 'Card scripts', userId: activeUserId ?? undefined },
+            { title: t('Card scripts'), userId: activeUserId ?? undefined },
           );
           break;
         }
@@ -3096,16 +3100,14 @@ spindle.onFrontendMessage(async (raw, userId) => {
         spindle.log.info(`[LumiScript] card-scripts: installed ${summary.installed.length}, updated ${summary.updated.length}, skipped ${summary.skipped}`);
         const changed = summary.installed.length + summary.updated.length;
         if (changed > 0) {
-          const parts: string[] = [];
-          if (summary.installed.length) parts.push(`installed ${summary.installed.length}`);
-          if (summary.updated.length) parts.push(`updated ${summary.updated.length}`);
-          const fromCard = prepared.bundleName ? ` from ${prepared.bundleName}` : '';
           spindle.toast.success(
-            `LumiScript ${parts.join(', ')} script${changed === 1 ? '' : 's'}${fromCard}. ` +
-            `Review and enable ${changed === 1 ? 'it' : 'them'} in the LumiScript panel.`,
+            cardInstallSummary(summary.installed.length, summary.updated.length, prepared.bundleName) + ' ' +
+            (changed === 1
+              ? t('Review and enable it in the LumiScript panel.')
+              : t('Review and enable them in the LumiScript panel.')),
             // Scope to the importing user — the message includes the card name +
             // their install activity; broadcasting it would leak to other sessions.
-            { title: 'Card scripts', userId: replyUserId ?? undefined },
+            { title: t('Card scripts'), userId: replyUserId ?? undefined },
           );
           // Let scripts react to a card-scripts install (e.g. a manager script).
           busEmit('ls:card-scripts:installed', {
@@ -3158,8 +3160,8 @@ spindle.onFrontendMessage(async (raw, userId) => {
           // banner, so surface it (mirrors the install cache-miss) rather than a
           // silent dead click.
           spindle.toast.warning(
-            'This card-scripts prompt expired — re-open the chat to see it again.',
-            { title: 'Card scripts', userId: activeUserId ?? undefined },
+            t('This card-scripts prompt expired — re-open the chat to see it again.'),
+            { title: t('Card scripts'), userId: activeUserId ?? undefined },
           );
         }
         break;
@@ -3238,7 +3240,7 @@ spindle.onFrontendMessage(async (raw, userId) => {
         const replyUserId = activeUserId;
         const char = await spindle.characters.get(msg.characterId, replyUserId ?? undefined).catch(() => null);
         if (!char) {
-          spindle.toast.warning('Could not read this character to import its scripts.', { title: 'Card scripts', userId: replyUserId ?? undefined });
+          spindle.toast.warning(t('Could not read this character to import its scripts.'), { title: t('Card scripts'), userId: replyUserId ?? undefined });
           break;
         }
         const prepared = prepareCardScriptDetection({
@@ -3248,7 +3250,7 @@ spindle.onFrontendMessage(async (raw, userId) => {
           genRequestId: generateUUID,
         });
         if (!prepared) {
-          spindle.toast.info('Nothing to import — every bundled script here is already in your library.', { title: 'Card scripts', userId: replyUserId ?? undefined });
+          spindle.toast.info(t('Nothing to import — every bundled script here is already in your library.'), { title: t('Card scripts'), userId: replyUserId ?? undefined });
           break;
         }
         prepared.ownerUserId = replyUserId;
@@ -3329,7 +3331,7 @@ spindle.onFrontendMessage(async (raw, userId) => {
         };
         // Writing a character's extensions needs the `characters` permission.
         if (!grantedPermissions.has('characters')) {
-          fail('LumiScript needs the “characters” permission to write scripts into a card. Grant it in Lumiverse → Extensions.');
+          fail(t('LumiScript needs the “characters” permission to write scripts into a card. Grant it in Lumiverse → Extensions.'));
           break;
         }
         // Backend-authority: load the real scripts from storage by id; never trust
@@ -3339,14 +3341,14 @@ spindle.onFrontendMessage(async (raw, userId) => {
           .map((id) => scriptStorage.getScript(id))
           .filter((s): s is NonNullable<typeof s> => s != null);
         if (selected.length === 0) {
-          fail('None of the selected scripts could be found.');
+          fail(t('None of the selected scripts could be found.'));
           break;
         }
         try {
           const uid = replyUserId ?? undefined;
           const character = await spindle.characters.get(msg.characterId, uid);
           if (!character) {
-            fail('The target character could not be found.');
+            fail(t('The target character could not be found.'));
             break;
           }
           // Reuse an existing bundleCardId on the target so re-exports update the
@@ -3374,19 +3376,18 @@ spindle.onFrontendMessage(async (raw, userId) => {
             scriptCount: written,
             droppedCount: dropped,
           }, replyUserId);
-          const mergedNote = dropped > 0
-            ? ` (${dropped} shared a bundle id and ${dropped === 1 ? 'was' : 'were'} merged)`
-            : '';
           spindle.toast.success(
-            `Bundled ${written} script${written === 1 ? '' : 's'} into ${character.name}${mergedNote}. ` +
-            `Export the card to share ${written === 1 ? 'it' : 'them'}.`,
-            { title: 'Card scripts', userId: uid },
+            cardBundleSummary(written, dropped, character.name) + ' ' +
+            (written === 1
+              ? t('Export the card to share it.')
+              : t('Export the card to share them.')),
+            { title: t('Card scripts'), userId: uid },
           );
           spindle.log.info(`[LumiScript] card-scripts export: ${written} script(s)${dropped > 0 ? ` (${dropped} merged)` : ''} → character ${msg.characterId} (bundleCardId ${bundleCardId})`);
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
           spindle.log.warn(`[LumiScript] ls_card_scripts_export failed: ${message}`);
-          fail(`Failed to write scripts into the card: ${message}`);
+          fail(t('Failed to write scripts into the card: {error}', { error: message }));
         }
         break;
       }
@@ -3641,13 +3642,13 @@ spindle.onFrontendMessage(async (raw, userId) => {
             `${relPath} (${bytes.byteLength} bytes)`,
           );
           spindle.toast.success(
-            `Pack saved to extension storage: ${relPath}`,
-            { title: 'Export' },
+            t('Pack saved to extension storage: {path}', { path: relPath }),
+            { title: t('Export') },
           );
         } catch (err) {
           const text = err instanceof Error ? err.message : String(err);
           spindle.log.error(`[LumiScript] save_pack_to_disk failed: ${text}`);
-          spindle.toast.error(`Export to disk failed: ${text}`, { title: 'Export' });
+          spindle.toast.error(t('Export to disk failed: {error}', { error: text }), { title: t('Export') });
         }
         break;
       }
@@ -4099,7 +4100,7 @@ spindle.onFrontendMessage(async (raw, userId) => {
         // user to be looking at the extension panel — a toast gives
         // immediate feedback regardless of which Lumiverse view is active.
         if (!result.success) {
-          spindle.toast.error(result.error?.message ?? 'Unknown error', {
+          spindle.toast.error(result.error?.message ?? t('Unknown error'), {
             title: `LumiScript — ${script.name}`,
             duration: 10_000,
           });
@@ -4504,12 +4505,59 @@ async function checkForUpdates(): Promise<void> {
       `[LumiScript] Update available: local=${localVersion} remote=${remoteVersion}`,
     );
     spindle.toast.info(
-      `LumiScript ${remoteVersion} is available (you have ${localVersion}). Update via the Extensions panel.`,
-      { title: 'LumiScript update available', duration: 12000 },
+      t('LumiScript {remote} is available (you have {local}). Update via the Extensions panel.', { remote: remoteVersion, local: localVersion }),
+      { title: t('LumiScript update available'), duration: 12000 },
     );
   } catch {
     // Skip silently: no network, parse error, missing manifest field, etc.
   }
+}
+
+// ─── Card-scripts toast sentences (LumiScript-ko) ───────────────────────────
+// Whole-sentence variants so each locale can order the words its own way.
+// English output is identical to the former string-concatenated form.
+
+function cardInstallSummary(installed: number, updated: number, card: string | null | undefined): string {
+  if (card) {
+    if (installed > 0 && updated > 0) {
+      return t('LumiScript installed {installed}, updated {updated} scripts from {card}.', { installed, updated, card });
+    }
+    if (installed > 0) {
+      return installed === 1
+        ? t('LumiScript installed {n} script from {card}.', { n: installed, card })
+        : t('LumiScript installed {n} scripts from {card}.', { n: installed, card });
+    }
+    return updated === 1
+      ? t('LumiScript updated {n} script from {card}.', { n: updated, card })
+      : t('LumiScript updated {n} scripts from {card}.', { n: updated, card });
+  }
+  if (installed > 0 && updated > 0) {
+    return t('LumiScript installed {installed}, updated {updated} scripts.', { installed, updated });
+  }
+  if (installed > 0) {
+    return installed === 1
+      ? t('LumiScript installed {n} script.', { n: installed })
+      : t('LumiScript installed {n} scripts.', { n: installed });
+  }
+  return updated === 1
+    ? t('LumiScript updated {n} script.', { n: updated })
+    : t('LumiScript updated {n} scripts.', { n: updated });
+}
+
+function cardBundleSummary(written: number, dropped: number, character: string): string {
+  if (dropped === 0) {
+    return written === 1
+      ? t('Bundled {n} script into {character}.', { n: written, character })
+      : t('Bundled {n} scripts into {character}.', { n: written, character });
+  }
+  if (dropped === 1) {
+    return written === 1
+      ? t('Bundled {n} script into {character} ({dropped} shared a bundle id and was merged).', { n: written, character, dropped })
+      : t('Bundled {n} scripts into {character} ({dropped} shared a bundle id and was merged).', { n: written, character, dropped });
+  }
+  return written === 1
+    ? t('Bundled {n} script into {character} ({dropped} shared a bundle id and were merged).', { n: written, character, dropped })
+    : t('Bundled {n} scripts into {character} ({dropped} shared a bundle id and were merged).', { n: written, character, dropped });
 }
 
 // ─── Permission denied handler ────────────────────────────────────────────────

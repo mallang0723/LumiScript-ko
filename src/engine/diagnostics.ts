@@ -33,6 +33,7 @@ import type { ScriptStorage } from '../storage/script-storage.js';
 import type { TriggerRegistry } from './trigger-registry.js';
 import type { EngineTelemetry } from '../types/script-runner-ipc.js';
 import { getActiveContext } from './binding.js';
+import { t } from '../i18n/index.js';
 import { listAll as listInjections } from './injection-store.js';
 import { listAll as listTools } from './tool-store.js';
 import { listAll as listMacros } from './macro-store.js';
@@ -458,7 +459,7 @@ function gteSemver(version: string, minimum: string): boolean {
 function buildLumiScriptSection(deps: DiagnosticsCollectorDeps): DiagnosticSection {
   const checks: DiagnosticCheck[] = [
     {
-      label:   'Version',
+      label:   t('Version'),
       status:  'info',
       message: deps.lumiScriptVersion,
     },
@@ -471,7 +472,7 @@ function buildLumiScriptSection(deps: DiagnosticsCollectorDeps): DiagnosticSecti
     // surfaced only the requirement.
     const meets = gteSemver(deps.lumiverseVersions.backend, deps.minLumiverseVersion);
     checks.push({
-      label:   'Minimum Lumiverse host version',
+      label:   t('Minimum Lumiverse host version'),
       status:  meets ? 'pass' : 'warn',
       // Drop the actual backend version from the message — the
       // "Lumiverse backend version" row immediately below covers it
@@ -481,8 +482,8 @@ function buildLumiScriptSection(deps: DiagnosticsCollectorDeps): DiagnosticSecti
       // qualifier on the warn branch keeps the warn state
       // self-describing.
       message: meets
-        ? `Requires ${deps.minLumiverseVersion}`
-        : `Requires ${deps.minLumiverseVersion} — extension may misbehave`,
+        ? t('Requires {version}', { version: deps.minLumiverseVersion })
+        : t('Requires {version} — extension may misbehave', { version: deps.minLumiverseVersion }),
       details: {
         required: deps.minLumiverseVersion,
         backend:  deps.lumiverseVersions.backend,
@@ -490,12 +491,12 @@ function buildLumiScriptSection(deps: DiagnosticsCollectorDeps): DiagnosticSecti
       },
     });
     checks.push({
-      label:   'Lumiverse backend version',
+      label:   t('Lumiverse backend version'),
       status:  'info',
       message: deps.lumiverseVersions.backend,
     });
     checks.push({
-      label:   'Lumiverse frontend version',
+      label:   t('Lumiverse frontend version'),
       status:  'info',
       message: deps.lumiverseVersions.frontend,
     });
@@ -505,22 +506,25 @@ function buildLumiScriptSection(deps: DiagnosticsCollectorDeps): DiagnosticSecti
     // that doesn't exercise version reporting). Keep the original
     // info-only row + skip the explicit backend/frontend rows.
     checks.push({
-      label:   'Minimum Lumiverse host version',
+      label:   t('Minimum Lumiverse host version'),
       status:  'info',
-      message: `Requires ${deps.minLumiverseVersion}`,
+      message: t('Requires {version}', { version: deps.minLumiverseVersion }),
     });
   }
 
   checks.push({
-    label:   'Granted permissions',
+    label:   t('Granted permissions'),
     status:  deps.grantedPermissions.length > 0 ? 'pass' : 'warn',
     message: deps.grantedPermissions.length > 0
       // Name the permissions inline (not just a count): the compact form fed to
       // the Lisa `read_diagnostics` tool drops `details`, and "which permission
       // is missing" is a top cause of "why does api.* silently fail". Enriches
       // the markdown export for free; stays well under the tool-result cap.
-      ? `${deps.grantedPermissions.length} permission(s) granted: ${[...deps.grantedPermissions].sort().join(', ')}`
-      : 'No permissions granted — extension features will be degraded',
+      ? t('{count} permission(s) granted: {list}', {
+        count: deps.grantedPermissions.length,
+        list:  [...deps.grantedPermissions].sort().join(', '),
+      })
+      : t('No permissions granted — extension features will be degraded'),
     details: { granted: [...deps.grantedPermissions].sort() },
   });
 
@@ -540,9 +544,9 @@ function buildScriptRunnerSection(deps: DiagnosticsCollectorDeps): DiagnosticSec
   if (deps.scriptRunner === undefined) {
     return {
       id:   'scriptRunner',
-      name: 'Script-runner subprocess',
+      name: t('Script-runner subprocess'),
       checks: [
-        { label: 'Status', status: 'info', message: 'Not probed (caller chose to skip)' },
+        { label: t('Status'), status: 'info', message: t('Not probed (caller chose to skip)') },
       ],
     };
   }
@@ -563,25 +567,27 @@ function buildScriptRunnerSection(deps: DiagnosticsCollectorDeps): DiagnosticSec
   // (don't rename existing check labels).
   const aliveWorkerCount = probe.pool?.workers.length ?? (probe.childAlive ? 1 : 0);
   checks.push({
-    label:   'Subprocess alive',
+    label:   t('Subprocess alive'),
     status:  probe.childAlive ? 'pass' : 'fail',
     message: probe.childAlive
       ? aliveWorkerCount === 1
-        ? 'Running — 1 worker alive (see the Workers check below for per-worker details)'
-        : `Running — ${aliveWorkerCount} workers alive (see the Workers check below for per-worker details)`
-      : 'Not running — no workers alive (post-crash or pre-spawn state)',
+        ? t('Running — 1 worker alive (see the Workers check below for per-worker details)')
+        : t('Running — {count} workers alive (see the Workers check below for per-worker details)', { count: aliveWorkerCount })
+      : t('Not running — no workers alive (post-crash or pre-spawn state)'),
   });
 
   // Restart history. Zero is the expected steady state. Any non-zero is
   // worth surfacing; sustained / growing is a sign of a crash loop.
   checks.push({
-    label:   'Total restarts (this session)',
+    label:   t('Total restarts (this session)'),
     status:  probe.totalRestartCount === 0 ? 'pass'
            : probe.totalRestartCount <= 3 ? 'warn'
            : 'fail',
     message: probe.totalRestartCount === 0
-      ? 'No respawns since LumiScript loaded'
-      : `${probe.totalRestartCount} respawn(s)${probe.lastRestartReason ? ` (last reason: ${probe.lastRestartReason})` : ''}`,
+      ? t('No respawns since LumiScript loaded')
+      : probe.lastRestartReason
+        ? t('{count} respawn(s) (last reason: {reason})', { count: probe.totalRestartCount, reason: probe.lastRestartReason })
+        : t('{count} respawn(s)', { count: probe.totalRestartCount }),
     details: {
       totalRestartCount:      probe.totalRestartCount,
       lastRestartReason:      probe.lastRestartReason,
@@ -593,9 +599,14 @@ function buildScriptRunnerSection(deps: DiagnosticsCollectorDeps): DiagnosticSec
   // either timed out or wasn't alive at probe time.
   if (probe.stats !== null) {
     checks.push({
+      // LumiScript-ko: stays English — the catalog key 'Memory' already means Lisa's notes (메모).
       label:   'Memory',
       status:  'info',
-      message: `${formatBytes(probe.stats.rss)} RSS, ${formatBytes(probe.stats.heapUsed)} / ${formatBytes(probe.stats.heapTotal)} heap`,
+      message: t('{rss} RSS, {used} / {total} heap', {
+        rss:   formatBytes(probe.stats.rss),
+        used:  formatBytes(probe.stats.heapUsed),
+        total: formatBytes(probe.stats.heapTotal),
+      }),
       details: {
         rss:       probe.stats.rss,
         heapTotal: probe.stats.heapTotal,
@@ -604,9 +615,13 @@ function buildScriptRunnerSection(deps: DiagnosticsCollectorDeps): DiagnosticSec
       },
     });
     checks.push({
-      label:   'CPU time',
+      label:   t('CPU time'),
       status:  'info',
-      message: `${formatMicros(probe.stats.cpuUserUs)} user, ${formatMicros(probe.stats.cpuSystemUs)} system (uptime: ${formatSeconds(probe.stats.uptimeSec)})`,
+      message: t('{user} user, {system} system (uptime: {uptime})', {
+        user:   formatMicros(probe.stats.cpuUserUs),
+        system: formatMicros(probe.stats.cpuSystemUs),
+        uptime: formatSeconds(probe.stats.uptimeSec),
+      }),
       details: {
         cpuUserUs:   probe.stats.cpuUserUs,
         cpuSystemUs: probe.stats.cpuSystemUs,
@@ -615,11 +630,11 @@ function buildScriptRunnerSection(deps: DiagnosticsCollectorDeps): DiagnosticSec
     });
   } else {
     checks.push({
-      label:   'Resource stats',
+      label:   t('Resource stats'),
       status:  probe.childAlive ? 'warn' : 'info',
       message: probe.childAlive
-        ? 'Stats request timed out — child may be hung in a sync block'
-        : 'Stats unavailable (no child alive)',
+        ? t('Stats request timed out — child may be hung in a sync block')
+        : t('Stats unavailable (no child alive)'),
     });
   }
 
@@ -631,13 +646,14 @@ function buildScriptRunnerSection(deps: DiagnosticsCollectorDeps): DiagnosticSec
 
     // Pool config recap. `info` status — these are knobs, not health signals.
     checks.push({
-      label:   'Worker pool config',
+      label:   t('Worker pool config'),
       status:  'info',
-      message:
-        `${p.configuredWorkerCount} configured` +
-        `, ${p.workers.length} spawned` +
-        `, idle timeout ${Math.round(p.settings.idleTimeoutMs / 60_000)} min` +
-        `, memory ceiling ${Math.round(p.settings.memoryCeilingBytes / 1024 / 1024)} MB`,
+      message: t('{configured} configured, {spawned} spawned, idle timeout {idle} min, memory ceiling {ceiling} MB', {
+        configured: p.configuredWorkerCount,
+        spawned:    p.workers.length,
+        idle:       Math.round(p.settings.idleTimeoutMs / 60_000),
+        ceiling:    Math.round(p.settings.memoryCeilingBytes / 1024 / 1024),
+      }),
       details: {
         configuredWorkerCount: p.configuredWorkerCount,
         spawnedWorkerCount:    p.workers.length,
@@ -680,10 +696,12 @@ function buildScriptRunnerSection(deps: DiagnosticsCollectorDeps): DiagnosticSec
           scriptNames: scriptNamesByWorker[idx]!,
         };
       });
-      const messageLines = summarised.map((s) =>
-        `${s.workerKey}: pid ${s.pidShort}, idle ${s.idle}, ${s.scripts} script(s), ${s.memory}` +
-        (s.restarts !== '0' ? `, restart-attempts ${s.restarts}` : ''),
-      );
+      const messageLines = summarised.map((s) => {
+        const args = { worker: s.workerKey, pid: s.pidShort, idle: s.idle, scripts: s.scripts, memory: s.memory, restarts: s.restarts };
+        return s.restarts !== '0'
+          ? t('{worker}: pid {pid}, idle {idle}, {scripts} script(s), {memory}, restart-attempts {restarts}', args)
+          : t('{worker}: pid {pid}, idle {idle}, {scripts} script(s), {memory}', args);
+      });
       // Per-row tooltip overlay. Headers are
       // ['Worker', 'PID', 'Idle', 'Scripts', 'Memory', 'Restarts'];
       // only the Scripts column (index 3) carries a tooltip — the
@@ -701,11 +719,11 @@ function buildScriptRunnerSection(deps: DiagnosticsCollectorDeps): DiagnosticSec
         null,
       ]);
       checks.push({
-        label:   'Workers',
+        label:   t('Workers'),
         status:  'info',
         message: messageLines.join(' · '),
         table: {
-          headers: ['Worker', 'PID', 'Idle', 'Scripts', 'Memory', 'Restarts'],
+          headers: [t('Worker'), 'PID', t('Idle'), t('Scripts'), 'Memory', t('Restarts')],
           rows:    summarised.map((s) => [
             s.workerKey, s.pidShort, s.idle, s.scripts, s.memory, s.restarts,
           ]),
@@ -720,10 +738,10 @@ function buildScriptRunnerSection(deps: DiagnosticsCollectorDeps): DiagnosticSec
       // pasting the report into a Discord support thread wouldn't
       // see which scripts are on which worker).
       const assignmentLines = summarised.map((s) =>
-        `${s.workerKey}: ${s.scriptNames.length > 0 ? s.scriptNames.join(', ') : '(none)'}`,
+        `${s.workerKey}: ${s.scriptNames.length > 0 ? s.scriptNames.join(', ') : t('(none)')}`,
       );
       checks.push({
-        label:   'Script assignments by worker',
+        label:   t('Script assignments by worker'),
         status:  'info',
         message: assignmentLines.join(' · '),
         details: {
@@ -736,9 +754,9 @@ function buildScriptRunnerSection(deps: DiagnosticsCollectorDeps): DiagnosticSec
 
     // Total assignments — separate row so it shows even at 0 spawned.
     checks.push({
-      label:   'Total script assignments',
+      label:   t('Total script assignments'),
       status:  'info',
-      message: `${p.totalAssignedScripts} script(s) assigned across the pool`,
+      message: t('{count} script(s) assigned across the pool', { count: p.totalAssignedScripts }),
       details: { totalAssignedScripts: p.totalAssignedScripts },
     });
 
@@ -763,14 +781,14 @@ function buildScriptRunnerSection(deps: DiagnosticsCollectorDeps): DiagnosticSec
       });
       const messageLines = pinnedEntries.map((entry) => {
         const scriptName = deps.scriptStorage.getScript(entry.scriptId)?.name ?? entry.scriptId;
-        return `${entry.workerKey}/${scriptName}: ${entry.counts.total} registration(s)`;
+        return t('{worker}/{script}: {count} registration(s)', { worker: entry.workerKey, script: scriptName, count: entry.counts.total });
       });
       checks.push({
-        label:   'Eviction-exempt scripts (registrations)',
+        label:   t('Eviction-exempt scripts (registrations)'),
         status:  'info',
         message: messageLines.join(' · '),
         table: {
-          headers: ['Worker', 'Script', 'Total', 'Breakdown'],
+          headers: [t('Worker'), t('Script'), t('Total'), t('Breakdown')],
           rows,
         },
         details: {
@@ -801,14 +819,16 @@ function buildScriptRunnerSection(deps: DiagnosticsCollectorDeps): DiagnosticSec
     // last-known readings because a worker was too busy to answer the stats
     // ping in time — so it's appended to the message when present.
     const carriedNote = ev.totalMemoryReadingsCarriedForward > 0
-      ? ` (${ev.totalMemoryReadingsCarriedForward} memory reading(s) carried forward from a non-responding worker)`
+      ? ' ' + t('({count} memory reading(s) carried forward from a non-responding worker)', { count: ev.totalMemoryReadingsCarriedForward })
       : '';
     checks.push({
-      label:   'Evictions (this session)',
+      label:   t('Evictions (this session)'),
       status:  'info',
       message: (ev.totalEvictions === 0
-        ? 'No evictions since LumiScript loaded'
-        : `${ev.totalEvictions} eviction(s)${ev.lastEvictionReason ? ` — last reason: ${ev.lastEvictionReason}` : ''}`) + carriedNote,
+        ? t('No evictions since LumiScript loaded')
+        : ev.lastEvictionReason
+          ? t('{count} eviction(s) — last reason: {reason}', { count: ev.totalEvictions, reason: ev.lastEvictionReason })
+          : t('{count} eviction(s)', { count: ev.totalEvictions })) + carriedNote,
       details: {
         totalEvictions:             ev.totalEvictions,
         lastEvictionAt:             ev.lastEvictionAt,
@@ -819,7 +839,7 @@ function buildScriptRunnerSection(deps: DiagnosticsCollectorDeps): DiagnosticSec
     });
   }
 
-  return { id: 'scriptRunner', name: 'Script-runner subprocess', checks };
+  return { id: 'scriptRunner', name: t('Script-runner subprocess'), checks };
 }
 
 /** Format a duration in seconds as a brief human-readable string. */
@@ -913,9 +933,9 @@ function buildEngineSection(deps: DiagnosticsCollectorDeps): DiagnosticSection {
   if (deps.engineProbe === undefined) {
     return {
       id:   'engine',
-      name: 'Engine (QuickJS-WASM)',
+      name: t('Engine (QuickJS-WASM)'),
       checks: [
-        { label: 'Status', status: 'info', message: 'Not probed (no worker reported engine telemetry)' },
+        { label: t('Status'), status: 'info', message: t('Not probed (no worker reported engine telemetry)') },
       ],
     };
   }
@@ -925,95 +945,100 @@ function buildEngineSection(deps: DiagnosticsCollectorDeps): DiagnosticSection {
 
   // WASM availability — the primary "is the isolate usable on this platform" signal.
   checks.push({
-    label:   'WASM availability',
+    label:   t('WASM availability'),
     status:  !e.coldStartProbed ? 'info' : e.coldStartOk ? 'pass' : 'warn',
     message: !e.coldStartProbed
-      ? 'Not probed this session — no run has selected the quickjs engine yet (default is AsyncFunction)'
+      ? t('Not probed this session — no run has selected the quickjs engine yet (default is AsyncFunction)')
       : e.coldStartOk
-        ? `Instantiated in ${e.coldStartMs}ms — isolate engine usable`
-        : 'WASM module failed to instantiate — all quickjs runs degrade to the AsyncFunction engine',
+        ? t('Instantiated in {ms}ms — isolate engine usable', { ms: e.coldStartMs })
+        : t('WASM module failed to instantiate — all quickjs runs degrade to the AsyncFunction engine'),
     details: { coldStartProbed: e.coldStartProbed, coldStartOk: e.coldStartOk, coldStartMs: e.coldStartMs },
   });
 
   // Engine mix — the quickjs-vs-asyncfn run split (the rollout's adoption denominator).
   checks.push({
-    label:   'Runs by engine',
+    label:   t('Runs by engine'),
     status:  'info',
-    message: `${e.quickjsRuns} quickjs / ${e.asyncfnRuns} asyncfn body-run(s)`,
+    message: t('{quickjs} quickjs / {asyncfn} asyncfn body-run(s)', { quickjs: e.quickjsRuns, asyncfn: e.asyncfnRuns }),
     details: { quickjsRuns: e.quickjsRuns, asyncfnRuns: e.asyncfnRuns },
   });
 
   // Degraded runs — quickjs-requested runs that fell back (a platform / cold-start-failure signal).
   checks.push({
-    label:   'Degraded runs',
+    label:   t('Degraded runs'),
     status:  e.degradedRuns > 0 ? 'warn' : 'pass',
     message: e.degradedRuns > 0
-      ? `${e.degradedRuns} run(s) degraded quickjs→asyncfn (WASM uninstantiable on this platform)`
-      : 'None — no quickjs run has fallen back to AsyncFunction',
+      ? t('{count} run(s) degraded quickjs→asyncfn (WASM uninstantiable on this platform)', { count: e.degradedRuns })
+      : t('None — no quickjs run has fallen back to AsyncFunction'),
     details: { degradedRuns: e.degradedRuns },
   });
 
   // Errors — non-timeout run + fire errors. Info, not warn: a user script legitimately throwing also
   // lands here, so this is a rate to eyeball against the run counts, not a health verdict on its own.
   checks.push({
-    label:   'Engine errors',
+    label:   t('Engine errors'),
     status:  'info',
-    message: `${e.quickjsRunErrors} run error(s), ${e.quickjsFireErrors} fire error(s) (excludes timeouts + self-invoke rejects)`,
+    message: t('{run} run error(s), {fire} fire error(s) (excludes timeouts + self-invoke rejects)', { run: e.quickjsRunErrors, fire: e.quickjsFireErrors }),
     details: { quickjsRunErrors: e.quickjsRunErrors, quickjsFireErrors: e.quickjsFireErrors },
   });
 
   // Timeouts — each one forced a whole-child respawn. The load-bearing stability signal.
   checks.push({
-    label:   'Timeouts (→ respawn)',
+    label:   t('Timeouts (→ respawn)'),
     status:  e.quickjsTimeouts > 0 ? 'warn' : 'pass',
     message: e.quickjsTimeouts > 0
-      ? `${e.quickjsTimeouts} quickjs run/fire timeout(s) — each respawned the child`
-      : 'None — no quickjs run/fire hit its execution timeout',
+      ? t('{count} quickjs run/fire timeout(s) — each respawned the child', { count: e.quickjsTimeouts })
+      : t('None — no quickjs run/fire hit its execution timeout'),
     details: { quickjsTimeouts: e.quickjsTimeouts },
   });
 
   // In-VM OOM — a per-context memory-limit hit. Warn: worth surfacing even once.
   checks.push({
-    label:   'In-VM out-of-memory',
+    label:   t('In-VM out-of-memory'),
     status:  e.inVmOom > 0 ? 'warn' : 'pass',
     message: e.inVmOom > 0
-      ? `${e.inVmOom} in-VM OOM error(s) — a script hit the per-context WASM memory ceiling`
-      : 'None — no run exhausted its per-context WASM memory budget',
+      ? t('{count} in-VM OOM error(s) — a script hit the per-context WASM memory ceiling', { count: e.inVmOom })
+      : t('None — no run exhausted its per-context WASM memory budget'),
     details: { inVmOom: e.inVmOom },
   });
 
   // Reentrant rejects — expected user errors (a script invoked its own tool mid-run). Info-only.
   checks.push({
-    label:   'Self-invoke rejects',
+    label:   t('Self-invoke rejects'),
     status:  'info',
-    message: `${e.reentrantRejects} self-\`api.tools.invoke\` fast-reject(s) (an expected user error, not an engine fault)`,
+    message: t('{count} self-`api.tools.invoke` fast-reject(s) (an expected user error, not an engine fault)', { count: e.reentrantRejects }),
     details: { reentrantRejects: e.reentrantRejects },
   });
 
   // Streams — generateStream usage. Cancelled = broke early / overflowed / torn down before a normal end.
   checks.push({
-    label:   'Streams (generateStream)',
+    label:   t('Streams (generateStream)'),
     status:  'info',
-    message: `${e.streamsOpened} opened, ${e.streamsCancelled} cancelled early`,
+    message: t('{opened} opened, {cancelled} cancelled early', { opened: e.streamsOpened, cancelled: e.streamsCancelled }),
     details: { streamsOpened: e.streamsOpened, streamsCancelled: e.streamsCancelled },
   });
 
   // Context pool — branch on the model so 'shared' (prod default) never reads as an exercised pool.
   if (e.contextModel === 'shared') {
     checks.push({
-      label:   'Context pool',
+      label:   t('Context pool'),
       status:  'info',
-      message: 'n/a (shared context model — the per-script pool is inactive until the rollout flip)',
+      message: t('n/a (shared context model — the per-script pool is inactive until the rollout flip)'),
       details: { contextModel: e.contextModel, poolCap: e.poolCap, perCtxLimitBytes: e.perCtxLimitBytes },
     });
   } else {
     checks.push({
-      label:   'Context pool',
+      label:   t('Context pool'),
       status:  e.overCapTolerated > 0 ? 'warn' : 'info',
-      message:
-        `${e.liveContexts}/${e.poolCap} live context(s) — ${e.pinnedContexts} pinned, ` +
-        `${e.reservedContexts} reserved, ${formatBytes(e.perCtxLimitBytes)}/ctx` +
-        (e.overCapTolerated > 0 ? `; ${e.overCapTolerated} over-cap insert(s) tolerated (all pinned)` : ''),
+      message: e.overCapTolerated > 0
+        ? t('{live}/{cap} live context(s) — {pinned} pinned, {reserved} reserved, {limit}/ctx; {overCap} over-cap insert(s) tolerated (all pinned)', {
+          live: e.liveContexts, cap: e.poolCap, pinned: e.pinnedContexts, reserved: e.reservedContexts,
+          limit: formatBytes(e.perCtxLimitBytes), overCap: e.overCapTolerated,
+        })
+        : t('{live}/{cap} live context(s) — {pinned} pinned, {reserved} reserved, {limit}/ctx', {
+          live: e.liveContexts, cap: e.poolCap, pinned: e.pinnedContexts, reserved: e.reservedContexts,
+          limit: formatBytes(e.perCtxLimitBytes),
+        }),
       details: {
         contextModel:     e.contextModel,
         liveContexts:     e.liveContexts,
@@ -1025,18 +1050,18 @@ function buildEngineSection(deps: DiagnosticsCollectorDeps): DiagnosticSection {
       },
     });
     checks.push({
-      label:   'Context evictions',
+      label:   t('Context evictions'),
       status:  'info',
       message: e.contextEvictions > 0
-        ? `${e.contextEvictions} eviction(s) (idle-TTL + cap); last ${formatSeconds((Date.now() - e.lastEvictionAt) / 1000)} ago`
-        : 'None — no per-script context has been reaped',
+        ? t('{count} eviction(s) (idle-TTL + cap); last {ago} ago', { count: e.contextEvictions, ago: formatSeconds((Date.now() - e.lastEvictionAt) / 1000) })
+        : t('None — no per-script context has been reaped'),
       details: { contextEvictions: e.contextEvictions, lastEvictionAt: e.lastEvictionAt },
     });
   }
 
   return {
     id:   'engine',
-    name: 'Engine (QuickJS-WASM)',
+    name: t('Engine (QuickJS-WASM)'),
     checks,
   };
 }
@@ -1054,9 +1079,9 @@ function buildAsyncFnSection(deps: DiagnosticsCollectorDeps): DiagnosticSection 
   if (deps.engineProbe === undefined) {
     return {
       id:   'engine',
-      name: 'Engine (AsyncFunction)',
+      name: t('Engine (AsyncFunction)'),
       checks: [
-        { label: 'Status', status: 'info', message: 'Not probed (no worker reported engine telemetry)' },
+        { label: t('Status'), status: 'info', message: t('Not probed (no worker reported engine telemetry)') },
       ],
     };
   }
@@ -1067,50 +1092,52 @@ function buildAsyncFnSection(deps: DiagnosticsCollectorDeps): DiagnosticSection 
   // Sandbox — the AsyncFunction engine's isolation model (the counterpart to the QuickJS "WASM
   // availability" row). No WASM / context pool; isolation is the supervised child + respawn ladder.
   checks.push({
-    label:   'Sandbox',
+    label:   t('Sandbox'),
     status:  'pass',
-    message: 'In-process `new AsyncFunction` in the supervised child subprocess — no WASM isolate or per-script context pool; isolation is the child heartbeat watchdog + respawn ladder (see Script-runner subprocess)',
+    message: t('In-process `new AsyncFunction` in the supervised child subprocess — no WASM isolate or per-script context pool; isolation is the child heartbeat watchdog + respawn ladder (see Script-runner subprocess)'),
   });
 
   // Runs — asyncfn body-runs (the default engine's throughput). quickjs runs are shown only if any exist
   // (e.g. left from a prior quickjs session before the setting was flipped back).
   checks.push({
-    label:   'Runs',
+    label:   t('Runs'),
     status:  'info',
-    message: `${e.asyncfnRuns} asyncfn body-run(s)` + (e.quickjsRuns > 0 ? ` (+${e.quickjsRuns} quickjs)` : ''),
+    message: e.quickjsRuns > 0
+      ? t('{asyncfn} asyncfn body-run(s) (+{quickjs} quickjs)', { asyncfn: e.asyncfnRuns, quickjs: e.quickjsRuns })
+      : t('{asyncfn} asyncfn body-run(s)', { asyncfn: e.asyncfnRuns }),
     details: { asyncfnRuns: e.asyncfnRuns, quickjsRuns: e.quickjsRuns },
   });
 
   // Run errors — non-timeout throws. Info, not warn: a user script legitimately throwing lands here too,
   // so read it as a rate against the run count, not a health verdict on its own.
   checks.push({
-    label:   'Run errors',
+    label:   t('Run errors'),
     status:  'info',
-    message: `${e.asyncfnRunErrors} run error(s) (excludes timeouts; a user script throwing counts here too)`,
+    message: t('{count} run error(s) (excludes timeouts; a user script throwing counts here too)', { count: e.asyncfnRunErrors }),
     details: { asyncfnRunErrors: e.asyncfnRunErrors },
   });
 
   // Timeouts — each one SIGKILLed + respawned the child. The load-bearing stability signal.
   checks.push({
-    label:   'Timeouts (→ respawn)',
+    label:   t('Timeouts (→ respawn)'),
     status:  e.asyncfnTimeouts > 0 ? 'warn' : 'pass',
     message: e.asyncfnTimeouts > 0
-      ? `${e.asyncfnTimeouts} asyncfn run timeout(s) — each respawned the child`
-      : 'None — no asyncfn run hit its execution timeout',
+      ? t('{count} asyncfn run timeout(s) — each respawned the child', { count: e.asyncfnTimeouts })
+      : t('None — no asyncfn run hit its execution timeout'),
     details: { asyncfnTimeouts: e.asyncfnTimeouts },
   });
 
   // Streams — generateStream usage (engine-neutral; the asyncfn engine opens streams too).
   checks.push({
-    label:   'Streams (generateStream)',
+    label:   t('Streams (generateStream)'),
     status:  'info',
-    message: `${e.streamsOpened} opened, ${e.streamsCancelled} cancelled early`,
+    message: t('{opened} opened, {cancelled} cancelled early', { opened: e.streamsOpened, cancelled: e.streamsCancelled }),
     details: { streamsOpened: e.streamsOpened, streamsCancelled: e.streamsCancelled },
   });
 
   return {
     id:   'engine',
-    name: 'Engine (AsyncFunction)',
+    name: t('Engine (AsyncFunction)'),
     checks,
   };
 }
@@ -1123,15 +1150,15 @@ function buildActiveContextSection(deps: DiagnosticsCollectorDeps): DiagnosticSe
 
   return {
     id:   'activeContext',
-    name: 'Active context',
+    name: t('Active context'),
     checks: [
       {
-        label:   'Chat ID',
+        label:   t('Chat ID'),
         status:  chatOpen ? 'pass' : 'info',
-        message: ctx.chatId ?? '(no chat open)',
+        message: ctx.chatId ?? t('(no chat open)'),
       },
       {
-        label:   'Character ID',
+        label:   t('Character ID'),
         // Warning if chat is open but characterId is null — that's the
         // exact stale-context race we patched in v0.23.3. Diagnostic
         // surface should flag it loudly because per-character collection
@@ -1140,18 +1167,18 @@ function buildActiveContextSection(deps: DiagnosticsCollectorDeps): DiagnosticSe
         status:  chatOpen ? (ctx.characterId ? 'pass' : 'warn') : 'info',
         message: ctx.characterId
           ?? (chatOpen
-            ? '(missing — chat open but no character resolved; see v0.23.3 post-mortem)'
-            : '(no chat open)'),
+            ? t('(missing — chat open but no character resolved; see v0.23.3 post-mortem)')
+            : t('(no chat open)')),
       },
       {
-        label:   'Character name',
+        label:   t('Character name'),
         status:  'info',
-        message: ctx.characterName ?? '(not resolved)',
+        message: ctx.characterName ?? t('(not resolved)'),
       },
       {
-        label:   'User ID',
+        label:   t('User ID'),
         status:  deps.activeUserId ? 'pass' : 'warn',
-        message: deps.activeUserId ?? '(not set — no user activity from the frontend yet)',
+        message: deps.activeUserId ?? t('(not set — no user activity from the frontend yet)'),
       },
     ],
   };
@@ -1183,63 +1210,69 @@ function buildRegistrationsSection(deps: DiagnosticsCollectorDeps): DiagnosticSe
 
   const checks: DiagnosticCheck[] = [
       {
-        label:   'Scripts',
+        label:   t('Scripts'),
         status:  'info',
-        message: `${scripts.length} total — ${enabledCount} enabled, ${disabledCount} disabled (${triggerType} trigger, ${libraryType} library)`,
+        message: t('{total} total — {enabled} enabled, {disabled} disabled ({trigger} trigger, {library} library)', {
+          total: scripts.length, enabled: enabledCount, disabled: disabledCount, trigger: triggerType, library: libraryType,
+        }),
         details: {
           total: scripts.length, enabled: enabledCount, disabled: disabledCount,
           triggerType, libraryType,
         },
       },
       {
-        label:   'Spindle event subscriptions',
+        label:   t('Spindle event subscriptions'),
         status:  'info',
-        message: `${deps.triggerRegistry.handlerCount} live subscription(s)`,
+        message: t('{count} live subscription(s)', { count: deps.triggerRegistry.handlerCount }),
       },
       {
-        label:   'Tools',
+        label:   t('Tools'),
         status:  'info',
-        message: `${listTools().length} registered`,
+        message: t('{count} registered', { count: listTools().length }),
       },
       {
-        label:   'Macros',
+        label:   t('Macros'),
         status:  'info',
-        message: `${listMacros().length} registered`,
+        message: t('{count} registered', { count: listMacros().length }),
       },
       {
-        label:   'Macro interceptors',
+        label:   t('Macro interceptors'),
         status:  'info',
-        message: `${listMacroInterceptors().length} registered`,
+        message: t('{count} registered', { count: listMacroInterceptors().length }),
       },
       {
-        label:   'Content-message processors',
+        label:   t('Content-message processors'),
         status:  'info',
-        message: `${listContentProcessors().length} registered`,
+        message: t('{count} registered', { count: listContentProcessors().length }),
       },
       {
-        label:   'World-info interceptors',
+        label:   t('World-info interceptors'),
         status:  'info',
-        message: `${listWorldInfoInterceptors().length} registered`,
+        message: t('{count} registered', { count: listWorldInfoInterceptors().length }),
       },
       {
-        label:   'Injections',
+        label:   t('Injections'),
         status:  'info',
-        message: `${listInjections().length} active`,
+        message: t('{count} active', { count: listInjections().length }),
       },
       {
-        label:   'RPC endpoints',
+        label:   t('RPC endpoints'),
         status:  'info',
-        message: `${listRpc().length} registered`,
+        message: t('{count} registered', { count: listRpc().length }),
       },
       {
-        label:   'Broadcast subscriptions',
+        label:   t('Broadcast subscriptions'),
         status:  'info',
-        message: `${countBroadcastSubs()} active`,
+        message: t('{count} active', { count: countBroadcastSubs() }),
       },
       {
-        label:   'DOM injections',
+        label:   t('DOM injections'),
         status:  'info',
-        message: `${listElementInjectMessages().length} element(s), ${listStyleReplayMessages().length} stylesheet(s), ${listDelegationReplayMessages().length} delegation(s)`,
+        message: t('{elements} element(s), {styles} stylesheet(s), {delegations} delegation(s)', {
+          elements:    listElementInjectMessages().length,
+          styles:      listStyleReplayMessages().length,
+          delegations: listDelegationReplayMessages().length,
+        }),
         details: {
           elements:    listElementInjectMessages().length,
           styles:      listStyleReplayMessages().length,
@@ -1247,34 +1280,34 @@ function buildRegistrationsSection(deps: DiagnosticsCollectorDeps): DiagnosticSe
         },
       },
       {
-        label:   'Drawer tabs',
+        label:   t('Drawer tabs'),
         status:  'info',
-        message: `${countDrawerTabs()} registered`,
+        message: t('{count} registered', { count: countDrawerTabs() }),
       },
       {
-        label:   'Float widgets',
+        label:   t('Float widgets'),
         status:  'info',
-        message: `${floatWidgets} live`,
+        message: t('{count} live', { count: floatWidgets }),
       },
       {
-        label:   'App mounts',
+        label:   t('App mounts'),
         status:  'info',
-        message: `${appMounts} live`,
+        message: t('{count} live', { count: appMounts }),
       },
       {
-        label:   'Advanced modals',
+        label:   t('Advanced modals'),
         status:  'info',
-        message: `${advancedModals} live`,
+        message: t('{count} live', { count: advancedModals }),
       },
       {
-        label:   'Input-bar actions',
+        label:   t('Input-bar actions'),
         status:  'info',
-        message: `${inputBarActions} registered`,
+        message: t('{count} registered', { count: inputBarActions }),
       },
       {
-        label:   'Message-tag interceptors',
+        label:   t('Message-tag interceptors'),
         status:  'info',
-        message: `${messageTagInterceptors} registered`,
+        message: t('{count} registered', { count: messageTagInterceptors }),
       },
   ];
 
@@ -1315,14 +1348,14 @@ function buildRegistrationsSection(deps: DiagnosticsCollectorDeps): DiagnosticSe
               ? ` (flat=${summary.flatVariables}, dark=${summary.darkVariables}, light=${summary.lightVariables})`
               : '');
       const paletteCell =
-        summary.palette === 'set'     ? 'set' :
-        summary.palette === 'cleared' ? 'cleared' :
+        summary.palette === 'set'     ? t('set') :
+        summary.palette === 'cleared' ? t('cleared') :
                                          '—';
       const assignedWorker = assignedWorkerByScript.get(scriptId);
       const workerCell =
-        !poolProbed         ? 'unknown' :
+        !poolProbed         ? t('unknown') :
         assignedWorker      ? assignedWorker :
-                              'evicted';
+                              t('evicted');
       rows.push([scriptName, varsCell, paletteCell, workerCell]);
       detailsByScript[scriptId] = { name: scriptName, ...summary, worker: workerCell };
     }
@@ -1330,11 +1363,11 @@ function buildRegistrationsSection(deps: DiagnosticsCollectorDeps): DiagnosticSe
       `${r[0]}: ${r[1] === '—' ? '' : `${r[1]} var(s)`}${r[2] !== '—' ? `, palette ${r[2]}` : ''} (${r[3]})`,
     );
     checks.push({
-      label:   'Active theme overrides',
+      label:   t('Active theme overrides'),
       status:  'info',
-      message: `${themeScriptIds.length} script(s) contributing — ${messageLines.join(' · ')}`,
+      message: t('{count} script(s) contributing — {lines}', { count: themeScriptIds.length, lines: messageLines.join(' · ') }),
       table: {
-        headers: ['Script', 'Variables', 'Palette', 'Worker'],
+        headers: [t('Script'), t('Variables'), t('Palette'), t('Worker')],
         rows,
       },
       details: { contributorsByScriptId: detailsByScript },
@@ -1343,7 +1376,7 @@ function buildRegistrationsSection(deps: DiagnosticsCollectorDeps): DiagnosticSe
 
   return {
     id:   'registrations',
-    name: 'Registrations',
+    name: t('Registrations'),
     checks,
   };
 }
@@ -1355,29 +1388,29 @@ function buildStorageSection(deps: DiagnosticsCollectorDeps): DiagnosticSection 
 
   if (deps.storageProbe === undefined) {
     checks.push({
-      label:   'userStorage reachability',
+      label:   t('userStorage reachability'),
       status:  'info',
-      message: 'Not probed (caller chose to skip)',
+      message: t('Not probed (caller chose to skip)'),
     });
   } else if (deps.storageProbe.ok) {
     checks.push({
-      label:   'userStorage reachability',
+      label:   t('userStorage reachability'),
       status:  'pass',
       message: typeof deps.storageProbe.latencyMs === 'number'
-        ? `Reachable (${deps.storageProbe.latencyMs}ms round-trip)`
-        : 'Reachable',
+        ? t('Reachable ({ms}ms round-trip)', { ms: deps.storageProbe.latencyMs })
+        : t('Reachable'),
     });
   } else {
     checks.push({
-      label:   'userStorage reachability',
+      label:   t('userStorage reachability'),
       status:  'fail',
-      message: deps.storageProbe.error ?? 'Probe failed without an error message',
+      message: deps.storageProbe.error ?? t('Probe failed without an error message'),
     });
   }
 
   return {
     id:   'storage',
-    name: 'Storage',
+    name: t('Storage'),
     checks,
   };
 }
@@ -1410,9 +1443,9 @@ function buildAssistantSection(deps: DiagnosticsCollectorDeps): DiagnosticSectio
   if (deps.assistantProbe === undefined) {
     return {
       id:   'assistant',
-      name: 'Assistant (Lisa)',
+      name: t('Assistant (Lisa)'),
       checks: [
-        { label: 'Status', status: 'info', message: 'Not probed (caller chose to skip)' },
+        { label: t('Status'), status: 'info', message: t('Not probed (caller chose to skip)') },
       ],
     };
   }
@@ -1421,19 +1454,19 @@ function buildAssistantSection(deps: DiagnosticsCollectorDeps): DiagnosticSectio
   const checks: DiagnosticCheck[] = [];
 
   checks.push({
-    label:   'Initialised',
+    label:   t('Initialised'),
     status:  probe.initialised ? 'pass' : 'info',
     message: probe.initialised
-      ? 'Bootstrap complete'
-      : 'Not yet bootstrapped (will initialise on first assistant IPC)',
+      ? t('Bootstrap complete')
+      : t('Not yet bootstrapped (will initialise on first assistant IPC)'),
   });
 
   checks.push({
-    label:   'Corpus loaded',
+    label:   t('Corpus loaded'),
     status:  probe.corpusEntries > 0 ? 'pass' : 'fail',
     message: probe.corpusEntries > 0
-      ? `${probe.corpusEntries} entries indexed`
-      : "No entries found — Lisa's lookup_api tool will return nothing",
+      ? t('{count} entries indexed', { count: probe.corpusEntries })
+      : t("No entries found — Lisa's lookup_api tool will return nothing"),
     details: { corpusEntries: probe.corpusEntries },
   });
 
@@ -1442,18 +1475,22 @@ function buildAssistantSection(deps: DiagnosticsCollectorDeps): DiagnosticSectio
   let storageMessage: string;
   if (!s.indexLoaded) {
     storageStatus  = 'fail';
-    storageMessage = s.error ? `Index unreadable: ${s.error}` : 'Index unreadable';
+    storageMessage = s.error ? t('Index unreadable: {error}', { error: s.error }) : t('Index unreadable');
   } else if (s.threadsReadable < s.threadsIndexed) {
     storageStatus = 'warn';
-    storageMessage =
-      `${s.threadsReadable} of ${s.threadsIndexed} threads readable, ${formatBytes(s.totalBytes)} on disk` +
-      (s.error ? ` (${s.error})` : '');
+    storageMessage = s.error
+      ? t('{readable} of {indexed} threads readable, {size} on disk ({error})', {
+        readable: s.threadsReadable, indexed: s.threadsIndexed, size: formatBytes(s.totalBytes), error: s.error,
+      })
+      : t('{readable} of {indexed} threads readable, {size} on disk', {
+        readable: s.threadsReadable, indexed: s.threadsIndexed, size: formatBytes(s.totalBytes),
+      });
   } else {
     storageStatus  = 'pass';
-    storageMessage = `${s.threadsIndexed} thread(s) readable, ${formatBytes(s.totalBytes)} on disk`;
+    storageMessage = t('{count} thread(s) readable, {size} on disk', { count: s.threadsIndexed, size: formatBytes(s.totalBytes) });
   }
   checks.push({
-    label:   'Thread storage',
+    label:   t('Thread storage'),
     status:  storageStatus,
     message: storageMessage,
     details: {
@@ -1467,14 +1504,18 @@ function buildAssistantSection(deps: DiagnosticsCollectorDeps): DiagnosticSectio
 
   const c = probe.connections;
   checks.push({
-    label:   'LLM connections',
+    label:   t('LLM connections'),
     status:  c.count > 0 ? 'pass' : 'warn',
     message: c.count > 0
-      ? `${c.count} connection(s)` +
-        (c.defaultName
-          ? ` · default: "${c.defaultName}" (${c.defaultModel ?? '<no model>'} via ${c.defaultProvider ?? '<no provider>'})`
-          : ' · no default set')
-      : 'No LLM connections configured — Lisa cannot generate responses',
+      ? (c.defaultName
+        ? t('{count} connection(s) · default: "{name}" ({model} via {provider})', {
+          count:    c.count,
+          name:     c.defaultName,
+          model:    c.defaultModel ?? t('<no model>'),
+          provider: c.defaultProvider ?? t('<no provider>'),
+        })
+        : t('{count} connection(s) · no default set', { count: c.count }))
+      : t('No LLM connections configured — Lisa cannot generate responses'),
     details: {
       count: c.count,
       ...(c.defaultName     ? { defaultName:     c.defaultName     } : {}),
@@ -1494,11 +1535,11 @@ function buildAssistantSection(deps: DiagnosticsCollectorDeps): DiagnosticSectio
   if (set.maxTokens !== undefined)     overrides.push(`max-tokens=${set.maxTokens}`);
   if (set.parallelToolCalls === false) overrides.push('parallel-tool-calls=off');
   checks.push({
-    label:   'Generation defaults',
+    label:   t('Generation defaults'),
     status:  'info',
     message: overrides.length > 0
-      ? `Overrides: ${overrides.join(', ')}`
-      : 'No overrides (all defaults inherited from active connection)',
+      ? t('Overrides: {list}', { list: overrides.join(', ') })
+      : t('No overrides (all defaults inherited from active connection)'),
     details: {
       maxIterations: set.maxIterations,
       ...(set.temperature !== undefined ? { temperature: set.temperature } : {}),
@@ -1509,12 +1550,12 @@ function buildAssistantSection(deps: DiagnosticsCollectorDeps): DiagnosticSectio
   });
 
   checks.push({
-    label:   'Tool iterations ceiling',
+    label:   t('Tool iterations ceiling'),
     status:  'info',
-    message: `${set.maxIterations} per turn`,
+    message: t('{count} per turn', { count: set.maxIterations }),
   });
 
-  return { id: 'assistant', name: 'Assistant (Lisa)', checks };
+  return { id: 'assistant', name: t('Assistant (Lisa)'), checks };
 }
 
 // ─── Summary helper ─────────────────────────────────────────────────────────
