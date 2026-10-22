@@ -1,11 +1,11 @@
 {
-  "version": "2.0.0",
-  "name": "LumiScript",
-  "identifier": "lumiscript",
-  "author": "mindbound",
-  "github": "https://github.com/mindbound/lumiscript",
-  "homepage": "https://github.com/mindbound/lumiscript",
-  "description": "A JavaScript scripting platform for Lumiverse. Write scripts that react to chat events, automate behaviour, and extend your AI chat experience.",
+  "version": "2.0.0+ko",
+  "name": "LumiScript (한국어)",
+  "identifier": "lumiscript_ko",
+  "author": "mindbound (한국어판: mallang0723)",
+  "github": "https://github.com/mallang0723/LumiScript-ko",
+  "homepage": "https://github.com/mallang0723/LumiScript-ko",
+  "description": "LumiScript(mindbound 원작)의 비공식 한국어판. 채팅 이벤트에 반응하고 동작을 자동화하는 Lumiverse용 JavaScript 스크립트 플랫폼이에요. 원작: https://github.com/mindbound/lumiscript",
   "permissions": [
     "chat_mutation",
     "chats",
