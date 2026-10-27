@@ -3,7 +3,6 @@ import { Code2, BookMarked, Terminal, Timer, Type, FileCode2, Activity, MessageC
 import type { Script, LumiScriptSettings } from '../../types/script.js';
 import type { BackendToFrontend, FrontendToBackend } from '../../types/messages.js';
 import { DEFAULT_SETTINGS, scriptRunsOnStartup } from '../../types/script.js';
-import { parseAllowlistEntry, isDirectEligibleHost } from '../../engine/egress-allowlist.js';
 import { DiagnosticsModal } from '../diagnostics/DiagnosticsModal.js';
 import { AssistantModal } from '../assistant/AssistantModal.js';
 import { LS_OPEN_ASSISTANT_EVENT } from '../assistant/openAssistant.js';
@@ -84,11 +83,6 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
   // true value (same reasoning as engineSelectResetKey above).
   const [pendingContextModel, setPendingContextModel] = useState<'shared' | 'per-script' | null>(null);
   const [contextModelSelectResetKey, setContextModelSelectResetKey] = useState(0);
-  // Outbound-egress allowlist editor — the host currently being typed into the "add" field, plus
-  // an inline validation message (null = valid/empty). The committed list is settings.allowedPrivateHosts.
-  const [newHost, setNewHost] = useState('');
-  const [hostError, setHostError] = useState<string | null>(null);
-
   useEffect(() => {
     const unsub = onBackendMessage((raw) => {
       const msg = raw as BackendToFrontend;
@@ -174,30 +168,9 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
     sendToBackend({ type: 'update_settings', patch: { enabled } });
   };
 
-  // Outbound-egress allowlist — the hosts the user permits scripts to reach DIRECTLY, bypassing the
-  // SSRF-safe proxy that otherwise blocks loopback / LAN / link-local addresses. The backend re-validates
-  // every entry when a request is made; the check here only guides input. Only fixed addresses are
-  // accepted (an IP literal or localhost, optionally with a port) — a plain hostname would resolve at
-  // connect time with no pinning, so it is rejected here and, as defence in depth, also by the backend.
+  // Outbound-egress allowlist is DISABLED in LumiScript-ko: Lumiverse blocks direct fetch, so every request
+  // goes through spindle.cors/safeFetch and the list has no effect. Stored values are shown read-only.
   const allowedHosts = settings.allowedPrivateHosts ?? [];
-  const addAllowedHost = () => {
-    const parsed = parseAllowlistEntry(newHost);
-    if (!parsed || !isDirectEligibleHost(parsed.host)) {
-      setHostError(t('Enter an IP address or localhost, optionally with a port — e.g. localhost:11434, 192.168.1.50, or [::1]:8080.'));
-      return;
-    }
-    // Normalize to a stable display form (the parser already lowercased the host; re-bracket IPv6).
-    const normalized = parsed.host.includes(':')
-      ? `[${parsed.host}]${parsed.port ? `:${parsed.port}` : ''}`
-      : `${parsed.host}${parsed.port ? `:${parsed.port}` : ''}`;
-    if (allowedHosts.includes(normalized)) { setNewHost(''); setHostError(null); return; }
-    sendToBackend({ type: 'update_settings', patch: { allowedPrivateHosts: [...allowedHosts, normalized] } });
-    setNewHost('');
-    setHostError(null);
-  };
-  const removeAllowedHost = (host: string) => {
-    sendToBackend({ type: 'update_settings', patch: { allowedPrivateHosts: allowedHosts.filter((h) => h !== host) } });
-  };
 
   return (
     <div className="ls-settings">
@@ -353,60 +326,26 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
 
         <div
           className="ls-settings-template-label"
-          title={t('Hosts that outbound HTTP may reach directly, bypassing the private-address block. By default every request goes through an SSRF-safe proxy that blocks loopback / LAN / link-local addresses. Only fixed addresses are accepted: an IP literal or localhost, optionally with a port. Omit the port to allow any port on that host, or include one to scope to a single port. This list lives in your settings and is never writable by a script.')}
+          title={t('Unavailable: Lumiverse security policy blocks direct connections, so this setting has no effect (all requests go through the Lumiverse proxy).')}
         >
           {t('Allowed private hosts')}
         </div>
 
-        <div className="ls-allowlist">
-          {allowedHosts.length === 0 ? (
-            <div className="ls-allowlist-empty">{t('None — every request uses the SSRF-safe path.')}</div>
-          ) : (
+        <div className="ls-allowlist" aria-disabled="true" style={{ opacity: 0.55 }}>
+          <div className="ls-allowlist-hint">{t('Unavailable: Lumiverse security policy blocks direct connections, so this setting has no effect (all requests go through the Lumiverse proxy).')}</div>
+          {allowedHosts.length > 0 && (
             <div className="ls-allowlist-list">
               {allowedHosts.map((h) => (
                 <div key={h} className="ls-allowlist-row">
                   <span className="ls-allowlist-host" title={h}>{h}</span>
-                  <button
-                    type="button"
-                    className="ls-allowlist-remove"
-                    title={t('Remove {host}', { host: h })}
-                    aria-label={t('Remove {host}', { host: h })}
-                    onClick={() => removeAllowedHost(h)}
-                  >
-                    <Trash2 size={12} />
-                  </button>
                 </div>
               ))}
             </div>
           )}
-
           <div className="ls-allowlist-add">
-            <input
-              type="text"
-              className="ls-allowlist-input"
-              placeholder="localhost:11434"
-              spellCheck={false}
-              autoCapitalize="off"
-              autoCorrect="off"
-              value={newHost}
-              onChange={(e) => { setNewHost(e.target.value); if (hostError) setHostError(null); }}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addAllowedHost(); } }}
-            />
-            <button
-              type="button"
-              className="ls-btn ls-accent"
-              disabled={!newHost.trim()}
-              onClick={addAllowedHost}
-            >
-              {t('Add')}
-            </button>
+            <input type="text" className="ls-allowlist-input" placeholder="localhost:11434" disabled />
+            <button type="button" className="ls-btn ls-accent" disabled>{t('Add')}</button>
           </div>
-
-          {hostError ? (
-            <div className="ls-allowlist-error">{hostError}</div>
-          ) : (
-            <div className="ls-allowlist-hint">{t('Examples: localhost, localhost:11434, 192.168.1.50, [::1]:8080')}</div>
-          )}
         </div>
       </div>
 

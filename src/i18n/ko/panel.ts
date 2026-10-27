@@ -73,14 +73,8 @@ export const KO_PANEL: Readonly<Record<string, string>> = {
   // ── Network ──
   'Network': '네트워크',
   'Allowed private hosts': '허용된 사설 호스트',
-  'Hosts that outbound HTTP may reach directly, bypassing the private-address block. By default every request goes through an SSRF-safe proxy that blocks loopback / LAN / link-local addresses. Only fixed addresses are accepted: an IP literal or localhost, optionally with a port. Omit the port to allow any port on that host, or include one to scope to a single port. This list lives in your settings and is never writable by a script.':
-    '외부 HTTP가 사설 주소 차단을 우회해 직접 접속할 수 있는 호스트예요. 기본적으로 모든 요청은 루프백 / LAN / 링크 로컬 주소를 막는 SSRF 안전 프록시를 거쳐요. 고정 주소만 받아요: IP 리터럴이나 localhost, 필요하면 포트까지. 포트를 생략하면 그 호스트의 모든 포트를, 포트를 적으면 그 포트 하나만 허용해요. 이 목록은 내 설정에 저장되며 스크립트는 바꿀 수 없어요.',
-  'None — every request uses the SSRF-safe path.': '없음 — 모든 요청이 SSRF 안전 경로를 거쳐요.',
-  'Remove {host}': '{host} 제거',
+  'Unavailable: Lumiverse security policy blocks direct connections, so this setting has no effect (all requests go through the Lumiverse proxy).': '루미버스 보안 정책상 직접 연결이 막혀 현재 사용할 수 없어요 (모든 요청은 루미버스 프록시를 거칩니다)',
   'Add': '추가',
-  'Examples: localhost, localhost:11434, 192.168.1.50, [::1]:8080': '예: localhost, localhost:11434, 192.168.1.50, [::1]:8080',
-  'Enter an IP address or localhost, optionally with a port — e.g. localhost:11434, 192.168.1.50, or [::1]:8080.':
-    'IP 주소나 localhost를 입력하세요. 포트를 붙여도 돼요 — 예: localhost:11434, 192.168.1.50, [::1]:8080.',
 
   // ── Workers ──
   'Workers': '워커',
