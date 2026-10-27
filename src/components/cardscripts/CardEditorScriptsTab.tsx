@@ -23,6 +23,7 @@
  * frontend.tsx). Destructive confirms use the host-native `ctx.ui.showConfirm`
  * (bridged in as `confirm`), which layers above the editor modal.
  */
+import { generateUUID } from '../../utils/uuid.js';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import type { FC, CSSProperties } from 'react';
 import type {
@@ -125,7 +126,7 @@ function addEmbeddedEntries(ext: Record<string, unknown>, entries: EmbeddedScrip
   const next = { ...ext };
   const ls = next.lumiscript;
   const env = (ls !== null && typeof ls === 'object' && !Array.isArray(ls)) ? (ls as Record<string, unknown>) : undefined;
-  const cardId = (env && typeof env.bundleCardId === 'string' && env.bundleCardId.trim() !== '') ? env.bundleCardId : crypto.randomUUID();
+  const cardId = (env && typeof env.bundleCardId === 'string' && env.bundleCardId.trim() !== '') ? env.bundleCardId : generateUUID();
   const prev = (env && Array.isArray(env.scripts)) ? env.scripts : [];
   const newIds = new Set(entries.map((e) => e.bundleId));
   const merged = [
@@ -307,7 +308,7 @@ export const CardEditorScriptsTab: FC<Props> = ({ editor, confirm, sendToBackend
     if (scriptIds.length === 0) return;
     const characterId = editor.getState().characterId;
     if (!characterId) return;
-    const requestId = crypto.randomUUID();
+    const requestId = generateUUID();
     pendingBuildRef.current = { requestId, characterId };
     sendToBackend({ type: 'ls_card_editor_bundle_build', requestId, scriptIds });
     setPickerOpen(false);

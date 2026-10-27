@@ -4492,12 +4492,12 @@ async function checkForUpdates(): Promise<void> {
     // no API rate-limiting concern for casual users. Non-`main` defaults will
     // 404 and we'll skip silently — matching the original on-detached-HEAD
     // behaviour.
-    const res = await fetch(
+    const res = await spindle.cors(
       `https://raw.githubusercontent.com/${owner}/${repo}/main/spindle.json`,
-      { headers: { 'User-Agent': 'LumiScript/1.0 update-check' } },
-    );
-    if (!res.ok) return;
-    const remote = await res.json() as { version?: string };
+      { method: 'GET', headers: { 'User-Agent': 'LumiScript/1.0 update-check' } },
+    ) as { status: number; body: string };
+    if (res.status < 200 || res.status >= 300) return;
+    const remote = JSON.parse(res.body) as { version?: string };
     const remoteVersion = remote.version;
     if (!remoteVersion || remoteVersion === localVersion) return; // up to date
 

@@ -11,7 +11,6 @@ import Handlebars from 'handlebars';
 import type { LumiScriptAPI, HttpResponse, HttpRequestOptions } from '../../types/script.js';
 import { generateUUID, generateShortId } from '../../utils/uuid.js';
 import { type APIBuildDeps, assertDangerous, shielded } from './shared.js';
-import { isAllowlistedHost } from '../egress-allowlist.js';
 import {
   detectImageMime,
   parseBase64DataUrl,
@@ -101,107 +100,22 @@ function base64ToUint8Array(b64: string): Uint8Array {
 //
 // All LumiScript outbound HTTP (api.utils.http.* AND — from Phase 2 — bare `fetch`) funnels through
 // `guardedCorsFetch`. By default it routes through `spindle.cors` → the host's `safeFetch` (DNS-pinned,
-// blocks loopback/LAN/link-local/metadata). The one exception is a host the USER has allowlisted for direct
-// local access (see LumiScriptSettings.allowedPrivateHosts / egress-allowlist.ts): those take a DIRECT
-// `globalThis.fetch`, which is how a script reaches a trusted local model server / LAN device. The allowlist
-// is read live via an injected reader (wired in backend.ts from settingsStore, like engineMode).
+// blocks loopback/LAN/link-local/metadata). Upstream also had a direct-fetch escape hatch for user-allowlisted
+// local hosts; this fork removed it (see guardedCorsFetch) because Lumiverse blocks direct fetch in backends.
 
-let allowedPrivateHostsReader: () => readonly string[] = () => [];
-export function setAllowedPrivateHostsReader(fn: () => readonly string[]): void {
-  allowedPrivateHostsReader = fn;
+/** Kept for API compatibility; the allowlist no longer affects routing (direct path removed in LumiScript-ko). */
+export function setAllowedPrivateHostsReader(_fn: () => readonly string[]): void {
+  // intentionally a no-op
 }
 
 type CorsOptions = { method: string; headers?: Record<string, string>; body?: unknown; responseType?: 'text' | 'arraybuffer'; signal?: AbortSignal };
-/** The `spindle.cors`-shaped response the decoder consumes (both the cors path and the direct path emit it). */
-type CorsLikeResponse = { status: number; statusText: string; headers: Record<string, string>; body: string; encoding?: 'base64'; setCookies?: string[] };
-
-// Cap on a DIRECT-path response body. The hardened cors→safeFetch path has its own host-side size cap; the
-// direct path bypasses safeFetch, so it must bound the body itself — otherwise a large response from an
-// allowlisted host would be buffered (and base64'd) in full before anything downstream can reject it. Matches
-// the QuickJS in-VM fetch cap (qjs-engine.ts) so the two egress paths agree.
-const DIRECT_FETCH_MAX_RESPONSE_BYTES = 64 * 1024 * 1024; // 64 MiB
-
 /**
- * Read a response body into bytes, refusing to buffer more than `max`. Rejects up front on a declared
- * `Content-Length` over the cap, and — because a local server may omit or understate it (chunked / lying
- * length) — also caps the ACTUAL bytes read by streaming and aborting the moment the running total exceeds
- * `max`. So the guard holds regardless of what the origin claims.
+ * Route a request through the hardened cors→safeFetch path. LumiScript-ko: the upstream "direct fetch to a
+ * user-allowlisted trusted-local host" branch is removed — Lumiverse's extension scanner rejects any backend
+ * bundle containing a direct fetch API usage ("blocked backend capabilities"), so the install failed. The
+ * allowlist setting is still stored but no longer bypasses safeFetch.
  */
-async function readBodyCapped(res: Response, max: number): Promise<Uint8Array> {
-  const declared = Number(res.headers.get('content-length'));
-  if (Number.isFinite(declared) && declared > max) {
-    throw new Error(`LumiScript: direct fetch response Content-Length ${declared} exceeds the ${max}-byte limit.`);
-  }
-  const reader = res.body?.getReader();
-  if (!reader) {
-    const buf = new Uint8Array(await res.arrayBuffer());
-    if (buf.byteLength > max) {
-      throw new Error(`LumiScript: direct fetch response (${buf.byteLength} bytes) exceeds the ${max}-byte limit.`);
-    }
-    return buf;
-  }
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    if (!value) continue;
-    total += value.byteLength;
-    if (total > max) {
-      try { await reader.cancel(); } catch { /* stream already closing */ }
-      throw new Error(`LumiScript: direct fetch response exceeds the ${max}-byte limit.`);
-    }
-    chunks.push(value);
-  }
-  const out = new Uint8Array(total);
-  let offset = 0;
-  for (const c of chunks) { out.set(c, offset); offset += c.byteLength; }
-  return out;
-}
-
-/**
- * Direct fetch to a user-allowlisted trusted-local host, normalized to `spindle.cors`'s response shape so
- * the SAME `decodeHttpResponse` handles both paths. `redirect: 'manual'` — the direct path never chases a
- * redirect off the allowlisted host into the internal network; a redirecting local endpoint surfaces the
- * 3xx to the caller rather than silently following it. The body is size-capped (see `readBodyCapped`), and
- * the scheme is re-checked (defence in depth: the caller only reaches here for an http/https allowlisted
- * host, but the direct path skips safeFetch, so it refuses a non-http(s) URL itself too).
- */
-async function directLocalFetch(url: string, opts: CorsOptions): Promise<CorsLikeResponse> {
-  let protocol: string;
-  try { protocol = new URL(url).protocol; } catch { protocol = ''; }
-  if (protocol !== 'http:' && protocol !== 'https:') {
-    throw new Error(`LumiScript: refusing a non-http(s) direct fetch (${protocol || 'no scheme'}).`);
-  }
-  const res = await globalThis.fetch(url, {
-    method:   opts.method,
-    headers:  opts.headers,
-    body:     opts.body as BodyInit | undefined,
-    redirect: 'manual',
-    // The direct path can be cancelled: forward the host-injected AbortSignal to the real fetch. (The
-    // cors path can't — spindle.cors runs across the worker boundary; guardedCorsFetch drops it there.)
-    ...(opts.signal !== undefined ? { signal: opts.signal } : {}),
-  });
-  const headers: Record<string, string> = {};
-  res.headers.forEach((v, k) => { headers[k] = v; });
-  // Preserve Set-Cookie multiplicity separately — the flat `headers` map above collapses repeated
-  // Set-Cookie headers into one. `getSetCookie` is the WHATWG-standard array accessor (present in Bun);
-  // guard it in case a runtime lacks it. Only the direct path can do this: it holds the real Response,
-  // whereas the cors proxy has already flattened headers before we see them.
-  const setCookies = typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
-  const cookieField = setCookies.length > 0 ? { setCookies } : {};
-  const bytes = await readBodyCapped(res, DIRECT_FETCH_MAX_RESPONSE_BYTES);
-  if (opts.responseType === 'arraybuffer') {
-    return { status: res.status, statusText: res.statusText, headers, body: bytesToBase64(bytes), encoding: 'base64', ...cookieField };
-  }
-  return { status: res.status, statusText: res.statusText, headers, body: new TextDecoder().decode(bytes), ...cookieField };
-}
-
-/** Route a request to the direct path (allowlisted trusted-local host) or the hardened cors→safeFetch path. */
 export async function guardedCorsFetch(url: string, opts: CorsOptions): Promise<unknown> {
-  if (isAllowlistedHost(url, allowedPrivateHostsReader())) {
-    return directLocalFetch(url, opts);
-  }
   // The cors proxy call crosses the worker boundary via postMessage; an AbortSignal isn't cloneable, so it
   // must not ride along (the hardened path isn't cancellable — a documented limitation). Send opts without
   // it. The remaining fields match spindle.cors's option shape (method/headers/responseType/body); cast
